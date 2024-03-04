@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include=".generate">
+      <UniqueIdentifier>{9d30789d-a25d-4fc7-871b-42edd1fea2ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{6e1a4ab5-7803-42f8-9346-08e08dac5371}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Camera\glm">
+      <UniqueIdentifier>{938c1e33-1f57-48c7-9ef9-135a232fd325}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Camera\Handler">
+      <UniqueIdentifier>{e37b6b92-6460-495a-a4f2-235867a854a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Camera\Projection">
+      <UniqueIdentifier>{b4321c16-f68d-4cee-854f-1e77241f572c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Camera\Transform">
+      <UniqueIdentifier>{621ea825-9ec0-4981-86e6-3376775bd991}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{a5d8e202-617c-4678-8366-8730766967c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Base">
+      <UniqueIdentifier>{29a92c5b-90a4-4011-b751-fd98e0b1a71d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\SPH">
+      <UniqueIdentifier>{eb9b5bc7-9d0b-41dd-9fb2-eb54f97545d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MGLPArchiver">
+      <UniqueIdentifier>{aeab5b77-a1ee-4d79-b0a2-a5ee2e4c4196}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{177c480d-3ad0-4daa-9216-b9494d12d158}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HeaderPre.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="HeaderPost.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="GLMUtil.h">
+      <Filter>Camera\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSCameraUserInputEventHandler.h">
+      <Filter>Camera\Handler</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSCameraDef.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSCameraProjection.h">
+      <Filter>Camera\Projection</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSCameraTransform.h">
+      <Filter>Camera\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSCamera.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSRenderManager.h" />
+    <ClInclude Include="MPSRenderer.h">
+      <Filter>Renderer\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHRenderer.h">
+      <Filter>Renderer\SPH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSGLPArchiver.h">
+      <Filter>MGLPArchiver</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>.generate</Filter>
+    </ClCompile>
+    <ClCompile Include="GLMUtil.cpp">
+      <Filter>Camera\glm</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSCameraUserInputEventHandler.cpp">
+      <Filter>Camera\Handler</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSCameraProjection.cpp">
+      <Filter>Camera\Projection</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSCameraTransform.cpp">
+      <Filter>Camera\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSCamera.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSRenderManager.cpp" />
+    <ClCompile Include="MPSRenderer.cpp">
+      <Filter>Renderer\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSSPHRenderer.cpp">
+      <Filter>Renderer\SPH</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSGLPArchiver.cpp">
+      <Filter>MGLPArchiver</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\shader\particleShader.frag">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\shader\particleShader.vert">
+      <Filter>Shader</Filter>
+    </None>
+  </ItemGroup>
+</Project>

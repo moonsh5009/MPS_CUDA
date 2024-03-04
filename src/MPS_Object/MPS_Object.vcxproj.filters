@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include=".generate">
+      <UniqueIdentifier>{e16ce1d0-d3a6-450f-9862-3a3ef5039d53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GBArchiver">
+      <UniqueIdentifier>{07c73daa-0b7d-4a00-b2cc-3e343df3c9a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object">
+      <UniqueIdentifier>{7234a4b9-59ad-4152-8d04-a0137298d806}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Material">
+      <UniqueIdentifier>{77e58d9d-6062-43f1-bf87-fd5ed7ac6ecc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Material\Base">
+      <UniqueIdentifier>{031ac4a2-600b-47de-9d68-dc7377463dcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Material\SPH">
+      <UniqueIdentifier>{98b4a747-07f1-45f9-8af2-98c2de0774c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Model">
+      <UniqueIdentifier>{2827d95e-08d0-48c6-96ac-41369ebe1d47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Model\Base">
+      <UniqueIdentifier>{ea187f30-a3dc-4311-8247-e0dff787803b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tree">
+      <UniqueIdentifier>{0b17ff65-294f-4b48-90e8-caa8a6c503ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tree\Base">
+      <UniqueIdentifier>{0eb834ea-732a-4f8f-8743-12354f486995}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tree\SpatialHash">
+      <UniqueIdentifier>{17789d0c-2fe4-4ac4-b4ce-a51714dda1ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Model\SPH">
+      <UniqueIdentifier>{c8c22af6-d341-4329-bb05-85bee9b5c85c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Base">
+      <UniqueIdentifier>{314c7f99-2cae-4378-bf88-be065381b93a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Particle">
+      <UniqueIdentifier>{0bc0a35c-ac44-4894-8bda-fb048fc80a01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\SPH">
+      <UniqueIdentifier>{a7501988-ba24-4a34-a9d8-38a9f625da31}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>.generate</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSGBArchiver.cpp">
+      <Filter>GBArchiver</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSSPHMaterial.cpp">
+      <Filter>Material\SPH</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSModel.cpp">
+      <Filter>Model\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSSpatialHash.cpp">
+      <Filter>Tree\SpatialHash</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSSPHModel.cpp">
+      <Filter>Model\SPH</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSObject.cpp">
+      <Filter>Object\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSParticleObject.cpp">
+      <Filter>Object\Particle</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="HeaderPre.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="HeaderPost.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSGBArchiver.h">
+      <Filter>GBArchiver</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSUniformDef.h">
+      <Filter>GBArchiver</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSMaterial.h">
+      <Filter>Material\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHMaterial.h">
+      <Filter>Material\SPH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSDef.h" />
+    <ClInclude Include="MPSModel.h">
+      <Filter>Model\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSTree.h">
+      <Filter>Tree\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSpatialHash.h">
+      <Filter>Tree\SpatialHash</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHModel.h">
+      <Filter>Model\SPH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSObject.h">
+      <Filter>Object\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSParticleObject.h">
+      <Filter>Object\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHObject.h">
+      <Filter>Object\SPH</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="MPSSPHObject.cu">
+      <Filter>Object\SPH</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>
