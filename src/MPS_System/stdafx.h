@@ -1,6 +1,7 @@
 #pragma once
 #pragma warning (disable : 4251)
 #pragma warning (disable : 4267)
+#pragma warning (disable : 4068)
 
 #include <iostream>
 #include <cassert>

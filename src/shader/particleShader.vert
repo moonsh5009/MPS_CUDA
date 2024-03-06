@@ -20,7 +20,7 @@ out vec3 viewDir;
 
 void main()
 {
-    float radius = 40.5;
+    float radius = 180.;
 
     vec4 posClip = uCamera.viewMat * vec4(position, 1.f);
     float dist = length(posClip.xyz);

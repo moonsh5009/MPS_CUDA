@@ -74,9 +74,12 @@ namespace mgl
 		void CopyFromHost(const std::vector<T>& src, const size_t dstOffset);
 		void CopyFromHost(const std::vector<T>& src, const size_t dstOffset, const size_t srcOffset, const size_t byteLength);
 
-		void CopyFromHost(const T& src);
-		void CopyFromHost(const T& src, const size_t dstOffset);
-		void CopyFromHost(const T& src, const size_t dstOffset, const size_t srcOffset, const size_t byteLength);
+		template<typename T2>
+		void CopyFromHost(const T2& src);
+		template<typename T2>
+		void CopyFromHost(const T2& src, const size_t dstOffset);
+		template<typename T2>
+		void CopyFromHost(const T2& src, const size_t dstOffset, const size_t srcOffset, const size_t byteLength);
 
 	protected:
 		GLuint m_id;

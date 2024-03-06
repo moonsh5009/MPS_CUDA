@@ -42,45 +42,45 @@ void mps::System::Initalize()
     }
 }
 
-void mps::System::OnWMouseDown(glm::ivec2 curPos, int mods)
+void mps::System::OnWMouseDown(mevent::Flag flag, glm::ivec2 curPos)
 {
-    m_pCameraHandler->OnWMouseDown(curPos, mods);
+    m_pCameraHandler->OnWMouseDown(flag, curPos);
 }
 
-void mps::System::OnWMouseUp(glm::ivec2 curPos, int mods)
+void mps::System::OnWMouseUp(mevent::Flag flag, glm::ivec2 curPos)
 {
-    m_pCameraHandler->OnWMouseUp(curPos, mods);
+    m_pCameraHandler->OnWMouseUp(flag, curPos);
 }
 
-void mps::System::OnMouseMove(glm::ivec2 curPos)
+void mps::System::OnMouseMove(mevent::Flag flag, glm::ivec2 curPos)
 {
-    m_pCameraHandler->OnMouseMove(curPos);
+    m_pCameraHandler->OnMouseMove(flag, curPos);
 }
 
-void mps::System::OnMouseWheel(glm::ivec2 curPos, glm::ivec2 offset, int mods)
+void mps::System::OnMouseWheel(mevent::Flag flag, glm::ivec2 offset, glm::ivec2 curPos)
 {
-    m_pCameraHandler->OnMouseWheel(curPos, offset, mods);
+    m_pCameraHandler->OnMouseWheel(flag, offset, curPos);
 }
 
-void mps::System::OnKeyDown(int key, int mods)
+void mps::System::OnKeyDown(uint32_t key, uint32_t repCnt, mevent::Flag flag)
 {
     auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
     uint32_t sqNumParticles = static_cast<uint32_t>(powf(static_cast<float>(pSPHObject->GetSize()), 1.0f / 3.0f));
     uint32_t offset = 50;
     switch (key)
     {
-    case ']':
-        ResizeParticle(sqNumParticles + offset);
-        break;
-    case '[':
+    case 219: // ']':
         ResizeParticle((sqNumParticles > offset) ? sqNumParticles - offset : 1);
+        break;
+    case 221: // '[':
+        ResizeParticle(sqNumParticles + offset);
         break;
     default:
         break;
     }
 }
 
-void mps::System::OnKeyUp(int key, int mods)
+void mps::System::OnKeyUp(uint32_t key, uint32_t repCnt, mevent::Flag flag)
 {
     switch (key)
     {
@@ -105,6 +105,7 @@ void mps::System::OnUpdate()
 void mps::System::OnDraw()
 {
     m_pCamera->Update(m_pGBArchiver.get());
+    m_pGBArchiver->UpdateLightPos(m_pCamera->GetTransform()->GetPosition());
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_POINT_SPRITE);

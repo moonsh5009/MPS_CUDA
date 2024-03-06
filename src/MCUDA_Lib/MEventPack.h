@@ -26,10 +26,12 @@ namespace mevent
 		WMouse,
 	};
 
-	enum MMods : int
+	enum Flag : unsigned
 	{
 		None = 0,
-		Shift = 2,
+		LeftButton = 1,
+		RightButton = 2,
+		Shift = 4,
 		Ctrl = 8,
 		Wheel = 16,
 	};

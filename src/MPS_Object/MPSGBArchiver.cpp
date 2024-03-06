@@ -16,3 +16,8 @@ void mps::GBArchiver::UpdateLight(const mps::LightParam& light)
 {
 	m_lightBuffer.CopyFromHost(light);
 }
+
+void mps::GBArchiver::UpdateLightPos(const glm::vec3& lightPos)
+{
+	m_lightBuffer.CopyFromHost(lightPos);
+}

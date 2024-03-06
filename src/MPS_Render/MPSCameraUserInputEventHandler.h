@@ -15,10 +15,10 @@ namespace mps
 			CameraUserInputEventHandler(Camera* pCamera);
 
 		public:
-			void OnWMouseDown(glm::ivec2 curPos, int mods);
-			void OnWMouseUp(glm::ivec2 curPos, int mods);
-			void OnMouseMove(glm::ivec2 curPos);
-			void OnMouseWheel(glm::ivec2 curPos, glm::ivec2 offset, int mods);
+			void OnWMouseDown(mevent::Flag flag, glm::ivec2 curPos);
+			void OnWMouseUp(mevent::Flag flag, glm::ivec2 curPos);
+			void OnMouseMove(mevent::Flag flag, glm::ivec2 curPos);
+			void OnMouseWheel(mevent::Flag flag, glm::ivec2 offset, glm::ivec2 curPos);
 
 		private:
 			bool m_isDown;

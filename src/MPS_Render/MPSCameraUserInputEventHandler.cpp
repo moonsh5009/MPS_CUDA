@@ -11,17 +11,17 @@ CameraUserInputEventHandler::CameraUserInputEventHandler(Camera* pCamera) :
 {
 }
 
-void CameraUserInputEventHandler::OnWMouseDown(glm::ivec2 curPos, int mods)
+void CameraUserInputEventHandler::OnWMouseDown(mevent::Flag flag, glm::ivec2 curPos)
 {
 	if (m_isDown)
 		return;
 
-	m_isRotate = mods & mevent::MMods::Ctrl;
+	m_isRotate = (flag & mevent::Flag::Ctrl) != mevent::Flag::None;
 	m_startPos = curPos;
 	m_isDown = true;
 }
 
-void CameraUserInputEventHandler::OnWMouseUp(glm::ivec2 curPos, int mods)
+void CameraUserInputEventHandler::OnWMouseUp(mevent::Flag flag, glm::ivec2 curPos)
 {
 	if (!m_isDown)
 		return;
@@ -29,7 +29,7 @@ void CameraUserInputEventHandler::OnWMouseUp(glm::ivec2 curPos, int mods)
 	m_isDown = false;
 }
 
-void CameraUserInputEventHandler::OnMouseMove(glm::ivec2 curPos)
+void CameraUserInputEventHandler::OnMouseMove(mevent::Flag flag, glm::ivec2 curPos)
 {
 	if (!m_isDown)
 		return;
@@ -47,7 +47,7 @@ void CameraUserInputEventHandler::OnMouseMove(glm::ivec2 curPos)
 	}
 }
 
-void CameraUserInputEventHandler::OnMouseWheel(glm::ivec2 curPos, glm::ivec2 offset, int mods)
+void CameraUserInputEventHandler::OnMouseWheel(mevent::Flag flag, glm::ivec2 offset, glm::ivec2 curPos)
 {
 	m_pCamera->MoveForward(0.24f * offset.y);
 }

@@ -141,25 +141,28 @@ void mgl::Buffer<T>::CopyFromHost(const std::vector<T>& src, const size_t dstOff
 	glNamedBufferSubData(m_id, dstOffset, byteLength, reinterpret_cast<const char*>(src.data()) + srcOffset);
 }
 
-template<typename T>
-void mgl::Buffer<T>::CopyFromHost(const T& src)
-{
-	if (m_size < 1) { assert(false); return; }
-
-	glNamedBufferSubData(m_id, 0, sizeof(T), reinterpret_cast<const char*>(&src));
-}
-
-template<typename T>
-void mgl::Buffer<T>::CopyFromHost(const T& src, const size_t dstOffset)
+template<typename T> template<typename T2>
+void mgl::Buffer<T>::CopyFromHost(const T2& src)
 {
 	const auto dstByteLength = GetByteLength();
-	if (dstByteLength < dstOffset + sizeof(T)) { assert(false); return; }
+	const auto srcByteLength = sizeof(T2);
+	if (dstByteLength < srcByteLength) { assert(false); return; }
 
-	glNamedBufferSubData(m_id, dstOffset, sizeof(T), reinterpret_cast<const char*>(&src));
+	glNamedBufferSubData(m_id, 0, srcByteLength, reinterpret_cast<const char*>(&src));
 }
 
-template<typename T>
-void mgl::Buffer<T>::CopyFromHost(const T& src, const size_t dstOffset, const size_t srcOffset, const size_t byteLength)
+template<typename T> template<typename T2>
+void mgl::Buffer<T>::CopyFromHost(const T2& src, const size_t dstOffset)
+{
+	const auto dstByteLength = GetByteLength();
+	const auto srcByteLength = sizeof(T2);
+	if (dstByteLength < dstOffset + srcByteLength) { assert(false); return; }
+
+	glNamedBufferSubData(m_id, dstOffset, srcByteLength, reinterpret_cast<const char*>(&src));
+}
+
+template<typename T> template<typename T2>
+void mgl::Buffer<T>::CopyFromHost(const T2& src, const size_t dstOffset, const size_t srcOffset, const size_t byteLength)
 {
 	const auto dstByteLength = GetByteLength();
 	if (dstByteLength < dstOffset) { assert(false); return; }

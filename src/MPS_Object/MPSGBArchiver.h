@@ -26,6 +26,7 @@ namespace mps
 
 		void UpdateCamera(const mps::CameraParam& camera);
 		void UpdateLight(const mps::LightParam& light);
+		void UpdateLightPos(const glm::vec3& lightPos);
 
 	public:
 		mcuda::gl::Buffer<mps::CameraParam> m_cameraBuffer;

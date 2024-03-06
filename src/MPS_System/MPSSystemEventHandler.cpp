@@ -9,54 +9,54 @@ void mps::SystemEventHandler::Initalize()
 {
 }
 
-void mps::SystemEventHandler::LMouseDown(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::LMouseDown(mevent::Flag flag, glm::ivec2 curPos)
 {
-    OnLMouseDown(curPos, mods);
+    OnLMouseDown(flag, curPos);
 }
 
-void mps::SystemEventHandler::RMouseDown(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::RMouseDown(mevent::Flag flag, glm::ivec2 curPos)
 {
-    OnRMouseDown(curPos, mods);
+    OnRMouseDown(flag, curPos);
 }
 
-void mps::SystemEventHandler::WMouseDown(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::WMouseDown(mevent::Flag flag, glm::ivec2 curPos)
 {
-    OnWMouseDown(curPos, mods);
+    OnWMouseDown(flag, curPos);
 }
 
-void mps::SystemEventHandler::LMouseUp(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::LMouseUp(mevent::Flag flag, glm::ivec2 curPos)
 {
-    OnLMouseUp(curPos, mods);
+    OnLMouseUp(flag, curPos);
 }
 
-void mps::SystemEventHandler::RMouseUp(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::RMouseUp(mevent::Flag flag, glm::ivec2 curPos)
 {
-    OnRMouseUp(curPos, mods);
+    OnRMouseUp(flag, curPos);
 }
 
-void mps::SystemEventHandler::WMouseUp(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::WMouseUp(mevent::Flag flag, glm::ivec2 curPos)
 {
-    OnWMouseUp(curPos, mods);
+    OnWMouseUp(flag, curPos);
 }
 
-void mps::SystemEventHandler::MouseMove(glm::ivec2 curPos)
+void mps::SystemEventHandler::MouseMove(mevent::Flag flag, glm::ivec2 curPos)
 {
-    OnMouseMove(curPos);
+    OnMouseMove(flag, curPos);
 }
 
-void mps::SystemEventHandler::MouseWheel(glm::ivec2 curPos, glm::ivec2 offset, int mods)
+void mps::SystemEventHandler::MouseWheel(mevent::Flag flag, glm::ivec2 offset, glm::ivec2 curPos)
 {
-    OnMouseWheel(curPos, offset, mods);
+    OnMouseWheel(flag, offset, curPos);
 }
 
-void mps::SystemEventHandler::KeyDown(int key, int mods)
+void mps::SystemEventHandler::KeyDown(uint32_t key, uint32_t repCnt, mevent::Flag flag)
 {
-    OnKeyDown(key, mods);
+    OnKeyDown(key, repCnt, flag);
 }
 
-void mps::SystemEventHandler::KeyUp(int key, int mods)
+void mps::SystemEventHandler::KeyUp(uint32_t key, uint32_t repCnt, mevent::Flag flag)
 {
-    OnKeyUp(key, mods);
+    OnKeyUp(key, repCnt, flag);
 }
 
 void mps::SystemEventHandler::Resize(int width, int height)
@@ -74,43 +74,43 @@ void mps::SystemEventHandler::Draw()
     OnDraw();
 }
 
-void mps::SystemEventHandler::OnLMouseDown(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::OnLMouseDown(mevent::Flag flag, glm::ivec2 curPos)
 {
 }
 
-void mps::SystemEventHandler::OnRMouseDown(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::OnRMouseDown(mevent::Flag flag, glm::ivec2 curPos)
 {
 }
 
-void mps::SystemEventHandler::OnWMouseDown(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::OnWMouseDown(mevent::Flag flag, glm::ivec2 curPos)
 {
 }
 
-void mps::SystemEventHandler::OnLMouseUp(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::OnLMouseUp(mevent::Flag flag, glm::ivec2 curPos)
 {
 }
 
-void mps::SystemEventHandler::OnRMouseUp(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::OnRMouseUp(mevent::Flag flag, glm::ivec2 curPos)
 {
 }
 
-void mps::SystemEventHandler::OnWMouseUp(glm::ivec2 curPos, int mods)
+void mps::SystemEventHandler::OnWMouseUp(mevent::Flag flag, glm::ivec2 curPos)
 {
 }
 
-void mps::SystemEventHandler::OnMouseMove(glm::ivec2 curPos)
+void mps::SystemEventHandler::OnMouseMove(mevent::Flag flag, glm::ivec2 curPos)
 {
 }
 
-void mps::SystemEventHandler::OnMouseWheel(glm::ivec2 curPos, glm::ivec2 offset, int mods)
+void mps::SystemEventHandler::OnMouseWheel(mevent::Flag flag, glm::ivec2 offset, glm::ivec2 curPos)
 {
 }
 
-void mps::SystemEventHandler::OnKeyDown(int key, int mods)
+void mps::SystemEventHandler::OnKeyDown(uint32_t key, uint32_t repCnt, mevent::Flag flag)
 {
 }
 
-void mps::SystemEventHandler::OnKeyUp(int key, int mods)
+void mps::SystemEventHandler::OnKeyUp(uint32_t key, uint32_t repCnt, mevent::Flag flag)
 {
 }
 

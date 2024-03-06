@@ -30,16 +30,16 @@ namespace mps
 		void Initalize();
 
 	protected:
-		//virtual void OnLMouseDown(glm::ivec2 curPos, int mods) override;
-		//virtual void OnRMouseDown(glm::ivec2 curPos, int mods) override;
-		virtual void OnWMouseDown(glm::ivec2 curPos, int mods) override;
-		//virtual void OnLMouseUp(glm::ivec2 curPos, int mods) override;
-		//virtual void OnRMouseUp(glm::ivec2 curPos, int mods) override;
-		virtual void OnWMouseUp(glm::ivec2 curPos, int mods) override;
-		virtual void OnMouseMove(glm::ivec2 curPos) override;
-		virtual void OnMouseWheel(glm::ivec2 curPos, glm::ivec2 offset, int mods) override;
-		virtual void OnKeyDown(int key, int mods) override;
-		virtual void OnKeyUp(int key, int mods) override;
+		//virtual void OnLMouseDown(mevent::Flag flag, glm::ivec2 curPos) override;
+		//virtual void OnRMouseDown(mevent::Flag flag, glm::ivec2 curPos) override;
+		virtual void OnWMouseDown(mevent::Flag flag, glm::ivec2 curPos) override;
+		//virtual void OnLMouseUp(mevent::Flag flag, glm::ivec2 curPos) override;
+		//virtual void OnRMouseUp(mevent::Flag flag, glm::ivec2 curPos) override;
+		virtual void OnWMouseUp(mevent::Flag flag, glm::ivec2 curPos) override;
+		virtual void OnMouseMove(mevent::Flag flag, glm::ivec2 curPos) override;
+		virtual void OnMouseWheel(mevent::Flag flag, glm::ivec2 offset, glm::ivec2 curPos) override;
+		virtual void OnKeyDown(uint32_t key, uint32_t repCnt, mevent::Flag flag) override;
+		virtual void OnKeyUp(uint32_t key, uint32_t repCnt, mevent::Flag flag) override;
 		virtual void OnResize(int width, int height) override;
 		virtual void OnUpdate() override;
 		virtual void OnDraw() override;

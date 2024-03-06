@@ -31,14 +31,13 @@ BEGIN_MESSAGE_MAP(CAppDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_WM_TIMER()
 	ON_WM_LBUTTONDOWN()
-//	ON_WM_MOUSEWHEEL()
-ON_WM_MOUSEWHEEL()
-ON_WM_MOUSEMOVE()
-ON_WM_MBUTTONDOWN()
-ON_WM_RBUTTONDOWN()
-ON_WM_LBUTTONUP()
-ON_WM_MBUTTONUP()
-ON_WM_RBUTTONUP()
+	ON_WM_RBUTTONDOWN()
+	ON_WM_MBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_RBUTTONUP()
+	ON_WM_MBUTTONUP()
+	ON_WM_MOUSEMOVE()
+	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
 
@@ -234,66 +233,102 @@ BOOL CAppDlg::GetOldStyleRenderingContext()
 	return TRUE;
 }
 
-void CAppDlg::OnLButtonDown(UINT nFlags, CPoint point)
+glm::ivec2 CAppDlg::ConvertMousePos(const CPoint& pos) const
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-	m_pMPSCore->LMouseDown({ point.x, point.y }, nFlags);
-	CDialogEx::OnLButtonDown(nFlags, point);
+	CRect wndRect;
+	GetWindowRect(wndRect);
+	return glm::ivec2{ pos.x,wndRect.Height() - pos.y };
 }
 
-void CAppDlg::OnMButtonDown(UINT nFlags, CPoint point)
+void CAppDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	SetCapture();
 
-	m_pMPSCore->WMouseDown({ point.x, point.y }, nFlags);
-	CDialogEx::OnMButtonDown(nFlags, point);
+	m_pMPSCore->LMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
 void CAppDlg::OnRButtonDown(UINT nFlags, CPoint point)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	SetCapture();
 
-	m_pMPSCore->RMouseDown({ point.x, point.y }, nFlags);
+	m_pMPSCore->RMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnRButtonDown(nFlags, point);
+}
+
+void CAppDlg::OnMButtonDown(UINT nFlags, CPoint point)
+{
+	SetCapture();
+
+	m_pMPSCore->WMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	CDialogEx::OnMButtonDown(nFlags, point);
 }
 
 void CAppDlg::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	if (GetCapture() == this)
+	{
+		ReleaseCapture();
+	}
 
-	m_pMPSCore->LMouseUp({ point.x, point.y }, nFlags);
+	m_pMPSCore->LMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnLButtonUp(nFlags, point);
-}
-
-void CAppDlg::OnMButtonUp(UINT nFlags, CPoint point)
-{
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-
-	m_pMPSCore->WMouseUp({ point.x, point.y }, nFlags);
-	CDialogEx::OnMButtonUp(nFlags, point);
 }
 
 void CAppDlg::OnRButtonUp(UINT nFlags, CPoint point)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	if (GetCapture() == this)
+	{
+		ReleaseCapture();
+	}
 
-	m_pMPSCore->WMouseUp({ point.x, point.y }, nFlags);
+	m_pMPSCore->RMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnRButtonUp(nFlags, point);
 }
 
-BOOL CAppDlg::OnMouseWheel(UINT nFlags, short zDelta, CPoint point)
+void CAppDlg::OnMButtonUp(UINT nFlags, CPoint point)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	if (GetCapture() == this)
+	{
+		ReleaseCapture();
+	}
 
-	m_pMPSCore->MouseWheel({ point.x, point.y }, { 0, static_cast<int>(zDelta / abs(zDelta)) }, nFlags);
-	return CDialogEx::OnMouseWheel(nFlags, zDelta, point);
+	m_pMPSCore->WMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	CDialogEx::OnMButtonUp(nFlags, point);
 }
 
 void CAppDlg::OnMouseMove(UINT nFlags, CPoint point)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-
-	m_pMPSCore->MouseMove({ point.x, point.y });
-
+	m_pMPSCore->MouseMove(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnMouseMove(nFlags, point);
+}
+
+BOOL CAppDlg::OnMouseWheel(UINT nFlags, short zDelta, CPoint point)
+{
+	m_pMPSCore->MouseWheel(static_cast<mevent::Flag>(nFlags), { 0, static_cast<int>(zDelta / abs(zDelta)) }, ConvertMousePos(point));
+	return CDialogEx::OnMouseWheel(nFlags, zDelta, point);
+}
+
+void CAppDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	m_pMPSCore->KeyDown(nChar, nRepCnt, static_cast<mevent::Flag>(nFlags));
+}
+
+void CAppDlg::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	m_pMPSCore->KeyUp(nChar, nRepCnt, static_cast<mevent::Flag>(nFlags));
+}
+
+BOOL CAppDlg::PreTranslateMessage(MSG* pMsg)
+{
+	switch (pMsg->message)
+	{
+	case WM_KEYDOWN:
+		OnKeyDown(static_cast<UINT>(pMsg->wParam), LOWORD(pMsg->lParam), HIWORD(pMsg->lParam));
+		break;
+	case WM_KEYUP:
+		OnKeyUp(static_cast<UINT>(pMsg->wParam), LOWORD(pMsg->lParam), HIWORD(pMsg->lParam));
+		break;
+	}
+	return CDialogEx::PreTranslateMessage(pMsg);
 }
