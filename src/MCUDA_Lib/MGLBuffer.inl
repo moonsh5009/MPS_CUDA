@@ -111,7 +111,7 @@ void mgl::Buffer<T>::CopyFromHost(const std::vector<T>& src)
 {
 	if (m_size < src.size()) { assert(false); return; }
 
-	glNamedBufferSubData(m_id, 0, GetByteLength(), reinterpret_cast<const char*>(src.data()));
+	glNamedBufferSubData(m_id, 0, std::min(GetByteLength(), src.size() * sizeof(T)), reinterpret_cast<const char*>(src.data()));
 }
 
 template<typename T>

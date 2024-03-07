@@ -6,6 +6,12 @@
 
 namespace mgl
 {
+	enum class VertexStepMode
+	{
+		Vertex,
+		Instance,
+		Size
+	};
 	class __MY_EXT_CLASS__ VertexArray
 	{
 	public:
@@ -18,8 +24,8 @@ namespace mgl
 	public:
 		void Create();
 		void Delete();
-		void Bind();
-		void Unbind();
+		void Bind() const;
+		void Unbind() const;
 
 	public:
 		template<typename T>
@@ -69,7 +75,7 @@ namespace mgl
 		}
 
 		template<typename T>
-		void AddVertexBuffer(const mgl::Buffer<T>& vbo)
+		void AddVertexBuffer(const mgl::Buffer<T>& vbo, const VertexStepMode stepMode)
 		{
 			if (!IsAssigned()) return;
 
@@ -77,8 +83,20 @@ namespace mgl
 
 			glVertexArrayVertexBuffer(m_id, m_index, vbo.GetID(), 0, sizeof(T));
 			glEnableVertexArrayAttrib(m_id, m_index);
-			glVertexArrayAttribBinding(m_id, m_index, m_index);
 			glVertexArrayAttribFormat(m_id, m_index, size, type, GL_FALSE, 0);
+			switch (stepMode)
+			{
+			case VertexStepMode::Vertex:
+				glVertexArrayAttribBinding(m_id, m_index, m_index);
+				break;
+			case VertexStepMode::Instance:
+				glVertexArrayAttribBinding(m_id, m_index, m_index);
+				glVertexArrayBindingDivisor(m_id, m_index, 1);
+				break;
+			default:
+				assert(false);
+				return;
+			}
 			m_index++;
 		}
 

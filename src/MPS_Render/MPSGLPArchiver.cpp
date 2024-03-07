@@ -15,7 +15,5 @@ void mps::rndr::GLPArchiver::Initalize()
 		m_aProgram[static_cast<int>(def::ProgramDef::Particle)].Create();
 		m_aProgram[static_cast<int>(def::ProgramDef::Particle)].CompileShader(vShader);
 		m_aProgram[static_cast<int>(def::ProgramDef::Particle)].CompileShader(fShader);
-
-		m_aShader[static_cast<int>(def::ProgramDef::Particle)] = std::move(std::make_tuple(std::move(vShader), std::move(fShader)));
 	}
 }

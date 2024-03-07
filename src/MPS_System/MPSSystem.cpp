@@ -69,10 +69,10 @@ void mps::System::OnKeyDown(uint32_t key, uint32_t repCnt, mevent::Flag flag)
     uint32_t offset = 50;
     switch (key)
     {
-    case 219: // ']':
+    case 219: // '[':
         ResizeParticle((sqNumParticles > offset) ? sqNumParticles - offset : 1);
         break;
-    case 221: // '[':
+    case 221: // ']':
         ResizeParticle(sqNumParticles + offset);
         break;
     default:

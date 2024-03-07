@@ -18,14 +18,22 @@
     <ClInclude Include="stdafx.h">
       <Filter>.generate</Filter>
     </ClInclude>
-    <ClInclude Include="MPSSystem.h" />
-    <ClInclude Include="MPSSystemEventHandler.h" />
+    <ClInclude Include="MPSSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSystemEventHandler.h">
+      <Filter>System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>.generate</Filter>
     </ClCompile>
-    <ClCompile Include="MPSSystem.cpp" />
-    <ClCompile Include="MPSSystemEventHandler.cpp" />
+    <ClCompile Include="MPSSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSSystemEventHandler.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

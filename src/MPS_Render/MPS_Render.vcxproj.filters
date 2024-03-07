@@ -34,6 +34,9 @@
     <Filter Include="Shader">
       <UniqueIdentifier>{177c480d-3ad0-4daa-9216-b9494d12d158}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shader\Particle">
+      <UniqueIdentifier>{c19be9fc-7d2d-4841-af1d-c49487c52287}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HeaderPre.h">
@@ -106,10 +109,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shader\particleShader.frag">
-      <Filter>Shader</Filter>
+      <Filter>Shader\Particle</Filter>
     </None>
     <None Include="..\shader\particleShader.vert">
-      <Filter>Shader</Filter>
+      <Filter>Shader\Particle</Filter>
+    </None>
+    <None Include="..\shader\particleShader.glsl">
+      <Filter>Shader\Particle</Filter>
     </None>
   </ItemGroup>
 </Project>

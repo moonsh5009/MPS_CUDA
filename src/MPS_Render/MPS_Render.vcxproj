@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shader\particleShader.frag" />
+    <None Include="..\shader\particleShader.glsl" />
     <None Include="..\shader\particleShader.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

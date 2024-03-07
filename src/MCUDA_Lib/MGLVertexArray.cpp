@@ -26,14 +26,14 @@ void mgl::VertexArray::Delete()
 	m_index = 0;
 }
 
-void mgl::VertexArray::Bind()
+void mgl::VertexArray::Bind() const
 {
 	if (!IsAssigned()) return;
 
 	glBindVertexArray(m_id);
 }
 
-void mgl::VertexArray::Unbind()
+void mgl::VertexArray::Unbind() const
 {
 	glBindVertexArray(0);
 }

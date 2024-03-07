@@ -38,6 +38,7 @@ bool mgl::Program::CompileShader(const mgl::Shader& pShader)
         Destroy();
     }
 
+    m_aAttachedShader.emplace_back(iShader);
     return isSuccess != 0;
 }
 
@@ -58,4 +59,22 @@ void mgl::Program::Bind() const
 void mgl::Program::Unbind() const
 {
     glUseProgram(0);
+}
+
+GLuint mgl::Program::GetShader(const uint32_t i) const
+{
+    if (m_aAttachedShader.size() < i) { assert(false); return 0; }
+    return m_aAttachedShader[i];
+}
+
+GLuint mgl::Program::GetVertexShader() const
+{
+    if (m_aAttachedShader.size() < 2) { assert(false); return 0; }
+    return m_aAttachedShader.front();
+}
+
+GLuint mgl::Program::GetFragmentShader() const
+{
+    if (m_aAttachedShader.size() < 2) { assert(false); return 0; }
+    return m_aAttachedShader.back();
 }

@@ -27,18 +27,23 @@ namespace mgl
 		}
 
 	public:
-		constexpr GLuint GetID() const { return m_id; }
-		constexpr bool IsAssigned() const { return m_id != 0; }
-
-	public:
 		void Create();
 		bool CompileShader(const Shader& pShader);
 		void Destroy();
+		
 		void Bind() const;
 		void Unbind() const;
 
+	public:
+		constexpr bool IsAssigned() const { return m_id != 0; }
+		constexpr GLuint GetID() const { return m_id; }
+		GLuint GetShader(const uint32_t i) const;
+		GLuint GetVertexShader() const;
+		GLuint GetFragmentShader() const;
+
 	private:
 		GLuint m_id;
+		std::vector<GLuint> m_aAttachedShader;
 	};
 }
 

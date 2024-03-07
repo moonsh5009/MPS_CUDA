@@ -32,12 +32,9 @@ namespace mps
 		public:
 			mgl::Program& GetProgram(const def::ProgramDef program) { return m_aProgram[static_cast<int>(program)]; }
 			const mgl::Program& GetProgram(const def::ProgramDef program) const { return m_aProgram[static_cast<int>(program)]; }
-			std::tuple<mgl::Shader, mgl::Shader>& GetShader(const def::ProgramDef program) { return m_aShader[static_cast<int>(program)]; }
-			const std::tuple<mgl::Shader, mgl::Shader>& GetShader(const def::ProgramDef program) const { return m_aShader[static_cast<int>(program)]; }
-
+			
 		private:
 			std::array<mgl::Program, static_cast<int>(def::ProgramDef::Size)> m_aProgram;
-			std::array<std::tuple<mgl::Shader, mgl::Shader>, static_cast<int>(def::ProgramDef::Size)> m_aShader;
 		};
 	}
 }
