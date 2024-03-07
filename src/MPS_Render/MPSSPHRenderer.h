@@ -14,6 +14,9 @@ namespace mps
 		public:
 			virtual void Initalize(const GLPArchiver*, const GBArchiver*) override;
 			virtual void Draw(const GLPArchiver*, const GBArchiver*, const Model*) const override;
+
+		private:
+			mgl::Buffer<glm::fvec2> m_vbo;
 		};
 	}
 };

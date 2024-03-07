@@ -10,16 +10,25 @@
 
 void mps::rndr::SPHRenderer::Initalize(const mps::rndr::GLPArchiver* pGLPArchiver, const mps::GBArchiver* pGBArchiver)
 {
-	const auto&[vShader, fShader] = pGLPArchiver->GetShader(mps::rndr::def::ProgramDef::Particle);
+	const auto& program = pGLPArchiver->GetProgram(mps::rndr::def::ProgramDef::Particle);
+	const auto iVertShader = program.GetVertexShader();
 
-	const auto glCameraIndex = glGetUniformBlockIndex(vShader.GetID(), "uCamera");
-	const auto glLightIndex = glGetUniformBlockIndex(vShader.GetID(), "uLight");
+	const auto glCameraIndex = glGetUniformBlockIndex(iVertShader, "uCamera");
+	const auto glLightIndex = glGetUniformBlockIndex(iVertShader, "uLight");
 
-	glUniformBlockBinding(vShader.GetID(), glCameraIndex, 1);
-	glUniformBlockBinding(vShader.GetID(), glLightIndex, 2);
+	glUniformBlockBinding(iVertShader, glCameraIndex, 1);
+	glUniformBlockBinding(iVertShader, glLightIndex, 2);
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, pGBArchiver->m_cameraBuffer.GetID());
 	glBindBufferBase(GL_UNIFORM_BUFFER, 2, pGBArchiver->m_lightBuffer.GetID());
+
+	m_vbo.Resize(
+		{
+			glm::fvec2{ -1.0, -1.0 },
+			glm::fvec2{ 1.0, -1.0 },
+			glm::fvec2{ -1.0, 1.0 },
+			glm::fvec2{ 1.0, 1.0 },
+		});
 }
 
 void mps::rndr::SPHRenderer::Draw(const mps::rndr::GLPArchiver* pGLPArchiver, const mps::GBArchiver* pGBArchiver, const mps::Model* pModel) const
@@ -31,10 +40,13 @@ void mps::rndr::SPHRenderer::Draw(const mps::rndr::GLPArchiver* pGLPArchiver, co
 
 	mgl::VertexArray vao;
 	vao.Create();
-	vao.AddVertexBuffer(pSPHObject->m_pos);
+	vao.AddVertexBuffer(m_vbo, mgl::VertexStepMode::Vertex);
+	vao.AddVertexBuffer(pSPHObject->m_pos, mgl::VertexStepMode::Instance);
+	vao.AddVertexBuffer(pSPHObject->m_radius, mgl::VertexStepMode::Instance);
+	vao.AddVertexBuffer(pSPHObject->m_color, mgl::VertexStepMode::Instance);
 
 	vao.Bind();
-	glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(pSPHObject->GetSize()));
+	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, static_cast<GLsizei>(pSPHObject->GetSize()));
 	vao.Unbind();
 
 	program.Unbind();

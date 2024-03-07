@@ -1,4 +1,4 @@
-#version 420 core
+#include <particleShader.glsl>
 
 layout (std140, binding = 1) uniform Camera
 {
@@ -7,28 +7,31 @@ layout (std140, binding = 1) uniform Camera
     mat4 viewInvMat;
     mat4 projInvMat;
 } uCamera;
+
 layout (std140, binding = 2) uniform Light
 {
     vec3 pos;
     vec4 color;
 } uLight;
 
-layout (location = 0) in vec3 position;
+layout (location = 0) in vec2 inUV;
+layout (location = 1) in vec3 inPos;
+layout (location = 2) in float inRadius;
+layout (location = 3) in vec4 inColor;
 
-out vec3 lightDir;
-out vec3 viewDir;
+out VertexShaderOut vsOut;
 
 void main()
 {
-    float radius = 180.;
+    vsOut.uv = inUV;
+	vsOut.pos = inPos;
+	vsOut.radius = inRadius;
+	vsOut.color = inColor;
+	
+	vec4 viewPos = uCamera.viewMat * vec4(inPos.xy, -inPos.z, 1.0);
+    vec4 lightPos = uCamera.viewMat * vec4(uLight.pos, 1.f);
+	vsOut.unit2Light = normalize((lightPos - viewPos).xyz);
+	vsOut.lightColor = uLight.color.xyz;
 
-    vec4 posClip = uCamera.viewMat * vec4(position, 1.f);
-    float dist = length(posClip.xyz);
-    
-    vec4 lightClip = uCamera.viewMat * vec4(uLight.pos, 1.f);
-    lightDir = normalize((lightClip - posClip).xyz);
-    viewDir = normalize(-posClip.xyz);
-
-    gl_Position = uCamera.projMat * posClip;
-    gl_PointSize = radius / gl_Position.w;
+    gl_Position = uCamera.projMat * (viewPos + vec4(inUV * inRadius, 0.0f, 0.0f));
 }

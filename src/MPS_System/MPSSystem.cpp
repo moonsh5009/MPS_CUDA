@@ -40,6 +40,8 @@ void mps::System::Initalize()
 
         m_pRenderManager->AddModel(m_pSPHModel);
     }
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void mps::System::OnWMouseDown(mevent::Flag flag, glm::ivec2 curPos)
@@ -106,11 +108,6 @@ void mps::System::OnDraw()
 {
     m_pCamera->Update(m_pGBArchiver.get());
     m_pGBArchiver->UpdateLightPos(m_pCamera->GetTransform()->GetPosition());
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_POINT_SPRITE);
-    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
