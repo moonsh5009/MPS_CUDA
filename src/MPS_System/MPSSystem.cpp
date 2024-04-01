@@ -23,7 +23,7 @@ void mps::System::Initalize()
     {
         m_pGBArchiver = std::make_shared<mps::GBArchiver>();
         m_pGBArchiver->Initalize();
-        m_pGBArchiver->UpdateLight(mps::LightParam{ glm::fvec3{ 10.0, 10.0f, 10.0f }, glm::fvec4{ 1.0f, 1.0f, 1.0f, 1.0f } });
+        m_pGBArchiver->UpdateLight(mps::LightParam{ glm::dvec3{ 10.0, 10.0, 10.0 }, glm::fvec4{ 1.0f, 1.0f, 1.0f, 1.0f } });
     }
     {
         m_pRenderManager = std::make_shared<mps::rndr::RenderManager>();
@@ -125,18 +125,18 @@ void mps::System::ResizeParticle(size_t size)
     std::cout << pSPHObject->GetSize() << " to ";
     MTimer::Start("ResizeParticle");
 
-    float radius = 0.1f;// pSPHObject->GetSize() == 0 ? 0.1f : pSPHObject->m_radius.GetHost()[0];
-    float offset = 0.001f;
-    float stride = radius + radius + offset;
-    float l = stride * (size - 1) + radius + radius;
-    float startPos = -l * 0.5f;
-    float mass = 1.0f;
+    REAL radius = 0.1f;// pSPHObject->GetSize() == 0 ? 0.1f : pSPHObject->m_radius.GetHost()[0];
+    REAL offset = 0.001f;
+    REAL stride = radius + radius + offset;
+    REAL l = stride * (size - 1) + radius + radius;
+    REAL startPos = -l * 0.5f;
+    REAL mass = 1.0f;
 
-    std::vector<glm::dvec3> h_pos;
-    std::vector<float> h_radius;
-    //std::vector<float> mass;
-    //std::vector<glm::dvec3> vel;
-    //std::vector<glm::dvec3> force;
+    std::vector<REAL3> h_pos;
+    std::vector<REAL> h_radius;
+    //std::vector<REAL> mass;
+    //std::vector<REAL3> vel;
+    //std::vector<REAL3> force;
 
     h_pos.reserve(size * size * size);
     h_radius.reserve(size * size * size);
@@ -147,7 +147,7 @@ void mps::System::ResizeParticle(size_t size)
         {
             for (int x = 0; x < size; x++)
             {
-                glm::vec3 pos =
+                REAL3 pos =
                 {
                     startPos + x * stride + radius,
                     startPos + y * stride + radius,
@@ -167,7 +167,7 @@ void mps::System::ResizeParticle(size_t size)
     pSPHObject->m_radius.CopyFromHost(h_radius);
 
     pSpatialHash->SetObjectSize(pSPHObject->GetSize());
-    pSpatialHash->SetCeilSize(4 * radius);
+    pSpatialHash->SetCeilSize(radius * 4);
     pSpatialHash->SetHashSize({ 64, 64, 64 });
 
     std::cout << pSPHObject->GetSize() << std::endl;

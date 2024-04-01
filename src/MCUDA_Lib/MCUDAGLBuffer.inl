@@ -1,5 +1,5 @@
-template<typename T>
-void mcuda::gl::Buffer<T>::CudaRegister()
+template<typename T, GLenum TYPE>
+void mcuda::gl::Buffer<T, TYPE>::CudaRegister()
 {
 	if (this->GetSize() <= 0ull) return;
 	CudaUnRegister();
@@ -8,8 +8,8 @@ void mcuda::gl::Buffer<T>::CudaRegister()
 	assert(error == cudaSuccess);
 }
 
-template<typename T>
-void mcuda::gl::Buffer<T>::CudaUnRegister()
+template<typename T, GLenum TYPE>
+void mcuda::gl::Buffer<T, TYPE>::CudaUnRegister()
 {
 	if (!m_pCuRes->resource) return;
 	assert(m_pCuRes->bMapping == false);
@@ -19,36 +19,36 @@ void mcuda::gl::Buffer<T>::CudaUnRegister()
 	m_pCuRes->resource = nullptr;
 }
 
-template<typename T>
-void mcuda::gl::Buffer<T>::Destroy()
+template<typename T, GLenum TYPE>
+void mcuda::gl::Buffer<T, TYPE>::Destroy()
 {
 	assert(m_pCuRes->bMapping == false);
 	CudaUnRegister();
-	mgl::Buffer<T>::Destroy();
+	mgl::Buffer<T, TYPE>::Destroy();
 }
 
-template<typename T>
-void mcuda::gl::Buffer<T>::Resize(const size_t size)
+template<typename T, GLenum TYPE>
+void mcuda::gl::Buffer<T, TYPE>::Resize(const size_t size)
 {
 	const auto curCapacity = this->GetCapacity();
-	mgl::Buffer<T>::Resize(size);
+	mgl::Buffer<T, TYPE>::Resize(size);
 
 	if (this->GetCapacity() != curCapacity)
 		CudaRegister();
 }
 
-template<typename T>
-void mcuda::gl::Buffer<T>::Resize(const std::vector<T>& host)
+template<typename T, GLenum TYPE>
+void mcuda::gl::Buffer<T, TYPE>::Resize(const std::vector<T>& host)
 {
 	const auto curCapacity = this->GetCapacity();
-	mgl::Buffer<T>::Resize(host);
+	mgl::Buffer<T, TYPE>::Resize(host);
 
 	if (this->GetCapacity() != curCapacity)
 		CudaRegister();
 }
 
-template<typename T>
-std::optional<mcuda::gl::DeviceResource<T>> mcuda::gl::Buffer<T>::GetDeviceResource()
+template<typename T, GLenum TYPE>
+std::optional<mcuda::gl::DeviceResource<T>> mcuda::gl::Buffer<T, TYPE>::GetDeviceResource()
 {
 	if (m_pCuRes->bMapping) return {};
 

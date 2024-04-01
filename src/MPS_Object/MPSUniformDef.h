@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include "../MCUDA_Lib/MCUDAHelper.h"
 
 namespace mps
 {
@@ -13,7 +13,7 @@ namespace mps
 	};
 	struct LightParam
 	{
-		glm::fvec3 pos;
+		glm::vec3 pos;
 		glm::fvec4 color;
 	};
 }

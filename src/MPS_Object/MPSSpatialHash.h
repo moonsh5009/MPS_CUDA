@@ -9,7 +9,7 @@ namespace mps
 	struct SpatialHashParam
 	{
 		size_t objSize;
-		float ceilSize;
+		REAL ceilSize;
 		glm::uvec3 hashSize;
 	};
 	class __MY_EXT_CLASS__ SpatialHash : public VirtualTree<SpatialHashParam>
@@ -19,11 +19,11 @@ namespace mps
 
 	public:
 		void SetObjectSize(const size_t size);
-		void SetCeilSize(const float size);
+		void SetCeilSize(const REAL size);
 		void SetHashSize(const glm::uvec3& size);
 
 		constexpr uint32_t GetObjectSize() const { return GetHost().objSize; };
-		constexpr float GetCeilSize() const { return GetHost().ceilSize; };
+		constexpr REAL GetCeilSize() const { return GetHost().ceilSize; };
 		constexpr glm::uvec3 GetHashSize() const { return GetHost().hashSize; };
 
 		constexpr const mcuda::gl::Buffer<uint32_t>& GetHashKeys() const { return m_keys; };
@@ -33,8 +33,8 @@ namespace mps
 
 	public:
 		void InitHashID();
-		void InitHash(const mcuda::gl::Buffer<glm::fvec3>& dArPos);
-		void ColorTest(const mcuda::gl::Buffer<glm::fvec3>& dArPos, const mcuda::gl::Buffer<glm::fvec4>& dArColor);
+		void InitHash(const mcuda::gl::Buffer<REAL3>& dArPos);
+		void ColorTest(const mcuda::gl::Buffer<REAL3>& dArPos, const mcuda::gl::Buffer<REAL4>& dArColor);
 
 	private:
 		mcuda::gl::Buffer<uint32_t> m_keys;

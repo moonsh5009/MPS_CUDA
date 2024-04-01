@@ -4,7 +4,7 @@
 namespace
 {
 	constexpr auto uObjectSizeByteLength = sizeof(size_t);
-	constexpr auto uCeilSizeByteLength = sizeof(float);
+	constexpr auto uCeilSizeByteLength = sizeof(REAL);
 	constexpr auto uHashSizeByteLength = sizeof(glm::uvec3);
 
 	constexpr auto uObjectSizeOffset = 0ull;
@@ -26,7 +26,7 @@ void mps::SpatialHash::SetObjectSize(const size_t size)
 	m_IDs.Resize(size);
 }
 
-void mps::SpatialHash::SetCeilSize(const float size)
+void mps::SpatialHash::SetCeilSize(const REAL size)
 {
 	GetHost().ceilSize = size;
 	GetDevice().CopyFromHost(GetHost(), uCeilSizeOffset, uCeilSizeOffset, uCeilSizeByteLength);
@@ -46,10 +46,10 @@ void mps::SpatialHash::InitHashID()
 {
 }
 
-void mps::SpatialHash::InitHash(const mcuda::gl::Buffer<glm::fvec3>& dArPos)
+void mps::SpatialHash::InitHash(const mcuda::gl::Buffer<REAL3>& dArPos)
 {
 }
 
-void mps::SpatialHash::ColorTest(const mcuda::gl::Buffer<glm::fvec3>& dArPos, const mcuda::gl::Buffer<glm::fvec4>& dArColor)
+void mps::SpatialHash::ColorTest(const mcuda::gl::Buffer<REAL3>& dArPos, const mcuda::gl::Buffer<REAL4>& dArColor)
 {
 }

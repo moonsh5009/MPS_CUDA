@@ -27,23 +27,23 @@ void mps::SPHObject::Resize(const size_t size)
 
 std::shared_ptr<mps::ObjectResource> mps::SPHObject::GetObjectResource()
 {
-	/*auto pSuperParam = std::dynamic_pointer_cast<ParticleResource>(ParticleObject::GetObjectResource());
-	if (!pSuperParam) return {};
-
-	return std::make_shared<SPHResource>(
-		pSuperParam,
-		m_mass.begin(),
-		m_density.begin(),
-		m_pressure.begin(),
-		m_factor.begin());*/
-
 	auto pSuperParam = std::dynamic_pointer_cast<ParticleResource>(ParticleObject::GetObjectResource());
 	if (!pSuperParam) return {};
 
 	return std::make_shared<SPHResource>(
 		pSuperParam,
+		thrust::raw_pointer_cast(m_mass.data()),
+		thrust::raw_pointer_cast(m_density.data()),
+		thrust::raw_pointer_cast(m_pressure.data()),
+		thrust::raw_pointer_cast(m_factor.data()));
+
+	/*auto pSuperParam = std::dynamic_pointer_cast<ParticleResource>(ParticleObject::GetObjectResource());
+	if (!pSuperParam) return {};
+
+	return std::make_shared<SPHResource>(
+		pSuperParam,
 		nullptr,
 		nullptr,
 		nullptr,
-		nullptr);
+		nullptr);*/
 }

@@ -4,9 +4,9 @@
 namespace
 {
 	constexpr auto uNumParticlesByteLength = sizeof(size_t);
-	constexpr auto uRadiusByteLength = sizeof(float);
-	constexpr auto uMassByteLength = sizeof(float);
-	constexpr auto uDensityByteLength = sizeof(float);
+	constexpr auto uRadiusByteLength = sizeof(REAL);
+	constexpr auto uMassByteLength = sizeof(REAL);
+	constexpr auto uDensityByteLength = sizeof(REAL);
 	constexpr auto uColorByteLength = sizeof(glm::fvec4);
 
 	constexpr auto uNumParticlesOffset = 0ull;
@@ -27,19 +27,19 @@ void mps::SPHMaterial::SetParticleSize(const uint32_t size)
 	GetDevice().CopyFromHost(GetHost(), uNumParticlesOffset, uNumParticlesOffset, uNumParticlesByteLength);
 }
 
-void mps::SPHMaterial::SetRadius(const float radius)
+void mps::SPHMaterial::SetRadius(const REAL radius)
 {
 	GetHost().radius = radius;
 	GetDevice().CopyFromHost(GetHost(), uRadiusOffset, uRadiusOffset, uRadiusByteLength);
 }
 
-void mps::SPHMaterial::SetMass(const float mass)
+void mps::SPHMaterial::SetMass(const REAL mass)
 {
 	GetHost().mass = mass;
 	GetDevice().CopyFromHost(GetHost(), uMassOffset, uMassOffset, uMassByteLength);
 }
 
-void mps::SPHMaterial::SetDensity(const float density)
+void mps::SPHMaterial::SetDensity(const REAL density)
 {
 	GetHost().density = density;
 	GetDevice().CopyFromHost(GetHost(), uDensityOffset, uDensityOffset, uDensityByteLength);

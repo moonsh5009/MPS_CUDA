@@ -8,7 +8,7 @@
 
 namespace mgl
 {
-	template<typename T>
+	template<typename T, GLenum TYPE = GL_DYNAMIC_DRAW>
 	class Buffer
 	{
 	public:

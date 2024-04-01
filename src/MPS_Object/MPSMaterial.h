@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MPSDef.h"
 #include "../MCUDA_Lib/MCUDAGLBuffer.h"
 
 namespace mps

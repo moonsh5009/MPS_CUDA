@@ -9,9 +9,9 @@ namespace mps
 {
 	/*struct SPHParam : public ParticleParam
 	{
-		thrust::device_vector<float>::iterator density;
-		thrust::device_vector<float>::iterator pressure;
-		thrust::device_vector<float>::iterator factor;
+		thrust::device_vector<REAL>::iterator density;
+		thrust::device_vector<REAL>::iterator pressure;
+		thrust::device_vector<REAL>::iterator factor;
 	};
 
 	struct SPHResource : public ParticleResource
@@ -19,7 +19,7 @@ namespace mps
 	public:
 		SPHResource() = delete;
 		SPHResource(std::shared_ptr<ParticleResource> pSuper,
-			thrust::device_vector<float>::iterator density, thrust::device_vector<float>::iterator pressure, thrust::device_vector<float>::iterator factor) :
+			thrust::device_vector<REAL>::iterator density, thrust::device_vector<REAL>::iterator pressure, thrust::device_vector<REAL>::iterator factor) :
 			ParticleResource{ std::move(*pSuper) },
 			m_density{ density }, m_pressure{ pressure }, m_factor{ factor }
 		{
@@ -48,24 +48,24 @@ namespace mps
 		}
 
 	private:
-		thrust::device_vector<float>::iterator m_density;
-		thrust::device_vector<float>::iterator m_pressure;
-		thrust::device_vector<float>::iterator m_factor;
+		thrust::device_vector<REAL>::iterator m_density;
+		thrust::device_vector<REAL>::iterator m_pressure;
+		thrust::device_vector<REAL>::iterator m_factor;
 	};*/
 
 	struct SPHParam : public ParticleParam
 	{
-		float* mass;
-		float* density;
-		float* pressure;
-		float* factor;
+		REAL* mass;
+		REAL* density;
+		REAL* pressure;
+		REAL* factor;
 	};
 
 	struct SPHResource : public ParticleResource
 	{
 	public:
 		SPHResource() = delete;
-		SPHResource(std::shared_ptr<ParticleResource> pSuper, float* mass, float* density, float* pressure, float* factor) :
+		SPHResource(std::shared_ptr<ParticleResource> pSuper, REAL* mass, REAL* density, REAL* pressure, REAL* factor) :
 			ParticleResource{ std::move(*pSuper) },
 			m_mass{ mass }, m_density{ density }, m_pressure{ pressure }, m_factor{ factor }
 		{
@@ -95,10 +95,10 @@ namespace mps
 		}
 
 	private:
-		float* m_mass;
-		float* m_density;
-		float* m_pressure;
-		float* m_factor;
+		REAL* m_mass;
+		REAL* m_density;
+		REAL* m_pressure;
+		REAL* m_factor;
 	};
 
 	class __MY_EXT_CLASS__ SPHObject : public ParticleObject
@@ -118,10 +118,10 @@ namespace mps
 		virtual std::shared_ptr<ObjectResource> GetObjectResource() override;
 
 	public:
-		thrust::device_vector<float> m_mass;
-		thrust::device_vector<float> m_density;
-		thrust::device_vector<float> m_pressure;
-		thrust::device_vector<float> m_factor;
+		thrust::device_vector<REAL> m_mass;
+		thrust::device_vector<REAL> m_density;
+		thrust::device_vector<REAL> m_pressure;
+		thrust::device_vector<REAL> m_factor;
 	};
 }
 

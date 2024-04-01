@@ -8,8 +8,8 @@ namespace mps
 {
 	struct ParticleParam : public ObjectParam
 	{
-		glm::dvec3* pos;
-		float* radius;
+		REAL3* pos;
+		REAL* radius;
 		glm::fvec4* color;
 	};
 
@@ -18,7 +18,7 @@ namespace mps
 	public:
 		ParticleResource() = delete;
 		ParticleResource(std::shared_ptr<ObjectResource> pSuper,
-			mcuda::gl::DeviceResource<glm::dvec3>&& pos, mcuda::gl::DeviceResource<float>&& radius, mcuda::gl::DeviceResource<glm::fvec4>&& color) :
+			mcuda::gl::DeviceResource<REAL3>&& pos, mcuda::gl::DeviceResource<REAL>&& radius, mcuda::gl::DeviceResource<glm::fvec4>&& color) :
 			ObjectResource{ std::move(*pSuper) }, m_pos{ std::move(pos) }, m_radius{ std::move(radius) }, m_color{ std::move(color) }
 		{
 		}
@@ -46,8 +46,8 @@ namespace mps
 		}
 
 	private:
-		mcuda::gl::DeviceResource<glm::dvec3> m_pos;
-		mcuda::gl::DeviceResource<float> m_radius;
+		mcuda::gl::DeviceResource<REAL3> m_pos;
+		mcuda::gl::DeviceResource<REAL> m_radius;
 		mcuda::gl::DeviceResource<glm::fvec4> m_color;
 	};
 
@@ -68,8 +68,8 @@ namespace mps
 		virtual std::shared_ptr<ObjectResource> GetObjectResource() override;
 
 	public:
-		mcuda::gl::Buffer<glm::dvec3> m_pos;
-		mcuda::gl::Buffer<float> m_radius;
+		mcuda::gl::Buffer<REAL3> m_pos;
+		mcuda::gl::Buffer<REAL> m_radius;
 		mcuda::gl::Buffer<glm::fvec4> m_color;
 	};
 }

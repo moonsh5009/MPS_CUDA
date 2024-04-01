@@ -46,18 +46,18 @@ namespace mcuda
 			std::weak_ptr<CudaGLResource> m_pCuRes;
 		};
 
-		template<typename T>
-		class Buffer : public mgl::Buffer<T>
+		template<typename T, GLenum TYPE = GL_DYNAMIC_DRAW>
+		class Buffer : public mgl::Buffer<T, TYPE>
 		{
 		public:
-			Buffer() : mgl::Buffer<T>{}, m_pCuRes{ std::make_shared<CudaGLResource>() }
+			Buffer() : mgl::Buffer<T, TYPE>{}, m_pCuRes{ std::make_shared<CudaGLResource>() }
 			{
 			}
-			Buffer(const size_t size) : mgl::Buffer<T>{ size }, m_pCuRes{ std::make_shared<CudaGLResource>() }
+			Buffer(const size_t size) : mgl::Buffer<T, TYPE>{ size }, m_pCuRes{ std::make_shared<CudaGLResource>() }
 			{
 				CudaRegister();
 			}
-			Buffer(const std::vector<T>& host) : mgl::Buffer<T>{ host }, m_pCuRes{ std::make_shared<CudaGLResource>() }
+			Buffer(const std::vector<T>& host) : mgl::Buffer<T, TYPE>{ host }, m_pCuRes{ std::make_shared<CudaGLResource>() }
 			{
 				CudaRegister();
 			}
