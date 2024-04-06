@@ -18,11 +18,14 @@
     <ClInclude Include="MPSMaterial.h" />
     <ClInclude Include="MPSModel.h" />
     <ClInclude Include="MPSObject.h" />
+    <ClInclude Include="MPSObjectParam.h" />
     <ClInclude Include="MPSParticleObject.h" />
+    <ClInclude Include="MPSParticleParam.h" />
     <ClInclude Include="MPSSpatialHash.h" />
     <ClInclude Include="MPSSPHMaterial.h" />
     <ClInclude Include="MPSSPHModel.h" />
     <ClInclude Include="MPSSPHObject.h" />
+    <ClInclude Include="MPSSPHParam.h" />
     <ClInclude Include="MPSTree.h" />
     <ClInclude Include="MPSUniformDef.h" />
     <ClInclude Include="stdafx.h" />
@@ -30,7 +33,6 @@
   <ItemGroup>
     <ClCompile Include="MPSGBArchiver.cpp" />
     <ClCompile Include="MPSModel.cpp" />
-    <ClCompile Include="MPSObject.cpp" />
     <ClCompile Include="MPSParticleObject.cpp" />
     <ClCompile Include="MPSSpatialHash.cpp" />
     <ClCompile Include="MPSSPHMaterial.cpp" />
@@ -38,6 +40,7 @@
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="MPSObject.cu" />
     <CudaCompile Include="MPSSPHObject.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

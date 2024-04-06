@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MCUDA_Lib/MCUDAHelper.h"
+#include "MPSDef.h"
 
 namespace mps
 {
@@ -15,5 +15,9 @@ namespace mps
 	{
 		glm::vec3 pos;
 		glm::fvec4 color;
+	};
+	struct PhysicsParam
+	{
+		REAL3 gravity;
 	};
 }

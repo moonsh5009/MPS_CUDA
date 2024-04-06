@@ -52,7 +52,7 @@ std::optional<mcuda::gl::DeviceResource<T>> mcuda::gl::Buffer<T, TYPE>::GetDevic
 {
 	if (m_pCuRes->bMapping) return {};
 
-	if (cudaGraphicsMapResources(1, &m_pCuRes->resource, 0) != cudaSuccess)
+	if (const auto error = cudaGraphicsMapResources(1, &m_pCuRes->resource, 0); error != cudaSuccess)
 	{
 		assert(false);
 		return {};

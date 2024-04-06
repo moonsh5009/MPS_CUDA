@@ -12,8 +12,8 @@
 #define new DEBUG_NEW
 #endif
 
-CAppDlg::CAppDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_APP_DIALOG, pParent)
+CAppDlg::CAppDlg(CWnd* pParent /*=nullptr*/) :
+	CDialogEx(IDD_APP_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -115,6 +115,7 @@ void CAppDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
 
+	m_pMPSCore->Update();
 	m_pMPSCore->Draw();
 
 	SwapBuffers(m_pDC->GetSafeHdc());

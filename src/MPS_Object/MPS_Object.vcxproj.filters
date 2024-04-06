@@ -66,9 +66,6 @@
     <ClCompile Include="MPSSPHModel.cpp">
       <Filter>Model\SPH</Filter>
     </ClCompile>
-    <ClCompile Include="MPSObject.cpp">
-      <Filter>Object\Base</Filter>
-    </ClCompile>
     <ClCompile Include="MPSParticleObject.cpp">
       <Filter>Object\Particle</Filter>
     </ClCompile>
@@ -117,10 +114,22 @@
     <ClInclude Include="MPSSPHObject.h">
       <Filter>Object\SPH</Filter>
     </ClInclude>
+    <ClInclude Include="MPSObjectParam.h">
+      <Filter>Object\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSParticleParam.h">
+      <Filter>Object\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHParam.h">
+      <Filter>Object\SPH</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="MPSSPHObject.cu">
       <Filter>Object\SPH</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSObject.cu">
+      <Filter>Object\Base</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

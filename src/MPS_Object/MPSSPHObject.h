@@ -1,106 +1,12 @@
 #pragma once
 
+#include "MPSSPHParam.h"
 #include "MPSParticleObject.h"
-#include <thrust/device_vector.h>
 
 #include "HeaderPre.h"
 
 namespace mps
 {
-	/*struct SPHParam : public ParticleParam
-	{
-		thrust::device_vector<REAL>::iterator density;
-		thrust::device_vector<REAL>::iterator pressure;
-		thrust::device_vector<REAL>::iterator factor;
-	};
-
-	struct SPHResource : public ParticleResource
-	{
-	public:
-		SPHResource() = delete;
-		SPHResource(std::shared_ptr<ParticleResource> pSuper,
-			thrust::device_vector<REAL>::iterator density, thrust::device_vector<REAL>::iterator pressure, thrust::device_vector<REAL>::iterator factor) :
-			ParticleResource{ std::move(*pSuper) },
-			m_density{ density }, m_pressure{ pressure }, m_factor{ factor }
-		{
-		}
-		~SPHResource() = default;
-		SPHResource(const SPHResource&) = delete;
-		SPHResource(SPHResource&&) = default;
-		SPHResource& operator=(const SPHResource&) = delete;
-		SPHResource& operator=(SPHResource&&) = default;
-
-		virtual std::shared_ptr<ObjectParam> GetParam() override
-		{
-			std::shared_ptr<SPHParam> pParam = std::make_shared<SPHParam>();
-			SetParam(pParam);
-			return pParam;
-		}
-
-	protected:
-		void SetParam(std::shared_ptr<SPHParam> pParam)
-		{
-			ParticleResource::SetParam(std::static_pointer_cast<ParticleParam>(pParam));
-
-			pParam->density = m_density;
-			pParam->pressure = m_pressure;
-			pParam->factor = m_factor;
-		}
-
-	private:
-		thrust::device_vector<REAL>::iterator m_density;
-		thrust::device_vector<REAL>::iterator m_pressure;
-		thrust::device_vector<REAL>::iterator m_factor;
-	};*/
-
-	struct SPHParam : public ParticleParam
-	{
-		REAL* mass;
-		REAL* density;
-		REAL* pressure;
-		REAL* factor;
-	};
-
-	struct SPHResource : public ParticleResource
-	{
-	public:
-		SPHResource() = delete;
-		SPHResource(std::shared_ptr<ParticleResource> pSuper, REAL* mass, REAL* density, REAL* pressure, REAL* factor) :
-			ParticleResource{ std::move(*pSuper) },
-			m_mass{ mass }, m_density{ density }, m_pressure{ pressure }, m_factor{ factor }
-		{
-		}
-		~SPHResource() = default;
-		SPHResource(const SPHResource&) = delete;
-		SPHResource(SPHResource&&) = default;
-		SPHResource& operator=(const SPHResource&) = delete;
-		SPHResource& operator=(SPHResource&&) = default;
-
-		virtual std::shared_ptr<ObjectParam> GetParam() override
-		{
-			std::shared_ptr<SPHParam> pParam = std::make_shared<SPHParam>();
-			SetParam(pParam);
-			return pParam;
-		}
-
-	protected:
-		void SetParam(std::shared_ptr<SPHParam> pParam)
-		{
-			ParticleResource::SetParam(std::static_pointer_cast<ParticleParam>(pParam));
-
-			pParam->mass = m_mass;
-			pParam->density = m_density;
-			pParam->pressure = m_pressure;
-			pParam->factor = m_factor;
-		}
-
-	private:
-		REAL* m_mass;
-		REAL* m_density;
-		REAL* m_pressure;
-		REAL* m_factor;
-	};
-
 	class __MY_EXT_CLASS__ SPHObject : public ParticleObject
 	{
 	public:
@@ -115,10 +21,10 @@ namespace mps
 		virtual void Clear() override;
 		virtual void Resize(const size_t size) override;
 
-		virtual std::shared_ptr<ObjectResource> GetObjectResource() override;
+	protected:
+		virtual std::shared_ptr<ObjectResource> GenerateDeviceResource();
 
 	public:
-		thrust::device_vector<REAL> m_mass;
 		thrust::device_vector<REAL> m_density;
 		thrust::device_vector<REAL> m_pressure;
 		thrust::device_vector<REAL> m_factor;

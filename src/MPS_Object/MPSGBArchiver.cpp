@@ -21,3 +21,8 @@ void mps::GBArchiver::UpdateLightPos(const glm::vec3& lightPos)
 {
 	m_lightBuffer.CopyFromHost(lightPos);
 }
+
+void mps::GBArchiver::UpdateGravity(const REAL3& gravity)
+{
+	m_physicsBuffer.CopyFromHost(gravity);
+}

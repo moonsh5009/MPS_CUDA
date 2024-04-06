@@ -20,14 +20,14 @@ namespace mcuda
 		{
 		public:
 			DeviceResource() = delete;
-			DeviceResource(T* ptr, size_t size, const std::shared_ptr<CudaGLResource> pCuRes) :
+			DeviceResource(T* ptr, size_t size, std::shared_ptr<CudaGLResource> pCuRes) :
 				ptr{ ptr }, size{ size }, m_pCuRes{ pCuRes }
 			{
 			}
 			~DeviceResource()
 			{
 				const auto pCuRes = m_pCuRes.lock();
-				if (!pCuRes) { assert(false); return; }
+				if (!pCuRes) return;
 
 				if (pCuRes->bMapping == false) { assert(false); return; }
 				if (cudaGraphicsUnmapResources(1, &pCuRes->resource, 0) != cudaSuccess) { assert(false); return; }
