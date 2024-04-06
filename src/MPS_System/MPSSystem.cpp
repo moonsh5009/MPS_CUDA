@@ -24,6 +24,8 @@ void mps::System::Initalize()
         m_pGBArchiver = std::make_shared<mps::GBArchiver>();
         m_pGBArchiver->Initalize();
         m_pGBArchiver->UpdateLight(mps::LightParam{ glm::dvec3{ 10.0, 10.0, 10.0 }, glm::fvec4{ 1.0f, 1.0f, 1.0f, 1.0f } });
+        m_pGBArchiver->m_physicsParam.gravity = REAL3{ 0.0, -9.8, 0.0 };
+        m_pGBArchiver->m_physicsParam.dt = 0.01;
     }
     {
         m_pRenderManager = std::make_shared<mps::rndr::RenderManager>();
@@ -100,8 +102,21 @@ void mps::System::OnResize(int width, int height)
     m_pCamera->GetProjection()->SetAspectRatio(width, height);
 }
 
+#include "../MPS_Computer/AdvectUtil.h"
 void mps::System::OnUpdate()
 {
+    auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
+
+    const auto objRes = pSPHObject->GetDeviceResource<mps::ObjectResource>();
+    const auto pObjParam = objRes->GetObjectParam().lock();
+    if (!pObjParam) return;
+
+    const auto& physParam = m_pGBArchiver->m_physicsParam;
+
+    mps::kernel::InitForce(*pObjParam);
+    mps::kernel::ApplyGravity(physParam, *pObjParam);
+    mps::kernel::UpdateVelocity(physParam, *pObjParam);
+    mps::kernel::UpdatePosition(physParam, *pObjParam);
 }
 
 void mps::System::OnDraw()
@@ -134,9 +149,6 @@ void mps::System::ResizeParticle(size_t size)
 
     std::vector<REAL3> h_pos;
     std::vector<REAL> h_radius;
-    //std::vector<REAL> mass;
-    //std::vector<REAL3> vel;
-    //std::vector<REAL3> force;
 
     h_pos.reserve(size * size * size);
     h_radius.reserve(size * size * size);
@@ -155,9 +167,6 @@ void mps::System::ResizeParticle(size_t size)
                 };
                 h_pos.emplace_back(pos);
                 h_radius.emplace_back(radius);
-                //pSPHObject->m_mass.GetHost().emplace_back(mass);
-                //pSPHObject->m_vel.GetHost().emplace_back(0.0f, 0.0f, 0.0f);
-                //pSPHObject->m_force.GetHost().emplace_back(0.0f, 0.0f, 0.0f);
             }
         }
     }
@@ -165,6 +174,7 @@ void mps::System::ResizeParticle(size_t size)
     pSPHObject->Resize(h_radius.size());
     pSPHObject->m_pos.CopyFromHost(h_pos);
     pSPHObject->m_radius.CopyFromHost(h_radius);
+    mps::kernel::InitMass(pSPHObject);
 
     pSpatialHash->SetObjectSize(pSPHObject->GetSize());
     pSpatialHash->SetCeilSize(radius * 4);

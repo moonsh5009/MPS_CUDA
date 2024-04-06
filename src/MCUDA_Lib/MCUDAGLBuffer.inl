@@ -48,7 +48,7 @@ void mcuda::gl::Buffer<T, TYPE>::Resize(const std::vector<T>& host)
 }
 
 template<typename T, GLenum TYPE>
-std::optional<mcuda::gl::DeviceResource<T>> mcuda::gl::Buffer<T, TYPE>::GetDeviceResource()
+std::optional<mcuda::gl::DeviceResource<T>> mcuda::gl::Buffer<T, TYPE>::GetDeviceResource() const
 {
 	if (m_pCuRes->bMapping) return {};
 

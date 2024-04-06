@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include=".generate">
+      <UniqueIdentifier>{24a28600-6810-4b6c-a222-232e1e203b4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Advect">
+      <UniqueIdentifier>{5242ad64-0ac1-448f-b72d-9b53a6b66402}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HeaderPost.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="HeaderPre.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="AdvectUtil.h">
+      <Filter>Advect</Filter>
+    </ClInclude>
+    <ClInclude Include="AdvectUtil.cuh">
+      <Filter>Advect</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>.generate</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="AdvectUtil.cu">
+      <Filter>Advect</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>

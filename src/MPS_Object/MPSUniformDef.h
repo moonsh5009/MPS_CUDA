@@ -18,6 +18,7 @@ namespace mps
 	};
 	struct PhysicsParam
 	{
+		REAL dt;
 		REAL3 gravity;
 	};
 }

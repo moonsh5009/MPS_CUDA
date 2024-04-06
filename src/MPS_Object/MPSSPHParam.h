@@ -7,7 +7,8 @@ namespace mps
 	class SPHParam : public ParticleParam
 	{
 	public:
-		MCUDA_HOST_DEVICE_FUNC SPHParam() : ParticleParam{} {};
+		MCUDA_HOST_DEVICE_FUNC SPHParam() : ParticleParam{}, m_pDensity{ nullptr }, m_pPressure{ nullptr }, m_pFactor{ nullptr } {}
+		MCUDA_HOST_DEVICE_FUNC ~SPHParam() {};
 
 	public:
 		MCUDA_DEVICE_FUNC REAL& Density(uint32_t idx) { return m_pDensity[idx]; }

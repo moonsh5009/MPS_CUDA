@@ -8,23 +8,18 @@ namespace mps
 	class ObjectParam
 	{
 	public:
-		MCUDA_HOST_DEVICE_FUNC ObjectParam() : m_size{ 0ull }, m_pPos{ nullptr }, m_pColor{ nullptr } {}
+		MCUDA_HOST_DEVICE_FUNC ObjectParam() : m_size{ 0ull }, 
+			m_pColor{ nullptr }, m_pPos{ nullptr }, m_pMass{ nullptr }, m_pVelocity{ nullptr }, m_pForce{ nullptr } {}
 		MCUDA_HOST_DEVICE_FUNC ~ObjectParam() {}
 
 	public:
 		MCUDA_HOST_DEVICE_FUNC size_t GetSize() const { return m_size; }
 
-		MCUDA_DEVICE_FUNC glm::fvec4& Color(uint32_t idx) { return m_pColor[idx]; }
-		MCUDA_DEVICE_FUNC REAL3& Pos(uint32_t idx) { return m_pPos[idx]; }
-		MCUDA_DEVICE_FUNC REAL& Mass(uint32_t idx) { return m_pMass[idx]; }
-		MCUDA_DEVICE_FUNC REAL3& Velocity(uint32_t idx) { return m_pVelocity[idx]; }
-		MCUDA_DEVICE_FUNC REAL3& Force(uint32_t idx) { return m_pForce[idx]; }
-
-		MCUDA_DEVICE_FUNC const glm::fvec4& Color(uint32_t idx) const { return m_pColor[idx]; }
-		MCUDA_DEVICE_FUNC const REAL3& Pos(uint32_t idx) const { return m_pPos[idx]; }
-		MCUDA_DEVICE_FUNC const REAL& Mass(uint32_t idx) const { return m_pMass[idx]; }
-		MCUDA_DEVICE_FUNC const REAL3& Velocity(uint32_t idx) const { return m_pVelocity[idx]; }
-		MCUDA_DEVICE_FUNC const REAL3& Force(uint32_t idx) const { return m_pForce[idx]; }
+		MCUDA_DEVICE_FUNC glm::fvec4& Color(uint32_t idx) const { return m_pColor[idx]; }
+		MCUDA_DEVICE_FUNC REAL3& Position(uint32_t idx) const { return m_pPos[idx]; }
+		MCUDA_DEVICE_FUNC REAL& Mass(uint32_t idx) const { return m_pMass[idx]; }
+		MCUDA_DEVICE_FUNC REAL3& Velocity(uint32_t idx) const { return m_pVelocity[idx]; }
+		MCUDA_DEVICE_FUNC REAL3& Force(uint32_t idx) const { return m_pForce[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC void SetSize(size_t size) { m_size = size; }
@@ -46,9 +41,9 @@ namespace mps
 
 		glm::fvec4* m_pColor;
 		REAL3* m_pPos;
+		REAL* m_pMass;
 		REAL3* m_pVelocity;
 		REAL3* m_pForce;
-		REAL* m_pMass;
 	};
 
 	class ObjectResource
@@ -77,8 +72,8 @@ namespace mps
 				m_pParam = std::make_shared<ObjectParam>();
 
 			m_pParam->SetSize(m_size);
-			m_pParam->SetColorArray(m_color.ptr);
-			m_pParam->SetPosArray(m_pos.ptr);
+			m_pParam->SetColorArray(m_color.GetData());
+			m_pParam->SetPosArray(m_pos.GetData());
 			m_pParam->SetMassArray(m_mass);
 			m_pParam->SetVelocityArray(m_velocity);
 			m_pParam->SetForceArray(m_force);

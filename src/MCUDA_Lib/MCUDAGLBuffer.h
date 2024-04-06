@@ -21,7 +21,7 @@ namespace mcuda
 		public:
 			DeviceResource() = delete;
 			DeviceResource(T* ptr, size_t size, std::shared_ptr<CudaGLResource> pCuRes) :
-				ptr{ ptr }, size{ size }, m_pCuRes{ pCuRes }
+				m_ptr{ ptr }, m_size{ size }, m_pCuRes{ pCuRes }
 			{
 			}
 			~DeviceResource()
@@ -39,11 +39,13 @@ namespace mcuda
 			DeviceResource& operator=(DeviceResource&& other) = default;
 
 		public:
-			T* ptr;
-			size_t size;
+			T* GetData() const { return m_ptr; }
+			size_t GetSize() const { return m_size; }
 
 		private:
 			std::weak_ptr<CudaGLResource> m_pCuRes;
+			T* m_ptr;
+			size_t m_size;
 		};
 
 		template<typename T, GLenum TYPE = GL_DYNAMIC_DRAW>
@@ -96,7 +98,7 @@ namespace mcuda
 			virtual void Resize(const size_t size) override;
 			virtual void Resize(const std::vector<T>& host) override;
 
-			std::optional<DeviceResource<T>> GetDeviceResource();
+			std::optional<DeviceResource<T>> GetDeviceResource() const;
 
 		private:
 			std::shared_ptr<CudaGLResource> m_pCuRes;

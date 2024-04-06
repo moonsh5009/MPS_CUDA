@@ -27,12 +27,11 @@ namespace mps
 		void UpdateCamera(const mps::CameraParam& camera);
 		void UpdateLight(const mps::LightParam& light);
 		void UpdateLightPos(const glm::vec3& lightPos);
-		void UpdateGravity(const REAL3& gravity);
 
 	public:
 		mcuda::gl::Buffer<mps::CameraParam> m_cameraBuffer;
 		mcuda::gl::Buffer<mps::LightParam> m_lightBuffer;
-		mcuda::gl::Buffer<mps::PhysicsParam> m_physicsBuffer;
+		mps::PhysicsParam m_physicsParam;
 	};
 }
 

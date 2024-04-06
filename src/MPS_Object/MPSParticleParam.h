@@ -48,7 +48,7 @@ namespace mps
 				m_pParam = std::make_shared<ParticleParam>();
 
 			auto pParam = std::static_pointer_cast<ParticleParam>(m_pParam);
-			pParam->SetRadiusArray(m_radius.ptr);
+			pParam->SetRadiusArray(m_radius.GetData());
 			ObjectResource::SetParam();
 		}
 

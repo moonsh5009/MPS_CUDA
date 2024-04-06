@@ -28,6 +28,8 @@ namespace mps
 		{
 			std::shared_ptr<T> pResource = std::static_pointer_cast<T>(GenerateDeviceResource());
 			if (!pResource) return nullptr;
+
+			pResource->SetParam();
 			return std::const_pointer_cast<const T>(pResource);
 		}
 

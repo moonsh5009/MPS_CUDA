@@ -28,15 +28,15 @@ void mps::Object::Resize(const size_t size)
 
 std::shared_ptr<mps::ObjectResource> mps::Object::GenerateDeviceResource()
 {
-	auto posRes = m_pos.GetDeviceResource();
-	if (!posRes) return {};
+	auto optColorRes = m_color.GetDeviceResource();
+	if (!optColorRes) return {};
 
-	auto colorRes = m_color.GetDeviceResource();
-	if (!colorRes) return {};
+	auto optPosRes = m_pos.GetDeviceResource();
+	if (!optPosRes) return {};
 
 	return std::make_shared<ObjectResource>(m_size,
-		std::move(colorRes.value()),
-		std::move(posRes.value()),
+		std::move(optColorRes.value()),
+		std::move(optPosRes.value()),
 		thrust::raw_pointer_cast(m_mass.data()),
 		thrust::raw_pointer_cast(m_velocity.data()),
 		thrust::raw_pointer_cast(m_force.data()));

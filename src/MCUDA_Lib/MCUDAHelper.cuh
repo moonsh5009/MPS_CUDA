@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MCUDAHelper.h"
+#include <cuda/std/type_traits>
 #include <device_launch_parameters.h>
 #include <device_functions.h>
 #include <cuda.h>
@@ -12,7 +13,7 @@ namespace mcuda
 		template<typename T>
 		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC T AtomicMax(T* address, const T val)
 		{
-			if constexpr (std::is_same_v(T, double))
+			if constexpr (cuda::std::is_same_v<T, double>)
 			{
 				long long* address_as_ull = reinterpret_cast<long long*>(address);
 				auto old = *address_as_ull;
@@ -23,7 +24,7 @@ namespace mcuda
 				}
 				return __longlong_as_double(old);
 			}
-			else if constexpr (std::is_same_v(T, float))
+			else if constexpr (cuda::std::is_same_v<T, float>)
 			{
 				int* address_as_ull = reinterpret_cast<int*>(address);
 				auto old = *address_as_ull;
@@ -39,7 +40,7 @@ namespace mcuda
 		template<typename T>
 		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC T AtomicMin(T* address, const T val)
 		{
-			if constexpr (std::is_same_v(T, double))
+			if constexpr (cuda::std::is_same_v<T, double>)
 			{
 				long long* address_as_ull = reinterpret_cast<long long*>(address);
 				auto old = *address_as_ull;
@@ -50,7 +51,7 @@ namespace mcuda
 				}
 				return __longlong_as_double(old);
 			}
-			else if constexpr (std::is_same_v(T, float))
+			else if constexpr (cuda::std::is_same_v<T, float>)
 			{
 				int* address_as_ull = reinterpret_cast<int*>(address);
 				auto old = *address_as_ull;
@@ -63,17 +64,17 @@ namespace mcuda
 			}
 			return atomicMin(address, val);
 		}
-		template<typename T>
+		/*template<typename T>
 		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC T AtomicAdd(T* address, const T val)
 		{
-			if constexpr (std::is_same_v(T, double))
+			if constexpr (cuda::std::is_same_v<T, double>)
 			{
 				long long* address_as_ull = reinterpret_cast<long long*>(address);
 				auto old = *address_as_ull;
 				while (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)))) != assumed);
 				return __longlong_as_double(old);
 			}
-			else if constexpr (std::is_same_v(T, float))
+			else if constexpr (cuda::std::is_same_v<T, float>)
 			{
 				int* address_as_ull = reinterpret_cast<int*>(address);
 				auto old = *address_as_ull;
@@ -85,14 +86,14 @@ namespace mcuda
 		template<typename T>
 		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC T AtomicExch(T* address, const T val)
 		{
-			if constexpr (std::is_same_v(T, double))
+			if constexpr (cuda::std::is_same_v<T, double>)
 			{
 				long long* address_as_ull = reinterpret_cast<long long*>(address);
 				auto old = *address_as_ull;
-				while (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val))) != assumed);
+				while (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val))) != assumed); 
 				return __longlong_as_double(old);
 			}
-			else if constexpr (std::is_same_v(T, float))
+			else if constexpr (cuda::std::is_same_v<T, float>)
 			{
 				int* address_as_ull = reinterpret_cast<int*>(address);
 				auto old = *address_as_ull;
@@ -180,6 +181,6 @@ namespace mcuda
 						ixs[i] = id + 1u;
 				}
 			}
-		}
+		}*/
 	}
 }

@@ -24,8 +24,8 @@ std::shared_ptr<mps::ObjectResource> mps::ParticleObject::GenerateDeviceResource
 	auto pSuperParam = Object::GenerateDeviceResource();
 	if (!pSuperParam) return {};
 
-	auto radiusRes = m_radius.GetDeviceResource();
-	if (!radiusRes) return {};
+	auto optRadiusRes = m_radius.GetDeviceResource();
+	if (!optRadiusRes) return {};
 
-	return std::make_shared<ParticleResource>(pSuperParam, std::move(radiusRes.value()));
+	return std::make_shared<ParticleResource>(pSuperParam, std::move(optRadiusRes.value()));
 }
