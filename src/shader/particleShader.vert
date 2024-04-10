@@ -27,7 +27,7 @@ void main()
     vsOut.uv = inUV;
 	vsOut.pos = vec3(float(aParticlePos[gl_InstanceID * 3 + 0]), float(aParticlePos[gl_InstanceID * 3 + 1]), float(aParticlePos[gl_InstanceID * 3 + 2]));
 	vsOut.radius = float(aParticleRadius[gl_InstanceID]);
-	vsOut.color = vec4(0.3f, 0.8f, 0.8f, 1.0f);//aParticleColor[gl_InstanceID];
+	vsOut.color = aParticleColor[gl_InstanceID];
 	
 	vec4 viewPos = uCamera.viewMat * vec4(vsOut.pos.xy, -vsOut.pos.z, 1.0);
     vec4 lightPos = uCamera.viewMat * vec4(vec3(uLight.pos), 1.f);

@@ -20,25 +20,22 @@
 #	define MCUDA_HOST_DEVICE_FUNC	__host__ __device__
 #	define MCUDA_HOST_FUNC			__host__
 #	define MCUDA_DEVICE_FUNC		__device__
+#	define MCUDA_RESTRICT			__restrict__
 #else
 #	define MCUDA_INLINE_FUNC inline
 #	define MCUDA_HOST_DEVICE_FUNC
 #	define MCUDA_HOST_FUNC
 #	define MCUDA_DEVICE_FUNC
+#	define MCUDA_RESTRICT
 #endif
 
 #ifndef _DEBUG
 #define CUDA_CHECK(x)	(x)
 #else
-#define CUDA_CHECK(x)	do {\
+#define CUDA_CHECK(x)	{\
 		(x); \
 		cudaError_t e = cudaGetLastError(); \
-		if (e != cudaSuccess) { \
-			printf("cuda failure %s:%d: '%s'\n", \
-				__FILE__, __LINE__, cudaGetErrorString(e)); \
-			/*exit(1);*/ \
-		}\
-	} while(0)
+		if (e != cudaSuccess) assert(false); } //"cuda failure %s:%d: '%s'\n", __FILE__, __LINE__, cudaGetErrorString(e));
 #endif
 
 namespace mcuda

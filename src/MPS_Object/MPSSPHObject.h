@@ -27,7 +27,12 @@ namespace mps
 	public:
 		thrust::device_vector<REAL> m_density;
 		thrust::device_vector<REAL> m_pressure;
-		thrust::device_vector<REAL> m_factor;
+		thrust::device_vector<REAL> m_factorA;
+
+		thrust::device_vector<REAL> m_smallDensity;
+		thrust::device_vector<REAL> m_smallPressure;
+		thrust::device_vector<REAL3x3> m_surfaceTensor;
+		thrust::device_vector<REAL> m_colorField;
 	};
 }
 

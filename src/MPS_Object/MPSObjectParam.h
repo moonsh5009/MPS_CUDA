@@ -39,11 +39,11 @@ namespace mps
 	private:
 		size_t m_size;
 
-		glm::fvec4* m_pColor;
-		REAL3* m_pPos;
-		REAL* m_pMass;
-		REAL3* m_pVelocity;
-		REAL3* m_pForce;
+		glm::fvec4* MCUDA_RESTRICT m_pColor;
+		REAL3* MCUDA_RESTRICT m_pPos;
+		REAL* MCUDA_RESTRICT m_pMass;
+		REAL3* MCUDA_RESTRICT m_pVelocity;
+		REAL3* MCUDA_RESTRICT m_pForce;
 	};
 
 	class ObjectResource

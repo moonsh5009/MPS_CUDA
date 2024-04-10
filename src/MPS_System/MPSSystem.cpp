@@ -24,8 +24,11 @@ void mps::System::Initalize()
         m_pGBArchiver = std::make_shared<mps::GBArchiver>();
         m_pGBArchiver->Initalize();
         m_pGBArchiver->UpdateLight(mps::LightParam{ glm::dvec3{ 10.0, 10.0, 10.0 }, glm::fvec4{ 1.0f, 1.0f, 1.0f, 1.0f } });
-        m_pGBArchiver->m_physicsParam.gravity = REAL3{ 0.0, -9.8, 0.0 };
+        //m_pGBArchiver->m_physicsParam.gravity = { 0.0, -9.8, 0.0 };
+        m_pGBArchiver->m_physicsParam.gravity = REAL3{ 0.0 };
         m_pGBArchiver->m_physicsParam.dt = 0.01;
+        m_pGBArchiver->m_physicsParam.min = { -5.0, -5.0, -5.0 };
+        m_pGBArchiver->m_physicsParam.max = { 5.0, 5.0, 5.0 };
     }
     {
         m_pRenderManager = std::make_shared<mps::rndr::RenderManager>();
@@ -38,7 +41,7 @@ void mps::System::Initalize()
             std::make_unique<mps::SPHMaterial>(),
             std::make_unique<mps::SPHObject>(),
             std::make_unique<mps::SpatialHash>());
-        ResizeParticle(100);
+        ResizeParticle(5);
 
         m_pRenderManager->AddModel(m_pSPHModel);
     }
@@ -70,7 +73,7 @@ void mps::System::OnKeyDown(uint32_t key, uint32_t repCnt, mevent::Flag flag)
 {
     auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
     uint32_t sqNumParticles = static_cast<uint32_t>(powf(static_cast<float>(pSPHObject->GetSize()), 1.0f / 3.0f));
-    uint32_t offset = 50;
+    uint32_t offset = 5;
     switch (key)
     {
     case 219: // '[':
@@ -103,20 +106,38 @@ void mps::System::OnResize(int width, int height)
 }
 
 #include "../MPS_Computer/AdvectUtil.h"
+#include "../MPS_Computer/SPHUtil.h"
 void mps::System::OnUpdate()
 {
     auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
+    auto pSPHMaterial = static_cast<mps::SPHMaterial*>(m_pSPHModel->GetMaterial());
+    auto pSpatialHash = static_cast<mps::SpatialHash*>(m_pSPHModel->GetTree());
 
-    const auto objRes = pSPHObject->GetDeviceResource<mps::ObjectResource>();
-    const auto pObjParam = objRes->GetObjectParam().lock();
-    if (!pObjParam) return;
+    const auto sphRes = pSPHObject->GetDeviceResource<mps::SPHResource>();
+    const auto pSPHParam = sphRes->GetSPHParam().lock();
+    if (!pSPHParam) return;
 
+    const auto& sphMaterialParam = pSPHMaterial->GetParam();
+    const auto& hashParam = pSpatialHash->GetParam();
     const auto& physParam = m_pGBArchiver->m_physicsParam;
+    pSpatialHash->UpdateHash(*pSPHParam);
 
-    mps::kernel::InitForce(*pObjParam);
-    mps::kernel::ApplyGravity(physParam, *pObjParam);
-    mps::kernel::UpdateVelocity(physParam, *pObjParam);
-    mps::kernel::UpdatePosition(physParam, *pObjParam);
+    mps::kernel::sph::ComputeDensity(*pSPHParam, sphMaterialParam, hashParam);
+    mps::kernel::sph::ComputeDFSPHFactor(*pSPHParam, sphMaterialParam, hashParam);
+    mps::kernel::sph::DensityColorTest(*pSPHParam, sphMaterialParam);
+
+    mps::kernel::sph::ComputeDivergenceFree(physParam, *pSPHParam, sphMaterialParam, hashParam);
+
+    mps::kernel::ResetForce(*pSPHParam);
+    mps::kernel::sph::ApplySurfaceTension(physParam, *pSPHParam, sphMaterialParam, hashParam);
+    mps::kernel::sph::ComputeDensity(*pSPHParam, sphMaterialParam, hashParam);
+    mps::kernel::ApplyGravity(physParam, *pSPHParam);
+    mps::kernel::UpdateVelocity(physParam, *pSPHParam);
+
+    mps::kernel::sph::ComputePressureForce(physParam, *pSPHParam, sphMaterialParam, hashParam);
+
+    mps::kernel::BoundaryCollision(physParam, *pSPHParam);
+    mps::kernel::UpdatePosition(physParam, *pSPHParam);
 }
 
 void mps::System::OnDraw()
@@ -133,26 +154,39 @@ void mps::System::OnDraw()
 void mps::System::ResizeParticle(size_t size)
 {
     auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
+    auto pSPHMaterial = static_cast<mps::SPHMaterial*>(m_pSPHModel->GetMaterial());
     auto pSpatialHash = static_cast<mps::SpatialHash*>(m_pSPHModel->GetTree());
     if (pSPHObject->GetSize() == size * size * size)
         return;
 
-    std::cout << pSPHObject->GetSize() << " to ";
     MTimer::Start("ResizeParticle");
 
-    REAL radius = 0.1f;// pSPHObject->GetSize() == 0 ? 0.1f : pSPHObject->m_radius.GetHost()[0];
+    REAL radius = 0.1f;// pSPHObject->GetSize() == 0 ? 0.1f : pSPHObject->m_radius.GetParam()[0];
     REAL offset = 0.001f;
     REAL stride = radius + radius + offset;
     REAL l = stride * (size - 1) + radius + radius;
     REAL startPos = -l * 0.5f;
     REAL mass = 1.0f;
+    m_pGBArchiver->m_physicsParam.min =
+    {
+        startPos + radius - 1.5,
+        startPos + radius - 1.5,
+        startPos + radius - 1.5
+    };
+    m_pGBArchiver->m_physicsParam.max =
+    {
+        startPos + (size - 1) * stride + radius + 1.5,
+        startPos + (size - 1) * stride + radius + 1.5,
+        startPos + (size - 1) * stride + radius + 1.5
+    };
 
     std::vector<REAL3> h_pos;
     std::vector<REAL> h_radius;
+    std::vector<REAL3> h_vel(size * size * size, REAL3{ 0.0 });
+    std::vector<REAL> h_mass(size * size * size, pSPHMaterial->GetMass());
 
     h_pos.reserve(size * size * size);
     h_radius.reserve(size * size * size);
-
     for (int z = 0; z < size; z++)
     {
         for (int y = 0; y < size; y++)
@@ -174,12 +208,19 @@ void mps::System::ResizeParticle(size_t size)
     pSPHObject->Resize(h_radius.size());
     pSPHObject->m_pos.CopyFromHost(h_pos);
     pSPHObject->m_radius.CopyFromHost(h_radius);
-    mps::kernel::InitMass(pSPHObject);
+    pSPHObject->m_velocity = h_vel;
+    pSPHObject->m_mass = h_mass;
+
+    pSPHMaterial->SetRadius(radius * 4);
 
     pSpatialHash->SetObjectSize(pSPHObject->GetSize());
     pSpatialHash->SetCeilSize(radius * 4);
     pSpatialHash->SetHashSize({ 64, 64, 64 });
 
-    std::cout << pSPHObject->GetSize() << std::endl;
     MTimer::End("ResizeParticle");
+    {
+        std::stringstream ss;
+        ss << "Number Of Particle" << " : " << pSPHObject->GetSize() << std::endl;
+        OutputDebugStringA(ss.str().c_str());
+    }
 }

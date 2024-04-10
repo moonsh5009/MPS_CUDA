@@ -60,9 +60,6 @@
     <ClCompile Include="MPSModel.cpp">
       <Filter>Model\Base</Filter>
     </ClCompile>
-    <ClCompile Include="MPSSpatialHash.cpp">
-      <Filter>Tree\SpatialHash</Filter>
-    </ClCompile>
     <ClCompile Include="MPSSPHModel.cpp">
       <Filter>Model\SPH</Filter>
     </ClCompile>
@@ -123,6 +120,12 @@
     <ClInclude Include="MPSSPHParam.h">
       <Filter>Object\SPH</Filter>
     </ClInclude>
+    <ClInclude Include="MPSSpatialHash.cuh">
+      <Filter>Tree\SpatialHash</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSpatialHashParam.h">
+      <Filter>Tree\SpatialHash</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="MPSSPHObject.cu">
@@ -130,6 +133,9 @@
     </CudaCompile>
     <CudaCompile Include="MPSObject.cu">
       <Filter>Object\Base</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSSpatialHash.cu">
+      <Filter>Tree\SpatialHash</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

@@ -7,6 +7,9 @@
     <Filter Include="Advect">
       <UniqueIdentifier>{5242ad64-0ac1-448f-b72d-9b53a6b66402}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SPH">
+      <UniqueIdentifier>{0f4d3c0a-79f2-4ccd-81c9-151930972760}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HeaderPost.h">
@@ -24,6 +27,18 @@
     <ClInclude Include="AdvectUtil.cuh">
       <Filter>Advect</Filter>
     </ClInclude>
+    <ClInclude Include="SPHUtil.h">
+      <Filter>SPH</Filter>
+    </ClInclude>
+    <ClInclude Include="SPHUtil.cuh">
+      <Filter>SPH</Filter>
+    </ClInclude>
+    <ClInclude Include="SPHKernel.cuh">
+      <Filter>SPH</Filter>
+    </ClInclude>
+    <ClInclude Include="SPHSurfaceTension.cuh">
+      <Filter>SPH</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -33,6 +48,9 @@
   <ItemGroup>
     <CudaCompile Include="AdvectUtil.cu">
       <Filter>Advect</Filter>
+    </CudaCompile>
+    <CudaCompile Include="SPHUtil.cu">
+      <Filter>SPH</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

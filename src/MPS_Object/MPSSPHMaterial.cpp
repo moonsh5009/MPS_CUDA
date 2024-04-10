@@ -1,52 +1,38 @@
 #include "stdafx.h"
 #include "MPSSPHMaterial.h"
 
-namespace
-{
-	constexpr auto uNumParticlesByteLength = sizeof(size_t);
-	constexpr auto uRadiusByteLength = sizeof(REAL);
-	constexpr auto uMassByteLength = sizeof(REAL);
-	constexpr auto uDensityByteLength = sizeof(REAL);
-	constexpr auto uColorByteLength = sizeof(glm::fvec4);
-
-	constexpr auto uNumParticlesOffset = 0ull;
-	constexpr auto uRadiusOffset = uNumParticlesOffset + uNumParticlesByteLength;
-	constexpr auto uMassOffset = uRadiusOffset + uRadiusByteLength;
-	constexpr auto uDensityOffset = uMassOffset + uMassByteLength;
-	constexpr auto uColorOffset = uDensityOffset + uDensityByteLength;
-}
-
 mps::SPHMaterial::SPHMaterial() : mps::VirtualMaterial<mps::SPHMaterialParam>{}
 {
-	SetParam({ 0ull, 0.1f, 0.0f, 0.0f, glm::fvec4{ 0.3f, 0.8f, 0.2f, 1.0f } });
+	SetParam(1.0, 1000.0);
+	SetSurfaceTension(1.1);
+	SetPressureAtm(1.1);
+	SetColor({ 0.3f, 0.8f, 0.2f, 1.0f });
 }
 
-void mps::SPHMaterial::SetParticleSize(const uint32_t size)
+void mps::SPHMaterial::SetParam(const REAL radius, const REAL density)
 {
-	GetHost().numParticles = size;
-	GetDevice().CopyFromHost(GetHost(), uNumParticlesOffset, uNumParticlesOffset, uNumParticlesByteLength);
+	GetParam().radius = radius;
+	GetParam().volume = radius * radius * radius / 48.0 * 3.141592;
+	GetParam().density = density;
+	GetParam().mass = density * GetParam().volume;
 }
 
 void mps::SPHMaterial::SetRadius(const REAL radius)
 {
-	GetHost().radius = radius;
-	GetDevice().CopyFromHost(GetHost(), uRadiusOffset, uRadiusOffset, uRadiusByteLength);
+	SetParam(radius, GetDensity());
 }
 
-void mps::SPHMaterial::SetMass(const REAL mass)
+void mps::SPHMaterial::SetSurfaceTension(const REAL surfaceTension)
 {
-	GetHost().mass = mass;
-	GetDevice().CopyFromHost(GetHost(), uMassOffset, uMassOffset, uMassByteLength);
+	GetParam().surfaceTension = surfaceTension;
 }
 
-void mps::SPHMaterial::SetDensity(const REAL density)
+void mps::SPHMaterial::SetPressureAtm(const REAL pressureAtm)
 {
-	GetHost().density = density;
-	GetDevice().CopyFromHost(GetHost(), uDensityOffset, uDensityOffset, uDensityByteLength);
+	GetParam().pressureAtm = pressureAtm;
 }
 
 void mps::SPHMaterial::SetColor(const glm::fvec4& color)
 {
-	GetHost().color = color;
-	GetDevice().CopyFromHost(GetHost(), uColorOffset, uColorOffset, uColorByteLength);
+	GetParam().color = color;
 }

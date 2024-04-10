@@ -1,17 +1,13 @@
 #pragma once
 
 #include "MPSTree.h"
+#include "MPSSpatialHashParam.h"
 
 #include "HeaderPre.h"
 
 namespace mps
 {
-	struct SpatialHashParam
-	{
-		size_t objSize;
-		REAL ceilSize;
-		glm::uvec3 hashSize;
-	};
+	class ObjectParam;
 	class __MY_EXT_CLASS__ SpatialHash : public VirtualTree<SpatialHashParam>
 	{
 	public:
@@ -22,25 +18,23 @@ namespace mps
 		void SetCeilSize(const REAL size);
 		void SetHashSize(const glm::uvec3& size);
 
-		constexpr uint32_t GetObjectSize() const { return GetHost().objSize; };
-		constexpr REAL GetCeilSize() const { return GetHost().ceilSize; };
-		constexpr glm::uvec3 GetHashSize() const { return GetHost().hashSize; };
+		uint32_t GetObjectSize() const { return GetParam().GetObjectSize(); };
+		REAL GetCeilSize() const { return GetParam().GetCeilSize(); };
+		const glm::uvec3& GetHashSize() const { return GetParam().GetHashSize(); };
 
-		constexpr const mcuda::gl::Buffer<uint32_t>& GetHashKeys() const { return m_keys; };
-		constexpr const mcuda::gl::Buffer<uint32_t>& GetHashIDs() const { return m_IDs; };
-		constexpr const mcuda::gl::Buffer<uint32_t>& GetStartIdx() const { return m_iStarts; };
-		constexpr const mcuda::gl::Buffer<uint32_t>& GetEndIdx() const { return m_iEnds; };
+		const thrust::device_vector<uint32_t>& GetHashKeys() const { return m_key; };
+		const thrust::device_vector<uint32_t>& GetHashIDs() const { return m_ID; };
+		const thrust::device_vector<uint32_t>& GetStartIdx() const { return m_startIdx; };
+		const thrust::device_vector<uint32_t>& GetEndIdx() const { return m_endIdx; };
 
 	public:
-		void InitHashID();
-		void InitHash(const mcuda::gl::Buffer<REAL3>& dArPos);
-		void ColorTest(const mcuda::gl::Buffer<REAL3>& dArPos, const mcuda::gl::Buffer<REAL4>& dArColor);
+		void UpdateHash(const mps::ObjectParam& objParam);
 
 	private:
-		mcuda::gl::Buffer<uint32_t> m_keys;
-		mcuda::gl::Buffer<uint32_t> m_IDs;
-		mcuda::gl::Buffer<uint32_t> m_iStarts;
-		mcuda::gl::Buffer<uint32_t> m_iEnds;
+		thrust::device_vector<uint32_t> m_key;
+		thrust::device_vector<uint32_t> m_ID;
+		thrust::device_vector<uint32_t> m_startIdx;
+		thrust::device_vector<uint32_t> m_endIdx;
 	};
 };
 

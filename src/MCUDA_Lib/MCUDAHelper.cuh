@@ -1,106 +1,151 @@
 #pragma once
-
 #include "MCUDAHelper.h"
+
 #include <cuda/std/type_traits>
 #include <device_launch_parameters.h>
-#include <device_functions.h>
+#include <cuda_runtime_api.h>
 #include <cuda.h>
 
 namespace mcuda
 {
 	namespace util
 	{
+		template <typename T>
+		MCUDA_DEVICE_FUNC constexpr const T& clamp(const T& v, const T& lo, const T& hi)
+		{
+			return (v < lo) ? lo : (hi < v) ? hi : v;
+		}
+		template <typename T>
+		MCUDA_DEVICE_FUNC constexpr const T& min(const T& a, const T& b)
+		{
+			return (a < b) ? a : b;
+		}
+		template <typename T>
+		MCUDA_DEVICE_FUNC constexpr const T& max(const T& a, const T& b)
+		{
+			return (a < b) ? b : a;
+		}
+
 		template<typename T>
 		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC T AtomicMax(T* address, const T val)
 		{
 			if constexpr (cuda::std::is_same_v<T, double>)
 			{
-				long long* address_as_ull = reinterpret_cast<long long*>(address);
-				auto old = *address_as_ull;
+				unsigned long long* address_as_l = reinterpret_cast<unsigned long long*>(address);
+				auto old = *address_as_l;
 				while (val > __longlong_as_double(old))
 				{
-					if (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val))) == assumed)
+					if (const auto assumed = old; (old = atomicCAS(address_as_l, assumed, __double_as_longlong(val))) == assumed)
 						break;
 				}
 				return __longlong_as_double(old);
 			}
 			else if constexpr (cuda::std::is_same_v<T, float>)
 			{
-				int* address_as_ull = reinterpret_cast<int*>(address);
-				auto old = *address_as_ull;
+				int* address_as_l = reinterpret_cast<int*>(address);
+				auto old = *address_as_l;
 				while (val > __int_as_float(old))
 				{
-					if (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __float_as_int(val))) == assumed)
+					if (const auto assumed = old; (old = atomicCAS(address_as_l, assumed, __float_as_int(val))) == assumed)
 						break;
 				}
 				return __int_as_float(old);
 			}
-			return atomicMax(address, val);
+			else
+			{
+				return atomicMax(address, val);
+			}
 		}
 		template<typename T>
 		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC T AtomicMin(T* address, const T val)
 		{
 			if constexpr (cuda::std::is_same_v<T, double>)
 			{
-				long long* address_as_ull = reinterpret_cast<long long*>(address);
-				auto old = *address_as_ull;
+				unsigned long long* address_as_l = reinterpret_cast<unsigned long long*>(address);
+				auto old = *address_as_l;
 				while (val < __longlong_as_double(old))
 				{
-					if (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val))) == assumed)
+					if (const auto assumed = old; (old = atomicCAS(address_as_l, assumed, __double_as_longlong(val))) == assumed)
 						break;
 				}
 				return __longlong_as_double(old);
 			}
 			else if constexpr (cuda::std::is_same_v<T, float>)
 			{
-				int* address_as_ull = reinterpret_cast<int*>(address);
-				auto old = *address_as_ull;
+				int* address_as_l = reinterpret_cast<int*>(address);
+				auto old = *address_as_l;
 				while (val < __int_as_float(old))
 				{
-					if (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __float_as_int(val))) == assumed)
+					if (const auto assumed = old; (old = atomicCAS(address_as_l, assumed, __float_as_int(val))) == assumed)
 						break;
 				}
 				return __int_as_float(old);
 			}
-			return atomicMin(address, val);
+			else
+			{
+				return atomicMin(address, val);
+			}
 		}
-		/*template<typename T>
+		template<typename T>
 		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC T AtomicAdd(T* address, const T val)
 		{
 			if constexpr (cuda::std::is_same_v<T, double>)
 			{
-				long long* address_as_ull = reinterpret_cast<long long*>(address);
-				auto old = *address_as_ull;
-				while (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)))) != assumed);
+				unsigned long long* address_as_l = reinterpret_cast<unsigned long long*>(address);
+				unsigned long long old = *address_as_l, assumed;
+				do
+				{
+					assumed = old;
+				}
+				while ((old = atomicCAS(address_as_l, assumed, __double_as_longlong(val + __longlong_as_double(assumed)))) != assumed);
 				return __longlong_as_double(old);
 			}
 			else if constexpr (cuda::std::is_same_v<T, float>)
 			{
-				int* address_as_ull = reinterpret_cast<int*>(address);
-				auto old = *address_as_ull;
-				while (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __float_as_int(val + __int_as_float(assumed)))) != assumed);
+				int* address_as_l = reinterpret_cast<int*>(address);
+				int old = *address_as_l, assumed;
+				do
+				{
+					assumed = old;
+				}
+				while ((old = atomicCAS(address_as_l, assumed, __float_as_int(val + __int_as_float(assumed)))) != assumed);
 				return __int_as_float(old);
 			}
-			return atomicAdd(address, val);
+			else
+			{
+				return atomicAdd(address, val);
+			}
 		}
 		template<typename T>
 		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC T AtomicExch(T* address, const T val)
 		{
 			if constexpr (cuda::std::is_same_v<T, double>)
 			{
-				long long* address_as_ull = reinterpret_cast<long long*>(address);
-				auto old = *address_as_ull;
-				while (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val))) != assumed); 
+				unsigned long long* address_as_l = reinterpret_cast<unsigned long long*>(address);
+
+				unsigned long long old = *address_as_l, assumed;
+				do
+				{
+					assumed = old;
+				}
+				while ((old = atomicCAS(address_as_l, assumed, __double_as_longlong(val))) != assumed);
 				return __longlong_as_double(old);
 			}
 			else if constexpr (cuda::std::is_same_v<T, float>)
 			{
-				int* address_as_ull = reinterpret_cast<int*>(address);
-				auto old = *address_as_ull;
-				while (const auto assumed = old; (old = atomicCAS(address_as_ull, assumed, __float_as_int(val))) != assumed);
+				int* address_as_l = reinterpret_cast<int*>(address);
+				int old = *address_as_l, assumed;
+				do
+				{
+					assumed = old;
+				}
+				while ((old = atomicCAS(address_as_l, assumed, __float_as_int(val))) != assumed);
 				return __int_as_float(old);
 			}
-			return atomicAdd(address, val);
+			else
+			{
+				return atomicExch(address, val);
+			}
 		}
 
 		template<typename T>
@@ -145,42 +190,5 @@ namespace mcuda
 			if (sData[tid] < sData[tid + 1u])
 				sData[tid] = sData[tid + 1u];
 		}
-
-		MCUDA_INLINE_FUNC __global__ void ReorderIdsUint2_kernel(
-			uint2* xs, uint32_t* ixs, uint32_t size, uint32_t isize)
-		{
-			extern __shared__ uint32_t s_ids[];
-			uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
-			uint32_t curr;
-
-			if (id < size)
-			{
-				uint2 tmp = xs[id];
-				curr = tmp.x;
-				s_ids[threadIdx.x + 1u] = curr;
-				if (id > 0u && threadIdx.x == 0u) {
-					tmp = xs[id - 1u];
-					s_ids[0] = tmp.x;
-				}
-			}
-			__syncthreads();
-
-			if (id < size) {
-				uint32_t i;
-				uint32_t prev = s_ids[threadIdx.x];
-				if (id == 0u || prev != curr) {
-					if (id == 0u) {
-						ixs[0] = 0u;
-						prev = 0u;
-					}
-					for (i = prev + 1u; i <= curr; i++)
-						ixs[i] = id;
-				}
-				if (id == size - 1u) {
-					for (i = curr + 1u; i < isize; i++)
-						ixs[i] = id + 1u;
-				}
-			}
-		}*/
 	}
 }

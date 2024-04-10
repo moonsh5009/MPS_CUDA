@@ -21,7 +21,9 @@
     <ClInclude Include="MPSObjectParam.h" />
     <ClInclude Include="MPSParticleObject.h" />
     <ClInclude Include="MPSParticleParam.h" />
+    <ClInclude Include="MPSSpatialHash.cuh" />
     <ClInclude Include="MPSSpatialHash.h" />
+    <ClInclude Include="MPSSpatialHashParam.h" />
     <ClInclude Include="MPSSPHMaterial.h" />
     <ClInclude Include="MPSSPHModel.h" />
     <ClInclude Include="MPSSPHObject.h" />
@@ -34,13 +36,13 @@
     <ClCompile Include="MPSGBArchiver.cpp" />
     <ClCompile Include="MPSModel.cpp" />
     <ClCompile Include="MPSParticleObject.cpp" />
-    <ClCompile Include="MPSSpatialHash.cpp" />
     <ClCompile Include="MPSSPHMaterial.cpp" />
     <ClCompile Include="MPSSPHModel.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="MPSObject.cu" />
+    <CudaCompile Include="MPSSpatialHash.cu" />
     <CudaCompile Include="MPSSPHObject.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -93,6 +95,7 @@
       <PreprocessorDefinitions>BUILD_MPS_OBJECT;WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Create</PrecompiledHeader>
+      <DisableSpecificWarnings>20012;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -114,6 +117,7 @@
       <PreprocessorDefinitions>BUILD_MPS_OBJECT;WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Create</PrecompiledHeader>
+      <DisableSpecificWarnings>20012;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

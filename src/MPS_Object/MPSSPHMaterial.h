@@ -8,10 +8,12 @@ namespace mps
 {
 	struct SPHMaterialParam
 	{
-		size_t numParticles;
 		REAL radius;
 		REAL mass;
 		REAL density;
+		REAL volume;
+		REAL surfaceTension;
+		REAL pressureAtm;
 		glm::fvec4 color;
 	};
 	class __MY_EXT_CLASS__ SPHMaterial : public VirtualMaterial<SPHMaterialParam>
@@ -20,17 +22,19 @@ namespace mps
 		SPHMaterial();
 
 	public:
-		void SetParticleSize(const uint32_t size);
+		void SetParam(const REAL radius, const REAL density);
 		void SetRadius(const REAL radius);
-		void SetMass(const REAL mass);
-		void SetDensity(const REAL density);
+		void SetSurfaceTension(const REAL surfaceTension);
+		void SetPressureAtm(const REAL pressureAtm);
 		void SetColor(const glm::fvec4& color);
 
-		constexpr uint32_t GetParticleSize() const { return GetHost().numParticles; };
-		constexpr REAL GetRadius() const { return GetHost().radius; };
-		constexpr REAL GetMass() const { return GetHost().mass; };
-		constexpr REAL GetDensity() const { return GetHost().density; };
-		constexpr const glm::fvec4& GetColor() const { return GetHost().color; };
+		REAL GetRadius() const { return GetParam().radius; };
+		REAL GetMass() const { return GetParam().mass; };
+		REAL GetDensity() const { return GetParam().density; };
+		REAL GetVolume() const { return GetParam().volume; };
+		REAL GetSurfaceTension() const { return GetParam().surfaceTension; };
+		REAL GetPressureAtm() const { return GetParam().pressureAtm; };
+		const glm::fvec4& GetColor() const { return GetParam().color; };
 	};
 };
 

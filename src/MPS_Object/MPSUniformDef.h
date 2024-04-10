@@ -20,5 +20,7 @@ namespace mps
 	{
 		REAL dt;
 		REAL3 gravity;
+		REAL3 min;
+		REAL3 max;
 	};
 }

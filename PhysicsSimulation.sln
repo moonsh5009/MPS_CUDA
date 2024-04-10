@@ -27,6 +27,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPS_System", "src\MPS_Syste
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPS_Computer", "src\MPS_Computer\MPS_Computer.vcxproj", "{27019F88-729F-4F35-8B75-10EB985B7F09}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81B63107-EBBF-4D16-8504-8A8BC9FE4AB8} = {81B63107-EBBF-4D16-8504-8A8BC9FE4AB8}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

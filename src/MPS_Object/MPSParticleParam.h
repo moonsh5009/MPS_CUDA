@@ -19,7 +19,7 @@ namespace mps
 		MCUDA_HOST_FUNC void SetRadiusArray(REAL* pRadius) { m_pRadius = pRadius; }
 
 	private:
-		REAL* m_pRadius;
+		REAL* MCUDA_RESTRICT m_pRadius;
 	};
 
 	struct ParticleResource : public ObjectResource

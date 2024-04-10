@@ -1,6 +1,8 @@
 #pragma once
 #include <chrono>
 #include <unordered_map>
+#include <sstream>
+#include <string>
 
 typedef std::chrono::system_clock::time_point CTimePoint;
 typedef std::chrono::duration<double, std::milli> CTimeDuration;
@@ -32,7 +34,10 @@ namespace MTimer
 	{
 	#ifdef CHRRONO_TIME_TEST
 		CTimeDuration d = std::chrono::system_clock::now() - startPoint;
-		std::cout << d.count() << " ms" << std::endl;
+
+		std::stringstream ss;
+		ss << d.count() << " ms" << std::endl;
+		OutputDebugStringA(ss.str().c_str());
 	#endif
 	}
 
@@ -42,7 +47,10 @@ namespace MTimer
 		const auto t = mapStartPoint[key];
 		mapStartPoint.erase(mapStartPoint.find(key));
 		CTimeDuration d = std::chrono::system_clock::now() - t;
-		std::cout << key << " : " << d.count() << " ms" << std::endl;// << std::endl;
+
+		std::stringstream ss;
+		ss << key << " : " << d.count() << " ms" << std::endl;
+		OutputDebugStringA(ss.str().c_str());
 	#endif
 	}
 };
