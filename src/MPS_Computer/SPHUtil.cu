@@ -20,51 +20,6 @@ void mps::kernel::sph::ComputeDensity(const mps::SPHParam& sph, const mps::SPHMa
 	CUDA_CHECK(cudaPeekAtLastError());
 }
 
-void mps::kernel::sph::ComputeColorField(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
-{
-	const auto nSize = sph.GetSize();
-	if (nSize == 0) return;
-
-	ComputeColorField_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(sph, material, hash);
-	CUDA_CHECK(cudaPeekAtLastError());
-}
-
-void mps::kernel::sph::ApplySurfaceTension(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
-{
-	const auto nSize = sph.GetSize();
-	if (nSize == 0) return;
-
-	ComputeColorField_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(sph, material, hash);
-	CUDA_CHECK(cudaPeekAtLastError());
-
-	ComputeLargeSmallDensity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(sph, material, hash);
-	CUDA_CHECK(cudaPeekAtLastError());
-
-	ComputeLargeSmallDPressure_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(physParam, sph, material, hash);
-	CUDA_CHECK(cudaPeekAtLastError());
-
-	auto dMaxColorField = thrust::max_element(thrust::device_ptr<REAL>(sph.GetColorFieldArray()), thrust::device_ptr<REAL>(sph.GetColorFieldArray() + sph.GetSize()));
-	auto dMaxSmallPressure = thrust::max_element(thrust::device_ptr<REAL>(sph.GetSmallPressureArray()), thrust::device_ptr<REAL>(sph.GetSmallPressureArray() + sph.GetSize()));
-	
-	thrust::device_vector<REAL> dTest(2);
-	thrust::copy(dMaxColorField, dMaxColorField + 1, dTest.begin());
-	thrust::copy(dMaxSmallPressure, dMaxSmallPressure + 1, dTest.begin());
-	thrust::host_vector<REAL> hTest(dTest);
-	std::vector<REAL> TTEST = { hTest[0], hTest[1] };
-
-	ComputeSurfaceTensor_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(sph, material, hash, thrust::raw_pointer_cast(dMaxColorField), thrust::raw_pointer_cast(dMaxSmallPressure));
-	CUDA_CHECK(cudaPeekAtLastError());
-
-	ApplySurfaceTension_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(sph, material, hash);
-	CUDA_CHECK(cudaPeekAtLastError());
-}
-
 void mps::kernel::sph::DensityColorTest(const mps::SPHParam& sph, const mps::SPHMaterialParam& material)
 {
 	const auto nSize = sph.GetSize();
@@ -149,6 +104,55 @@ void mps::kernel::sph::ApplyDFSPH(const mps::SPHParam& sph, const mps::SPHMateri
 	if (nSize == 0) return;
 
 	ApplyDFSPH_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+
+void mps::kernel::sph::ApplyViscosity(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+{
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ApplyViscosity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+
+void mps::kernel::sph::ComputeColorField(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+{
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeColorField_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+
+void mps::kernel::sph::ApplySurfaceTension(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+{
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeColorField_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+
+	/*ComputeLargeSmallDensity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(physParam, sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());*/
+
+	ComputeLargeSmallDPressure_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(physParam, sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+
+	auto dMaxColorField = thrust::max_element(thrust::device_ptr<REAL>(sph.GetColorFieldArray()), thrust::device_ptr<REAL>(sph.GetColorFieldArray() + sph.GetSize()));
+	auto dMaxSmallPressure = thrust::max_element(thrust::device_ptr<REAL>(sph.GetSmallPressureArray()), thrust::device_ptr<REAL>(sph.GetSmallPressureArray() + sph.GetSize()));
+	ComputeSurfaceTensor_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material, hash, thrust::raw_pointer_cast(dMaxColorField), thrust::raw_pointer_cast(dMaxSmallPressure));
+	CUDA_CHECK(cudaPeekAtLastError());
+
+	//ComputeDensity(sph, material, hash);
+	ApplySurfaceTension_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
 		(sph, material, hash);
 	CUDA_CHECK(cudaPeekAtLastError());
 }

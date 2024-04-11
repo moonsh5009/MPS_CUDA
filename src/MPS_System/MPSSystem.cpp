@@ -24,9 +24,9 @@ void mps::System::Initalize()
         m_pGBArchiver = std::make_shared<mps::GBArchiver>();
         m_pGBArchiver->Initalize();
         m_pGBArchiver->UpdateLight(mps::LightParam{ glm::dvec3{ 10.0, 10.0, 10.0 }, glm::fvec4{ 1.0f, 1.0f, 1.0f, 1.0f } });
-        //m_pGBArchiver->m_physicsParam.gravity = { 0.0, -9.8, 0.0 };
-        m_pGBArchiver->m_physicsParam.gravity = REAL3{ 0.0 };
-        m_pGBArchiver->m_physicsParam.dt = 0.01;
+        m_pGBArchiver->m_physicsParam.gravity = { 0.0, -9.8, 0.0 };
+        //m_pGBArchiver->m_physicsParam.gravity = REAL3{ 0.0 };
+        m_pGBArchiver->m_physicsParam.dt = 0.0025;
         m_pGBArchiver->m_physicsParam.min = { -5.0, -5.0, -5.0 };
         m_pGBArchiver->m_physicsParam.max = { 5.0, 5.0, 5.0 };
     }
@@ -129,8 +129,8 @@ void mps::System::OnUpdate()
     mps::kernel::sph::ComputeDivergenceFree(physParam, *pSPHParam, sphMaterialParam, hashParam);
 
     mps::kernel::ResetForce(*pSPHParam);
+    mps::kernel::sph::ApplyViscosity(*pSPHParam, sphMaterialParam, hashParam);
     mps::kernel::sph::ApplySurfaceTension(physParam, *pSPHParam, sphMaterialParam, hashParam);
-    mps::kernel::sph::ComputeDensity(*pSPHParam, sphMaterialParam, hashParam);
     mps::kernel::ApplyGravity(physParam, *pSPHParam);
     mps::kernel::UpdateVelocity(physParam, *pSPHParam);
 

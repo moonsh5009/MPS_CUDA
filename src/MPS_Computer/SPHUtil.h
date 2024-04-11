@@ -21,6 +21,7 @@ namespace mps
 			const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
 		void __MY_EXT_CLASS__ ApplyDFSPH(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
 
+		void __MY_EXT_CLASS__ ApplyViscosity(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
 		void __MY_EXT_CLASS__ ComputeColorField(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
 		void __MY_EXT_CLASS__ ApplySurfaceTension(const mps::PhysicsParam& physParam,
 			const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);

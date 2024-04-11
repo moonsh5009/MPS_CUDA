@@ -159,7 +159,6 @@ __global__ void ComputeDFPressure_kernel(const mps::PhysicsParam physParam,
 			}
 		});
 
-
 		auto pressure = mcuda::util::min(delta * physParam.dt, (di / material.density + physParam.dt * delta - 0.9));
 		if (pressure > 0.0)
 		{
@@ -204,7 +203,7 @@ __global__ void ApplyDFSPH_kernel(mps::SPHParam sph, const mps::SPHMaterialParam
 	{
 		if (id == jd) return;
 
-		const auto& xj = sph.Position(jd);
+		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
 		const auto dist = glm::length(xij);
@@ -220,12 +219,52 @@ __global__ void ApplyDFSPH_kernel(mps::SPHParam sph, const mps::SPHMaterialParam
 	sph.Force(id) = force;
 }
 
+__global__ void ApplyViscosity_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+{
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+	if (id >= sph.GetSize()) return;
+
+	const auto h = material.radius;
+	const auto invH = 1.0 / h;
+	const auto onePercentHSq = 0.01 * h * h;
+
+	const auto xi = sph.Position(id);
+	const auto vi = sph.Velocity(id);
+	const auto mi = sph.Mass(id);
+	const auto di = sph.Density(id);
+	const auto volumei = mi / di;
+
+	REAL3 viscForce{ 0.0 };
+	hash.Research(xi, [&](uint32_t jd)
+	{
+		if (id == jd) return;
+
+		const auto xj = sph.Position(jd);
+		auto xij = xi - xj;
+
+		const auto dist = glm::length(xij);
+		if (dist < h)
+		{
+			const auto vj = sph.Velocity(jd);
+			const auto dj = sph.Density(jd);
+			const auto mj = sph.Mass(jd);
+			const auto volumej = mj / dj;
+			const auto vij = vi - vj;
+			const auto forceij = volumej * glm::dot(vij, xij) / (dist * dist + onePercentHSq) * mps::kernel::sph::GKernel(dist, invH) / dist * xij;
+			viscForce += forceij;
+		}
+	});
+	auto force = sph.Force(id);
+	force += 10.0 * material.viscosity * volumei * viscForce;
+	sph.Force(id) = force;
+}
+
 __global__ void DensityColorTest_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
 
-	const auto& density = sph.Density(id);
+	const auto density = sph.Density(id);
 	const float ratio = static_cast<float>(density / material.density);
 
 	const auto blue = mcuda::util::clamp(1.0f - ratio, 0.0f, 1.0f);

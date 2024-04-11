@@ -17,6 +17,8 @@ __global__ void ComputeColorField_kernel(mps::SPHParam sph, const mps::SPHMateri
 	const auto h = material.radius;
 	const auto invH = 1.0 / h;
 	const auto xi = sph.Position(id);
+	const auto di = sph.Density(id);
+	const auto volumei = sph.Mass(id) / di;
 
 	REAL3 grads{ 0.0 };
 	REAL det = 0.0;
@@ -41,7 +43,13 @@ __global__ void ComputeColorField_kernel(mps::SPHParam sph, const mps::SPHMateri
 	sph.ColorField(id) = det < 1.0e-10 ? 0.0 : glm::dot(grads, grads) / det;
 }
 
-__global__ void ComputeLargeSmallDensity_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+namespace
+{
+	constexpr REAL SmallRadiusRatio = 0.5;
+}
+#if 0
+__global__ void ComputeLargeSmallDensity_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -71,11 +79,11 @@ __global__ void ComputeLargeSmallDensity_kernel(mps::SPHParam sph, const mps::SP
 			const auto vij = vi - vj;
 
 			largeDensity += material.volume * mps::kernel::sph::WKernel(dist, invLargeH);
-			//largeDensity += material.volume * mps::kernel::sph::GKernel(dist, invLargeH) / dist * glm::dot(xij, vij);
+			largeDensity += physParam.dt * material.volume * mps::kernel::sph::GKernel(dist, invLargeH) / dist * glm::dot(xij, vij);
 			if (dist < smallH)
 			{
 				smallDensity += material.volume * mps::kernel::sph::WKernel(dist, invSmallH);
-				//smallDensity += material.volume * mps::kernel::sph::GKernel(dist, invSmallH) / dist * glm::dot(xij, vij);
+				smallDensity += physParam.dt * material.volume * mps::kernel::sph::GKernel(dist, invSmallH) / dist * glm::dot(xij, vij);
 			}
 		}
 	});
@@ -113,18 +121,68 @@ __global__ void ComputeLargeSmallDPressure_kernel(const mps::PhysicsParam physPa
 		if (dist < largeH)
 		{
 			const auto largeDj = sph.Density(jd);
-			largePressure += (largeDj - material.density) / (4.0 * 3.141592 * material.density * physParam.dt * physParam.dt * dist);
+			largePressure += mcuda::util::max(largeDj - material.density, 0.0) / (4.0 * 3.141592 * material.density * physParam.dt * physParam.dt * dist);
 			if (dist < smallH)
 			{
 				const auto smallDj = sph.SmallDensity(jd);
-				smallPressure += (smallDj - material.density) * smallDj * radiusSq / (2.0 * material.density * physParam.dt * physParam.dt);
+				smallPressure += mcuda::util::max(smallDj - material.density, 0.0) * smallDj * smallH * smallH / (2.0 * material.density * physParam.dt * physParam.dt);
 			}
 		}
 	});
 
-	sph.Pressure(id) = mcuda::util::max(largePressure, 0.0);
-	sph.SmallPressure(id) = mcuda::util::max(smallPressure, 0.0);
+	sph.Pressure(id) = largePressure;
+	sph.SmallPressure(id) = smallPressure;
 }
+#else
+__global__ void ComputeLargeSmallDPressure_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+{
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+	if (id >= sph.GetSize()) return;
+
+	const auto largeH = material.radius;
+	const auto smallH = material.radius * SmallRadiusRatio;
+	const auto largeVolume = material.volume;
+	const auto smallVolume = material.volume * SmallRadiusRatio * SmallRadiusRatio * SmallRadiusRatio;
+	const auto invLargeH = 1.0 / largeH;
+	const auto invSmallH = 1.0 / smallH;
+
+	const auto xi = sph.Position(id);
+	const auto vi = sph.Velocity(id);
+
+	REAL largeDensity = largeVolume * mps::kernel::sph::WKernel(0.0, invLargeH);
+	REAL smallDensity = smallVolume * mps::kernel::sph::WKernel(0.0, invSmallH);
+
+	hash.Research(xi, [&](uint32_t jd)
+	{
+		if (id == jd) return;
+
+		const auto xj = sph.Position(jd);
+		auto xij = xi - xj;
+
+		const auto dist = glm::length(xij);
+		if (dist < largeH)
+		{
+			const auto vj = sph.Velocity(jd);
+			const auto vij = vi - vj;
+
+			largeDensity += largeVolume * mps::kernel::sph::WKernel(dist, invLargeH);
+			largeDensity += physParam.dt * largeVolume * mps::kernel::sph::GKernel(dist, invLargeH) / dist * glm::dot(xij, vij);
+			if (dist < smallH)
+			{
+				smallDensity += smallVolume * mps::kernel::sph::WKernel(dist, invSmallH);
+				smallDensity += physParam.dt * smallVolume * mps::kernel::sph::GKernel(dist, invSmallH) / dist * glm::dot(xij, vij);
+			}
+		}
+	});
+
+	largeDensity *= material.density;
+	smallDensity *= material.density;
+
+	sph.Pressure(id) = mcuda::util::max(largeDensity - material.density, 0.0) * largeDensity * largeH * largeH / (2.0 * material.density * physParam.dt * physParam.dt);
+	sph.SmallPressure(id) = mcuda::util::max(smallDensity - material.density, 0.0) * smallDensity * smallH * smallH / (2.0 * material.density * physParam.dt * physParam.dt);
+}
+#endif
 
 __global__ void ComputeSurfaceTensor_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
 	REAL* maxColorField, REAL* maxSmallPressure)
@@ -137,7 +195,7 @@ __global__ void ComputeSurfaceTensor_kernel(mps::SPHParam sph, const mps::SPHMat
 
 	const auto largePressure = sph.Pressure(id);
 	const auto smallPressure = sph.SmallPressure(id);
-	const auto beta = *maxSmallPressure < 1.0e-10 ? 0.0 : 1.0 * material.surfaceTension * (*maxColorField) / (*maxSmallPressure);
+	const auto beta = *maxSmallPressure < 1.0e-10 ? 0.0 : 0.8 * material.surfaceTension * (*maxColorField) / (*maxSmallPressure);
 	const auto pressure = mcuda::util::max(smallPressure * beta, largePressure) + material.pressureAtm;
 	const auto xi = sph.Position(id);
 
@@ -152,7 +210,7 @@ __global__ void ComputeSurfaceTensor_kernel(mps::SPHParam sph, const mps::SPHMat
 		const auto dist = glm::length(xij);
 		if (dist < h)
 		{
-			const auto wxij = xij* mps::kernel::sph::WKernel(0.0, invH);
+			const auto wxij = xij * mps::kernel::sph::WKernel(dist, invH);
 			Ci += REAL3x3
 			{
 				wxij.x * xij.x, wxij.x * xij.y, wxij.x * xij.z,
