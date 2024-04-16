@@ -4,9 +4,8 @@
 mps::SPHMaterial::SPHMaterial() : mps::VirtualMaterial<mps::SPHMaterialParam>{}
 {
 	SetParam(0.1, 1.0);
-	SetViscosity(0.05);
-	SetSurfaceTension(0.06);
-	SetPressureAtm(0.01);
+	SetViscosity(100.0);
+	SetSurfaceTension(0.01);
 	SetColor({ 0.3f, 0.8f, 0.2f, 1.0f });
 }
 
@@ -31,11 +30,6 @@ void mps::SPHMaterial::SetViscosity(const REAL viscosity)
 void mps::SPHMaterial::SetSurfaceTension(const REAL surfaceTension)
 {
 	GetParam().surfaceTension = surfaceTension;
-}
-
-void mps::SPHMaterial::SetPressureAtm(const REAL pressureAtm)
-{
-	GetParam().pressureAtm = pressureAtm;
 }
 
 void mps::SPHMaterial::SetColor(const glm::fvec4& color)

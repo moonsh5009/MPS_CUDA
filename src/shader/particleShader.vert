@@ -33,6 +33,7 @@ void main()
     vec4 lightPos = uCamera.viewMat * vec4(vec3(uLight.pos), 1.f);
 	vsOut.unit2Light = normalize((lightPos - viewPos).xyz);
 	vsOut.lightColor = uLight.color.xyz;
-
+    
+    vsOut.pos = vec3(viewPos);
     gl_Position = uCamera.projMat * (viewPos + vec4(inUV * vsOut.radius, 0.0f, 0.0f));
 }

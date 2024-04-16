@@ -54,5 +54,14 @@ __global__ void BoundaryCollision_kernel(const mps::PhysicsParam physicsParam, c
 	if (pos.z < physicsParam.min.z && vel.z < 0.) vel.z = (abs(vel.z) < 1.0e-4) ? 0.0 : -vel.z * 0.4;
 	else if (pos.z > physicsParam.max.z && vel.z > 0.) vel.z = (abs(vel.z) < 1.0e-4) ? 0.0 : -vel.z * 0.4;
 
+	/*const auto pos = objParam.Position(id);
+	auto vel = objParam.Velocity(id);
+	for (int i = 0; i < 3; i++)
+	{
+		if (pos[i] + vel[i] * physicsParam.dt < physicsParam.min[i])
+			vel[i] = (physicsParam.min[i] - pos[i]) / physicsParam.dt;
+		else if (pos[i] + vel[i] * physicsParam.dt > physicsParam.max[i])
+			vel[i] = (physicsParam.max[i] - pos[i]) / physicsParam.dt;
+	}*/
 	objParam.Velocity(id) = vel;
 }

@@ -18,6 +18,13 @@ namespace mps
 			void SetXDir(const glm::fvec3& xDir) { m_rotateMat[0] = { xDir, 0.0f }; m_isDirty = false; }
 			void SetYDir(const glm::fvec3& yDir) { m_rotateMat[1] = { yDir, 0.0f }; m_isDirty = false; }
 			void SetZDir(const glm::fvec3& zDir) { m_rotateMat[2] = { -zDir, 0.0f }; m_isDirty = false; }
+			void Set(const glm::fvec3& pos, const glm::fvec3& xDir, const glm::fvec3& yDir, const glm::fvec3& zDir)
+			{
+				SetPosition(pos);
+				SetXDir(xDir);
+				SetYDir(yDir);
+				SetZDir(zDir);
+			}
 
 			glm::fvec3 GetPosition() const { return m_transMat[3]; }
 			glm::fvec3 GetXDir() const { return m_rotateMat[0]; }

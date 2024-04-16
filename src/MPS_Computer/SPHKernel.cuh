@@ -2,154 +2,83 @@
 #include "../MPS_Object/MPSDef.h"
 #include "../MCUDA_Lib/MCUDAHelper.cuh"
 
-#define CONST_W						1.5666814710608447114749495456982 // 315.0 / (64.0 * M_PI)
-#define CONST_G						-14.323944878270580219199538703526 // -45.0 / M_PI
-#define CONST_CUBICW				2.5464790894703253723021402139602 // 8.0 / M_PI
-#define CONST_CUBICG				15.278874536821952233812841283761 // 48.0 / M_PI
-#define CONST_LAPLACIAN				14.323944878270580219199538703526 // 45.0 / M_PI
-#define CONST_COHESION				10.185916357881301489208560855841 // 32.0 / (M_PI);
-#define CONST_ADHESION				0.007
+#define USE_CUBIC_KERNEL		1
 
 namespace mps
 {
 	namespace kernel::sph
 	{
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL WKernel(REAL ratio)
-		{
-			if (ratio < 0.0 || ratio >= 1.0)
-				return 0.0;
+		constexpr const auto CONST_W = static_cast<REAL>(1.5666814710608447114749495456982); // 315.0 / (64.0 * PI)
+		constexpr const auto CONST_G = static_cast<REAL>(-14.323944878270580219199538703526); // -45.0 / PI
+		constexpr const auto CONST_CUBICW = static_cast<REAL>(2.5464790894703253723021402139602); // 8.0 / PI
+		constexpr const auto CONST_CUBICG = static_cast<REAL>(5.0929581789406507446042804279205); // 16.0 / PI
+		constexpr const auto CONST_STW = static_cast<REAL>(1.7825353626292277606114981497722); // 28.0 / 5PI
+		constexpr const auto SPH_EPSILON = static_cast<REAL>(1.0e-20);
 
-		#if 1
-			REAL tmp = 1.0 - ratio * ratio;
-			return CONST_W * tmp * tmp * tmp;
+		MCUDA_INLINE_FUNC MCUDA_HOST_DEVICE_FUNC REAL WKernel(REAL dist, REAL invh)
+		{
+			const auto ratio = dist * invh;
+			if (ratio >= static_cast<REAL>(1.0))
+				return static_cast<REAL>(0.0);
+
+		#if USE_CUBIC_KERNEL
+			const auto mult = CONST_CUBICW * invh * invh * invh;
+			if (ratio >= static_cast<REAL>(0.5))
+			{
+				const auto temp = static_cast<REAL>(1.0) - ratio;
+				return static_cast<REAL>(2.0) * temp * temp * temp * mult;
+			}
+			const auto ratio2 = ratio * ratio;
+			return ((static_cast<REAL>(6.0) * ratio - static_cast<REAL>(6.0)) * ratio2 + static_cast<REAL>(1.0)) * mult;
 		#else
-			REAL result;
-			if (ratio <= 0.5) {
-				REAL tmp2 = ratio * ratio;
-				result = 6.0 * tmp2 * (ratio - 1.0) + 1.0;
-			}
-			else {
-				result = 1.0 - ratio;
-				result = 2.0 * result * result * result;
-			}
-			return CONST_CUBICW * result;
+			const auto tmp = static_cast<REAL>(1.0) - ratio * ratio;
+			return CONST_W * invh * invh * invh * tmp * tmp * tmp;
 		#endif
 		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL GKernel(REAL ratio)
+		MCUDA_INLINE_FUNC MCUDA_HOST_DEVICE_FUNC REAL GKernel(REAL dist, REAL invh)
 		{
-			if (ratio < 1.0e-40 || ratio >= 1.0)
-				return 0.0;
-		#if 1
-			REAL tmp = 1.0 - ratio;
-			return CONST_G * tmp * tmp;
-		#else
-			REAL result;
-			if (ratio <= 0.5)
-				result = ratio * (3.0 * ratio - 2.0);
-			else {
-				result = 1.0 - ratio;
-				result = -result * result;
+			const auto ratio = dist * invh;
+			if (ratio < SPH_EPSILON || ratio >= static_cast<REAL>(1.0))
+				return static_cast<REAL>(0.0);
+
+		#if USE_CUBIC_KERNEL
+			const auto invh2 = invh * invh;
+			const auto mult = CONST_CUBICG * invh2 * invh2;
+			if (ratio > static_cast<REAL>(0.5))
+			{
+				const auto temp = static_cast<REAL>(1.0) - ratio;
+				return -static_cast<REAL>(3.0) * temp * temp * mult;
 			}
-			return CONST_CUBICG * result;
+			return (static_cast<REAL>(9.0) * ratio * ratio - static_cast<REAL>(6.0) * ratio) * mult;
+		#else
+			const auto invh2 = invh * invh;
+			const auto tmp = static_cast<REAL>(1.0) - ratio;
+			return CONST_G * invh2 * invh2 * tmp * tmp;
 		#endif
 		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL LaplacianKernel(REAL ratio)
+
+		MCUDA_INLINE_FUNC MCUDA_HOST_DEVICE_FUNC REAL STWKernel(REAL dist, REAL invh)
 		{
-			if (ratio < 0.0 || ratio >= 1.0)
-				return 0.0;
+			const auto ratio = dist * invh;
+			if (ratio >= static_cast<REAL>(1.0))
+				return static_cast<REAL>(0.0);
 
-			REAL tmp = 1.0 - ratio;
-			return CONST_LAPLACIAN * tmp;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL cohesionKernel(REAL ratio)
-		{
-			if (ratio <= 1.0e-40 || ratio >= 1.0)
-				return 0.0;
-
-			REAL result = (1.0 - ratio) * ratio;
-			result = result * result * result;
-			if (ratio <= 0.5)
-				result += result - 0.015625;
-
-			return CONST_COHESION * result;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL addhesionKernel(REAL ratio)
-		{
-			if (ratio <= 0.5 || ratio >= 1.0)
-				return 0.0;
-
-			REAL result = pow(-4.0 * ratio * ratio + 6.0 * ratio - 2.0, 0.25);
-			return CONST_ADHESION * result;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL selfCohesionKernel(REAL ratio)
-		{
-			if (ratio <= 0.5 || ratio >= 1.0)
-				return 0.0;
-
-			REAL result = (1.0 - ratio * 0.5) * ratio * 0.5;
-			result = result * result * result;
-
-			return CONST_COHESION * result;
+			const auto mult = CONST_STW * invh * invh * invh;
+			if (ratio > static_cast<REAL>(0.5))
+			{
+				const auto temp = static_cast<REAL>(1.0) - ratio;
+				return static_cast<REAL>(2.0) * temp * temp * temp * mult;
+			}
+			return static_cast<REAL>(0.25) * mult;
 		}
 
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL WKernel(REAL dist, REAL invh)
+		MCUDA_INLINE_FUNC MCUDA_HOST_DEVICE_FUNC REAL WKernel(REAL dist, REAL invhi, REAL invhj)
 		{
-			return WKernel(dist * invh) * invh * invh * invh;
+			return (WKernel(dist, invhi) + WKernel(dist, invhj)) * static_cast<REAL>(0.5);
 		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL GKernel(REAL dist, REAL invh)
+		MCUDA_INLINE_FUNC MCUDA_HOST_DEVICE_FUNC REAL GKernel(REAL dist, REAL invhi, REAL invhj)
 		{
-			REAL tmp = invh * invh;
-			return GKernel(dist * invh) * tmp * tmp;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL LaplacianKernel(REAL dist, REAL invh)
-		{
-			REAL tmp = invh * invh;
-
-			//return LaplacianKernel(dist * invh) * tmp * tmp * invh;
-
-			dist = dist * invh;
-			return -GKernel(dist) / (dist * dist + 0.01) * tmp * tmp * invh;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL cohesionKernel(REAL dist, REAL invh)
-		{
-			return cohesionKernel(dist * invh) * invh * invh * invh;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL addhesionKernel(REAL dist, REAL invh)
-		{
-			return addhesionKernel(dist * invh) * invh * invh * invh;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL selfCohesionKernel(REAL dist, REAL invh)
-		{
-			return selfCohesionKernel(dist * invh) * invh * invh * invh;
-		}
-
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL WKernel(REAL dist, REAL invhi, REAL invhj)
-		{
-			return (WKernel(dist, invhi) + WKernel(dist, invhj)) * 0.5;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL GKernel(REAL dist, REAL invhi, REAL invhj)
-		{
-			return (GKernel(dist, invhi) + GKernel(dist, invhj)) * 0.5;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL LaplacianKernel(REAL dist, REAL invhi, REAL invhj)
-		{
-			return (LaplacianKernel(dist, invhi) + LaplacianKernel(dist, invhj)) * 0.5;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL cohesionKernel(REAL dist, REAL invhi, REAL invhj)
-		{
-			return (cohesionKernel(dist, invhi) + cohesionKernel(dist, invhj)) * 0.5;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL addhesionKernel(REAL dist, REAL invhi, REAL invhj)
-		{
-			return (addhesionKernel(dist, invhi) + addhesionKernel(dist, invhj)) * 0.5;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL selfCohesionKernel(REAL dist, REAL invhi, REAL invhj)
-		{
-			return (selfCohesionKernel(dist, invhi) + selfCohesionKernel(dist, invhj)) * 0.5;
-		}
-		MCUDA_HOST_DEVICE_FUNC constexpr REAL GKernel(REAL dist, REAL hi, REAL hj, REAL invhi, REAL invhj)
-		{
-			return (hi * GKernel(dist, invhi) + hj * GKernel(dist, invhj)) * 0.5;
+			return (GKernel(dist, invhi) + GKernel(dist, invhj)) * static_cast<REAL>(0.5);
 		}
 	}
 }

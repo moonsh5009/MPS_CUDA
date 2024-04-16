@@ -12,9 +12,10 @@ namespace mps
 		REAL mass;
 		REAL density;
 		REAL volume;
+
 		REAL viscosity;
 		REAL surfaceTension;
-		REAL pressureAtm;
+
 		glm::fvec4 color;
 	};
 	class __MY_EXT_CLASS__ SPHMaterial : public VirtualMaterial<SPHMaterialParam>
@@ -27,7 +28,6 @@ namespace mps
 		void SetRadius(const REAL radius);
 		void SetViscosity(const REAL viscosity);
 		void SetSurfaceTension(const REAL surfaceTension);
-		void SetPressureAtm(const REAL pressureAtm);
 		void SetColor(const glm::fvec4& color);
 
 		REAL GetRadius() const { return GetParam().radius; };
@@ -36,7 +36,6 @@ namespace mps
 		REAL GetVolume() const { return GetParam().volume; };
 		REAL GetViscosity() const { return GetParam().viscosity; };
 		REAL GetSurfaceTension() const { return GetParam().surfaceTension; };
-		REAL GetPressureAtm() const { return GetParam().pressureAtm; };
 		const glm::fvec4& GetColor() const { return GetParam().color; };
 	};
 };

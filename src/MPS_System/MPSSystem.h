@@ -44,6 +44,8 @@ namespace mps
 		virtual void OnUpdate() override;
 		virtual void OnDraw() override;
 
+		void Capture(uint32_t endFrame, uint32_t step);
+
 	private:
 		std::shared_ptr<mps::GBArchiver> m_pGBArchiver;
 
@@ -53,11 +55,13 @@ namespace mps
 		std::unique_ptr<mps::rndr::CameraUserInputEventHandler> m_pCameraHandler;
 
 	private:
+		bool b_runSim;
 		uint64_t m_frame;
 		std::shared_ptr<mgpu::MGPUCore> m_pMGPUCore;
 
 	private:
 		void ResizeParticle(size_t size);
+		void ViscosityTestScene(size_t size, size_t height);
 		std::shared_ptr<mps::Model> m_pSPHModel;
 	};
 }

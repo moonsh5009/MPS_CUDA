@@ -12,20 +12,19 @@ namespace mps
 	namespace kernel::sph
 	{
 		void __MY_EXT_CLASS__ ComputeDensity(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
-		void __MY_EXT_CLASS__ DensityColorTest(const mps::SPHParam& sph, const mps::SPHMaterialParam& material);
 
 		void __MY_EXT_CLASS__ ComputeDFSPHFactor(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
-		void __MY_EXT_CLASS__ ComputePressureForce(const mps::PhysicsParam& physParam,
-			const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
-		void __MY_EXT_CLASS__ ComputeDivergenceFree(const mps::PhysicsParam& physParam,
-			const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
-		void __MY_EXT_CLASS__ ApplyDFSPH(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
+		void __MY_EXT_CLASS__ ComputeDFSPHConstantDensity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
+		void __MY_EXT_CLASS__ ComputeDFSPHDivergenceFree(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
 
-		void __MY_EXT_CLASS__ ApplyViscosity(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
-		void __MY_EXT_CLASS__ ComputeColorField(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
-		void __MY_EXT_CLASS__ ApplySurfaceTension(const mps::PhysicsParam& physParam,
-			const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
+		void __MY_EXT_CLASS__ ApplyExplicitViscosity(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
+		void __MY_EXT_CLASS__ ApplyExplicitSurfaceTension(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
 
+		void __MY_EXT_CLASS__ ApplyImplicitViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
+		void __MY_EXT_CLASS__ ApplyImplicitGDViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
+		void __MY_EXT_CLASS__ ApplyImplicitCGViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash);
+
+		void __MY_EXT_CLASS__ DensityColorTest(const mps::SPHParam& sph, const mps::SPHMaterialParam& material);
 	}
 }
 

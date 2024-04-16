@@ -36,9 +36,6 @@
     <ClInclude Include="SPHKernel.cuh">
       <Filter>SPH</Filter>
     </ClInclude>
-    <ClInclude Include="SPHSurfaceTension.cuh">
-      <Filter>SPH</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

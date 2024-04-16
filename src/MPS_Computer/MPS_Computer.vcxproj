@@ -16,7 +16,6 @@
     <ClInclude Include="HeaderPost.h" />
     <ClInclude Include="HeaderPre.h" />
     <ClInclude Include="SPHKernel.cuh" />
-    <ClInclude Include="SPHSurfaceTension.cuh" />
     <ClInclude Include="SPHUtil.cuh" />
     <ClInclude Include="SPHUtil.h" />
     <ClInclude Include="stdafx.h" />
