@@ -46,6 +46,9 @@
     <Filter Include="Object\SPH">
       <UniqueIdentifier>{a7501988-ba24-4a34-a9d8-38a9f625da31}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Mesh">
+      <UniqueIdentifier>{5371b985-5c0f-4a72-b791-0eeb643687c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -126,6 +129,12 @@
     <ClInclude Include="MPSSpatialHashParam.h">
       <Filter>Tree\SpatialHash</Filter>
     </ClInclude>
+    <ClInclude Include="MPSMeshObject.h">
+      <Filter>Object\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSMeshParam.h">
+      <Filter>Object\Mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="MPSSPHObject.cu">
@@ -136,6 +145,9 @@
     </CudaCompile>
     <CudaCompile Include="MPSSpatialHash.cu">
       <Filter>Tree\SpatialHash</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSMeshObject.cu">
+      <Filter>Object\Mesh</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

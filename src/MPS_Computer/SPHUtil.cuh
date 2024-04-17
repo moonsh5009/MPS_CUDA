@@ -541,7 +541,7 @@ __global__ void UpdateGDViscosity_kernel(mps::SPHParam sph, REAL3* R, REAL gama)
 }
 
 __global__ void ComputeCGViscosityAv_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
-	REAL3* V, REAL3* Av)
+	REAL3* V, REAL3* Av, REAL factor)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -577,7 +577,7 @@ __global__ void ComputeCGViscosityAv_kernel(const mps::PhysicsParam physParam, m
 	});
 	av *= physParam.dt * 10.0 * material.viscosity / di;
 	av = vi - av;
-	Av[id] = av;
+	Av[id] = av + vi * factor;
 }
 __global__ void UpdateCGViscosityAlphaParam_kernel(mps::SPHParam sph, REAL3* R, REAL3* V, REAL3* Av, REAL* alpha)
 {
@@ -593,7 +593,7 @@ __global__ void UpdateCGViscosityAlphaParam_kernel(mps::SPHParam sph, REAL3* R, 
 		const auto avi = Av[id];
 		
 		s_temp[threadIdx.x] = glm::dot(ri, ri);
-		s_temp[threadIdx.x + blockDim.x] = glm::dot(vi, avi + vi * 0.9);
+		s_temp[threadIdx.x + blockDim.x] = glm::dot(vi, avi);
 	}
 	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
 	{

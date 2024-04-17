@@ -131,8 +131,8 @@ void mps::kernel::sph::ApplyImplicitViscosity(const mps::PhysicsParam& physParam
 	thrust::device_vector<REAL> d_error(1);
 	thrust::host_vector<REAL> h_error(1);
 
-	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVel()));
-	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPreviousVel()));
+	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVelArray()));
+	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPreviousVelArray()));
 
 	REAL omega = 1.0;
 	REAL prevError = 0.0;
@@ -163,7 +163,7 @@ void mps::kernel::sph::ApplyImplicitViscosity(const mps::PhysicsParam& physParam
 		l++;
 	}
 
-	thrust::copy(thrust::device_pointer_cast(sph.GetPredictVel()), thrust::device_pointer_cast(sph.GetPredictVel() + sph.GetSize()), thrust::device_pointer_cast(sph.GetVelocityArray()));
+	thrust::copy(thrust::device_pointer_cast(sph.GetPredictVelArray()), thrust::device_pointer_cast(sph.GetPredictVelArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetVelocityArray()));
 }
 
 void mps::kernel::sph::ApplyImplicitGDViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
@@ -176,7 +176,7 @@ void mps::kernel::sph::ApplyImplicitGDViscosity(const mps::PhysicsParam& physPar
 	thrust::device_vector<REAL> d_gama(2);
 	thrust::host_vector<REAL> h_gama;
 
-	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVel()));
+	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVelArray()));
 
 	uint32_t l = 0u;
 	while (l < 100u)
@@ -206,7 +206,7 @@ void mps::kernel::sph::ApplyImplicitGDViscosity(const mps::PhysicsParam& physPar
 		l++;
 	}
 
-	thrust::copy(thrust::device_pointer_cast(sph.GetPredictVel()), thrust::device_pointer_cast(sph.GetPredictVel() + sph.GetSize()), thrust::device_pointer_cast(sph.GetVelocityArray()));
+	thrust::copy(thrust::device_pointer_cast(sph.GetPredictVelArray()), thrust::device_pointer_cast(sph.GetPredictVelArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetVelocityArray()));
 }
 
 void mps::kernel::sph::ApplyImplicitCGViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
@@ -220,17 +220,22 @@ void mps::kernel::sph::ApplyImplicitCGViscosity(const mps::PhysicsParam& physPar
 	thrust::device_vector<REAL> d_param(2);
 	thrust::host_vector<REAL> h_param;
 
-	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVel()));
+	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVelArray()));
 	ComputeGDViscosityR_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
 		(physParam, sph, material, hash, thrust::raw_pointer_cast(d_R.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 	thrust::copy(d_R.begin(), d_R.end(), d_V.begin());
 
+	REAL factor = 0.01;
 	uint32_t l = 0u;
 	while (l < 100u)
 	{
+		if (l < 18u)		factor = 0.01;
+		else if (l == 18u)	factor = 0.1;
+		else				factor += l * 0.016;
+		
 		ComputeCGViscosityAv_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_V.data()), thrust::raw_pointer_cast(d_Av.data()));
+			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_V.data()), thrust::raw_pointer_cast(d_Av.data()), factor);
 		CUDA_CHECK(cudaPeekAtLastError());
 
 		thrust::fill(d_param.begin(), d_param.end(), static_cast<REAL>(0.0));
@@ -265,7 +270,10 @@ void mps::kernel::sph::ApplyImplicitCGViscosity(const mps::PhysicsParam& physPar
 		l++;
 	}
 
-	thrust::copy(thrust::device_pointer_cast(sph.GetPredictVel()), thrust::device_pointer_cast(sph.GetPredictVel() + sph.GetSize()), thrust::device_pointer_cast(sph.GetVelocityArray()));
+	thrust::copy(thrust::device_pointer_cast(sph.GetPredictVelArray()), thrust::device_pointer_cast(sph.GetPredictVelArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetVelocityArray()));
+	std::stringstream ss;
+	ss << "Implicit GD Viscosity Loop : " << l << std::endl;
+	OutputDebugStringA(ss.str().c_str());
 }
 
 void mps::kernel::sph::DensityColorTest(const mps::SPHParam& sph, const mps::SPHMaterialParam& material)

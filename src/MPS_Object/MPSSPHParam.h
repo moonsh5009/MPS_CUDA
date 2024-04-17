@@ -17,10 +17,10 @@ namespace mps
 		MCUDA_DEVICE_FUNC REAL& Pressure(uint32_t idx) { return m_pPressure[idx]; }
 		MCUDA_DEVICE_FUNC REAL& FactorA(uint32_t idx) { return m_pFactorA[idx]; }
 
-		MCUDA_DEVICE_FUNC const REAL& Density(uint32_t idx) const { return m_pDensity[idx]; }
-		MCUDA_DEVICE_FUNC const REAL& Pressure(uint32_t idx) const { return m_pPressure[idx]; }
-		MCUDA_DEVICE_FUNC const REAL& FactorA(uint32_t idx) const { return m_pFactorA[idx]; }
-		MCUDA_DEVICE_FUNC const REAL& Volume(uint32_t idx) const
+		MCUDA_DEVICE_FUNC const REAL Density(uint32_t idx) const { return m_pDensity[idx]; }
+		MCUDA_DEVICE_FUNC const REAL Pressure(uint32_t idx) const { return m_pPressure[idx]; }
+		MCUDA_DEVICE_FUNC const REAL FactorA(uint32_t idx) const { return m_pFactorA[idx]; }
+		MCUDA_DEVICE_FUNC const REAL Volume(uint32_t idx) const
 		{
 			if (const auto d = Density(idx); d > 1.0e-10)
 				return Mass(idx) / d;
@@ -30,8 +30,8 @@ namespace mps
 		MCUDA_DEVICE_FUNC REAL3& PreviousVel(uint32_t idx) { return m_pPreviousVel[idx]; }
 		MCUDA_DEVICE_FUNC REAL3& PredictVel(uint32_t idx) { return m_pPredictVel[idx]; }
 
-		MCUDA_DEVICE_FUNC const REAL3& PreviousVel(uint32_t idx) const { return m_pPreviousVel[idx]; }
-		MCUDA_DEVICE_FUNC const REAL3& PredictVel(uint32_t idx) const { return m_pPredictVel[idx]; }
+		MCUDA_DEVICE_FUNC const REAL3 PreviousVel(uint32_t idx) const { return m_pPreviousVel[idx]; }
+		MCUDA_DEVICE_FUNC const REAL3 PredictVel(uint32_t idx) const { return m_pPredictVel[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC REAL* GetDensityArray() const { return m_pDensity; }
@@ -42,11 +42,11 @@ namespace mps
 		MCUDA_HOST_FUNC void SetPressureArray(REAL* pPressure) { m_pPressure = pPressure; }
 		MCUDA_HOST_FUNC void SetFactorAArray(REAL* pFactorA) { m_pFactorA = pFactorA; }
 
-		MCUDA_HOST_FUNC REAL3* GetPreviousVel() const { return m_pPreviousVel; }
-		MCUDA_HOST_FUNC REAL3* GetPredictVel() const { return m_pPredictVel; }
+		MCUDA_HOST_FUNC REAL3* GetPreviousVelArray() const { return m_pPreviousVel; }
+		MCUDA_HOST_FUNC REAL3* GetPredictVelArray() const { return m_pPredictVel; }
 
-		MCUDA_HOST_FUNC void SetPreviousVel(REAL3* pPreviousVel) { m_pPreviousVel = pPreviousVel; }
-		MCUDA_HOST_FUNC void SetPredictVel(REAL3* pPredictVel) { m_pPredictVel = pPredictVel; }
+		MCUDA_HOST_FUNC void SetPreviousVelArray(REAL3* pPreviousVel) { m_pPreviousVel = pPreviousVel; }
+		MCUDA_HOST_FUNC void SetPredictVelArray(REAL3* pPredictVel) { m_pPredictVel = pPredictVel; }
 
 	private:
 		REAL* MCUDA_RESTRICT m_pDensity;
@@ -88,8 +88,8 @@ namespace mps
 			pParam->SetPressureArray(m_pressure);
 			pParam->SetFactorAArray(m_factorA);
 
-			pParam->SetPreviousVel(m_pPreviousVel);
-			pParam->SetPredictVel(m_pPredictVel);
+			pParam->SetPreviousVelArray(m_pPreviousVel);
+			pParam->SetPredictVelArray(m_pPredictVel);
 			ParticleResource::SetParam();
 		}
 

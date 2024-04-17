@@ -41,7 +41,7 @@ void mps::System::Initalize()
             std::make_unique<mps::SPHObject>(),
             std::make_unique<mps::SpatialHash>());
         //ResizeParticle(5);
-        ViscosityTestScene(5, 1000);
+        ViscosityTestScene(5, 300);
         m_pRenderManager->AddModel(m_pSPHModel);
     }
 
@@ -185,7 +185,7 @@ void mps::System::OnUpdate()
     mps::kernel::UpdatePosition(physParam, *pSPHParam);
     
     m_pCamera->GetTransform()->Set({ 6.04415, 9.72579, -10.5085 }, { 0.86881, 0, 0.495144 }, { -0.217152, 0.898697, 0.381028 }, { -0.444984, -0.438562, 0.780798 });
-    Capture(500, 2);
+    Capture(300, 4);
     m_frame++;
 }
 
@@ -210,6 +210,11 @@ void mps::System::Capture(uint32_t endFrame, uint32_t step)
     if (m_frame == 0 || m_frame % step == 0)
     {
         static int index = 0;
+        if (index == 0)
+        {
+            index++;
+            return;
+        }
         char filename[100];
         sprintf_s(filename, "../../capture/capture-%d.bmp", index);
         BITMAPFILEHEADER bf;
@@ -365,7 +370,7 @@ void mps::System::ViscosityTestScene(size_t size, size_t height)
     std::vector<REAL> h_radius;
     std::vector<REAL3> h_vel(numParticle, REAL3{ 0.0, 0.0, 0.0 });
     std::vector<REAL> h_mass(numParticle, pSPHMaterial->GetMass());
-    std::vector<glm::fvec4> h_color(numParticle, glm::fvec4{ 0.0f, 0.0f, 1.0f, 1.0f });
+    std::vector<glm::fvec4> h_color(numParticle, glm::fvec4{ 0.2f, 0.7f, 1.0f, 1.0f });
 
     h_pos.reserve(numParticle);
     h_radius.reserve(numParticle);

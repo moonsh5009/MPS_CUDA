@@ -11,11 +11,13 @@ namespace mps
 		MCUDA_HOST_DEVICE_FUNC ~ParticleParam() {}
 
 	public:
-		MCUDA_DEVICE_FUNC REAL& Radius(uint32_t idx) { return m_pRadius[idx]; }
+		MCUDA_DEVICE_FUNC REAL Radius(uint32_t idx) { return m_pRadius[idx]; }
+
 		MCUDA_DEVICE_FUNC const REAL& Radius(uint32_t idx) const { return m_pRadius[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC REAL* GetRadiusArray() const { return m_pRadius; }
+
 		MCUDA_HOST_FUNC void SetRadiusArray(REAL* pRadius) { m_pRadius = pRadius; }
 
 	private:

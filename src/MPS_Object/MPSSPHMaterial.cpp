@@ -4,7 +4,7 @@
 mps::SPHMaterial::SPHMaterial() : mps::VirtualMaterial<mps::SPHMaterialParam>{}
 {
 	SetParam(0.1, 1.0);
-	SetViscosity(100.0);
+	SetViscosity(1.0);
 	SetSurfaceTension(0.01);
 	SetColor({ 0.3f, 0.8f, 0.2f, 1.0f });
 }

@@ -5,21 +5,21 @@
 #include "../MPS_Object/MPSUniformDef.h"
 #include "../MPS_Object/MPSObject.h"
 
-__global__ void InitForce_kernel(const mps::ObjectParam objParam)
+__global__ void InitForce_kernel(mps::ObjectParam objParam)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= objParam.GetSize()) return;
 
 	objParam.Force(id) = REAL3{ 0.0 };
 }
-__global__ void ApplyGravity_kernel(const mps::PhysicsParam physicsParam, const mps::ObjectParam objParam)
+__global__ void ApplyGravity_kernel(const mps::PhysicsParam physicsParam, mps::ObjectParam objParam)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= objParam.GetSize()) return;
 
 	objParam.Force(id) += physicsParam.gravity * objParam.Mass(id);
 }
-__global__ void UpdateVelocity_kernel(const mps::PhysicsParam physicsParam, const mps::ObjectParam objParam)
+__global__ void UpdateVelocity_kernel(const mps::PhysicsParam physicsParam, mps::ObjectParam objParam)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= objParam.GetSize()) return;
@@ -31,7 +31,7 @@ __global__ void UpdateVelocity_kernel(const mps::PhysicsParam physicsParam, cons
 	}
 }
 
-__global__ void UpdatePosition_kernel(const mps::PhysicsParam physicsParam, const mps::ObjectParam objParam)
+__global__ void UpdatePosition_kernel(const mps::PhysicsParam physicsParam, mps::ObjectParam objParam)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= objParam.GetSize()) return;
@@ -39,7 +39,7 @@ __global__ void UpdatePosition_kernel(const mps::PhysicsParam physicsParam, cons
 	objParam.Position(id) += physicsParam.dt * objParam.Velocity(id);
 }
 
-__global__ void BoundaryCollision_kernel(const mps::PhysicsParam physicsParam, const mps::ObjectParam objParam)
+__global__ void BoundaryCollision_kernel(const mps::PhysicsParam physicsParam, mps::ObjectParam objParam)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= objParam.GetSize()) return;

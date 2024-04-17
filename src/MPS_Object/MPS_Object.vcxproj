@@ -16,6 +16,8 @@
     <ClInclude Include="MPSDef.h" />
     <ClInclude Include="MPSGBArchiver.h" />
     <ClInclude Include="MPSMaterial.h" />
+    <ClInclude Include="MPSMeshObject.h" />
+    <ClInclude Include="MPSMeshParam.h" />
     <ClInclude Include="MPSModel.h" />
     <ClInclude Include="MPSObject.h" />
     <ClInclude Include="MPSObjectParam.h" />
@@ -41,6 +43,7 @@
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="MPSMeshObject.cu" />
     <CudaCompile Include="MPSObject.cu" />
     <CudaCompile Include="MPSSpatialHash.cu" />
     <CudaCompile Include="MPSSPHObject.cu" />

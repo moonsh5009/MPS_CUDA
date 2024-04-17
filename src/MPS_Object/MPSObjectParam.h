@@ -15,11 +15,17 @@ namespace mps
 	public:
 		MCUDA_HOST_DEVICE_FUNC size_t GetSize() const { return m_size; }
 
-		MCUDA_DEVICE_FUNC glm::fvec4& Color(uint32_t idx) const { return m_pColor[idx]; }
-		MCUDA_DEVICE_FUNC REAL3& Position(uint32_t idx) const { return m_pPos[idx]; }
-		MCUDA_DEVICE_FUNC REAL& Mass(uint32_t idx) const { return m_pMass[idx]; }
-		MCUDA_DEVICE_FUNC REAL3& Velocity(uint32_t idx) const { return m_pVelocity[idx]; }
-		MCUDA_DEVICE_FUNC REAL3& Force(uint32_t idx) const { return m_pForce[idx]; }
+		MCUDA_DEVICE_FUNC glm::fvec4& Color(uint32_t idx) { return m_pColor[idx]; }
+		MCUDA_DEVICE_FUNC REAL3& Position(uint32_t idx) { return m_pPos[idx]; }
+		MCUDA_DEVICE_FUNC REAL& Mass(uint32_t idx) { return m_pMass[idx]; }
+		MCUDA_DEVICE_FUNC REAL3& Velocity(uint32_t idx) { return m_pVelocity[idx]; }
+		MCUDA_DEVICE_FUNC REAL3& Force(uint32_t idx) { return m_pForce[idx]; }
+
+		MCUDA_DEVICE_FUNC const glm::fvec4 Color(uint32_t idx) const { return m_pColor[idx]; }
+		MCUDA_DEVICE_FUNC const REAL3 Position(uint32_t idx) const { return m_pPos[idx]; }
+		MCUDA_DEVICE_FUNC const REAL Mass(uint32_t idx) const { return m_pMass[idx]; }
+		MCUDA_DEVICE_FUNC const REAL3 Velocity(uint32_t idx) const { return m_pVelocity[idx]; }
+		MCUDA_DEVICE_FUNC const REAL3 Force(uint32_t idx) const { return m_pForce[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC void SetSize(size_t size) { m_size = size; }
