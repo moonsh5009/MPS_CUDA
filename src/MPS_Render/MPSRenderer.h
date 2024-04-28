@@ -1,11 +1,12 @@
 #pragma once
 
+#include "../MPS_Object/MPSSPHModel.h"
+
 #include "HeaderPre.h"
 
 namespace mps
 {
 	class GBArchiver;
-	class Model;
 	namespace rndr
 	{
 		class GLPArchiver;

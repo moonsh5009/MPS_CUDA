@@ -13,6 +13,7 @@ namespace mps
 		{
 			enum class ProgramDef : int
 			{
+				Mesh,
 				Particle,
 				Size,
 			};
@@ -20,7 +21,8 @@ namespace mps
 			using ShaderInfo = std::tuple<std::string_view, std::string_view>;
 			constexpr std::array<ShaderInfo, static_cast<int>(ProgramDef::Size)> aShaderInfo
 			{
-				ShaderInfo{ "particleShader.vert", "particleShader.frag" },
+				ShaderInfo{ "MeshShader.vert", "MeshShader.frag" },
+				ShaderInfo{ "ParticleShader.vert", "ParticleShader.frag" },
 			};
 		}
 

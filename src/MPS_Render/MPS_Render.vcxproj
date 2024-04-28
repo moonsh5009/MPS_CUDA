@@ -23,6 +23,7 @@
     <ClInclude Include="MPSRenderer.h" />
     <ClInclude Include="MPSRenderManager.h" />
     <ClInclude Include="MPSSPHRenderer.h" />
+    <ClInclude Include="MPSMeshRenderer.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
@@ -35,12 +36,16 @@
     <ClCompile Include="MPSRenderer.cpp" />
     <ClCompile Include="MPSRenderManager.cpp" />
     <ClCompile Include="MPSSPHRenderer.cpp" />
+    <ClCompile Include="MPSMeshRenderer.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\shader\particleShader.frag" />
-    <None Include="..\shader\particleShader.glsl" />
-    <None Include="..\shader\particleShader.vert" />
+    <None Include="..\shader\MeshShader.frag" />
+    <None Include="..\shader\MeshShader.glsl" />
+    <None Include="..\shader\MeshShader.vert" />
+    <None Include="..\shader\ParticleShader.frag" />
+    <None Include="..\shader\ParticleShader.glsl" />
+    <None Include="..\shader\ParticleShader.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B090E9F4-A62C-441E-9CBB-15876F0EB637}</ProjectGuid>

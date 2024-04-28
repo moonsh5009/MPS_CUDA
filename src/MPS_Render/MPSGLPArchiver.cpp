@@ -12,8 +12,8 @@ void mps::rndr::GLPArchiver::Initalize()
 		vShader.Create(vertPath, GL_VERTEX_SHADER);
 		fShader.Create(fragPath, GL_FRAGMENT_SHADER);
 
-		m_aProgram[static_cast<int>(def::ProgramDef::Particle)].Create();
-		m_aProgram[static_cast<int>(def::ProgramDef::Particle)].CompileShader(vShader);
-		m_aProgram[static_cast<int>(def::ProgramDef::Particle)].CompileShader(fShader);
+		m_aProgram[i].Create();
+		m_aProgram[i].CompileShader(vShader);
+		m_aProgram[i].CompileShader(fShader);
 	}
 }

@@ -15,6 +15,8 @@
     <ClInclude Include="AdvectUtil.h" />
     <ClInclude Include="HeaderPost.h" />
     <ClInclude Include="HeaderPre.h" />
+    <ClInclude Include="MPSParticleSamplingUtil.cuh" />
+    <ClInclude Include="MPSParticleSamplingUtil.h" />
     <ClInclude Include="SPHKernel.cuh" />
     <ClInclude Include="SPHUtil.cuh" />
     <ClInclude Include="SPHUtil.h" />
@@ -25,6 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="AdvectUtil.cu" />
+    <CudaCompile Include="MPSParticleSamplingUtil.cu" />
     <CudaCompile Include="SPHUtil.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

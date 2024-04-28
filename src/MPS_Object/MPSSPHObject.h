@@ -29,6 +29,7 @@ namespace mps
 		thrust::device_vector<REAL> m_pressure;
 		thrust::device_vector<REAL> m_factorA;
 
+		thrust::device_vector<REAL3> m_tempVec3;
 		thrust::device_vector<REAL3> m_previousVel;
 		thrust::device_vector<REAL3> m_predictVel;
 	};

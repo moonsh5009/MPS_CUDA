@@ -25,9 +25,6 @@
     <Filter Include="Renderer\Base">
       <UniqueIdentifier>{29a92c5b-90a4-4011-b751-fd98e0b1a71d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\SPH">
-      <UniqueIdentifier>{eb9b5bc7-9d0b-41dd-9fb2-eb54f97545d2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="MGLPArchiver">
       <UniqueIdentifier>{aeab5b77-a1ee-4d79-b0a2-a5ee2e4c4196}</UniqueIdentifier>
     </Filter>
@@ -36,6 +33,15 @@
     </Filter>
     <Filter Include="Shader\Particle">
       <UniqueIdentifier>{c19be9fc-7d2d-4841-af1d-c49487c52287}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\SPH">
+      <UniqueIdentifier>{eb9b5bc7-9d0b-41dd-9fb2-eb54f97545d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader\TriMesh">
+      <UniqueIdentifier>{9ce34546-fb78-4ba8-ab3f-434199725666}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Mesh">
+      <UniqueIdentifier>{b93f33d2-a912-4550-a0c5-b48e63242f99}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -76,6 +82,9 @@
     <ClInclude Include="MPSGLPArchiver.h">
       <Filter>MGLPArchiver</Filter>
     </ClInclude>
+    <ClInclude Include="MPSMeshRenderer.h">
+      <Filter>Renderer\Mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -106,16 +115,28 @@
     <ClCompile Include="MPSGLPArchiver.cpp">
       <Filter>MGLPArchiver</Filter>
     </ClCompile>
+    <ClCompile Include="MPSMeshRenderer.cpp">
+      <Filter>Renderer\Mesh</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\shader\particleShader.frag">
+    <None Include="..\shader\ParticleShader.frag">
       <Filter>Shader\Particle</Filter>
     </None>
-    <None Include="..\shader\particleShader.vert">
+    <None Include="..\shader\ParticleShader.vert">
       <Filter>Shader\Particle</Filter>
     </None>
-    <None Include="..\shader\particleShader.glsl">
+    <None Include="..\shader\ParticleShader.glsl">
       <Filter>Shader\Particle</Filter>
+    </None>
+    <None Include="..\shader\MeshShader.frag">
+      <Filter>Shader\TriMesh</Filter>
+    </None>
+    <None Include="..\shader\MeshShader.glsl">
+      <Filter>Shader\TriMesh</Filter>
+    </None>
+    <None Include="..\shader\MeshShader.vert">
+      <Filter>Shader\TriMesh</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -1,6 +1,6 @@
 #version 450 core
 
-layout (std140, binding = 0) uniform Camera
+layout(std140, binding = 0) uniform Camera
 {
     mat4 viewMat;
     mat4 projMat;
@@ -8,7 +8,7 @@ layout (std140, binding = 0) uniform Camera
     mat4 projInvMat;
 } uCamera;
 
-layout (std140, binding = 1) uniform Light
+layout(std140, binding = 1) uniform Light
 {
     vec3 pos;
     vec4 color;
@@ -16,10 +16,9 @@ layout (std140, binding = 1) uniform Light
 
 struct VertexShaderOut
 {
-    vec2 uv;
     vec3 pos;
-    float radius;
-    vec4 color;
+    vec4 frontColor;
+    vec4 backColor;
     vec3 unit2Light;
     vec3 lightColor;
 };

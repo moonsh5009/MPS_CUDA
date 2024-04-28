@@ -10,6 +10,9 @@
     <Filter Include="SPH">
       <UniqueIdentifier>{0f4d3c0a-79f2-4ccd-81c9-151930972760}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mesh">
+      <UniqueIdentifier>{ac013fa1-bcee-40f4-a3f3-b1811b3d5a1d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HeaderPost.h">
@@ -36,6 +39,12 @@
     <ClInclude Include="SPHKernel.cuh">
       <Filter>SPH</Filter>
     </ClInclude>
+    <ClInclude Include="MPSParticleSamplingUtil.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSParticleSamplingUtil.cuh">
+      <Filter>Mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -48,6 +57,9 @@
     </CudaCompile>
     <CudaCompile Include="SPHUtil.cu">
       <Filter>SPH</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSParticleSamplingUtil.cu">
+      <Filter>Mesh</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

@@ -7,13 +7,13 @@ namespace mps
 	class ParticleParam : public ObjectParam
 	{
 	public:
-		MCUDA_HOST_DEVICE_FUNC ParticleParam() : ObjectParam{}, m_pRadius{ nullptr } {};
+		MCUDA_HOST_DEVICE_FUNC ParticleParam() : ObjectParam{}, m_pRadius{ nullptr } {}
 		MCUDA_HOST_DEVICE_FUNC ~ParticleParam() {}
 
 	public:
-		MCUDA_DEVICE_FUNC REAL Radius(uint32_t idx) { return m_pRadius[idx]; }
+		MCUDA_DEVICE_FUNC REAL& Radius(uint32_t idx) { return m_pRadius[idx]; }
 
-		MCUDA_DEVICE_FUNC const REAL& Radius(uint32_t idx) const { return m_pRadius[idx]; }
+		MCUDA_DEVICE_FUNC REAL Radius(uint32_t idx) const { return m_pRadius[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC REAL* GetRadiusArray() const { return m_pRadius; }

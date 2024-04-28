@@ -1,38 +1,181 @@
 #include "stdafx.h"
 #include "SPHUtil.cuh"
-#include <thrust/extrema.h>
-#include "thrust/host_vector.h"
 #include "AdvectUtil.h"
+
+#include <thrust/host_vector.h>
+#include <thrust/extrema.h>
 
 #define DEBUG_PRINT		0
 
-namespace
+void mps::kernel::sph::ComputeBoundaryParticleVolume_0(const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& material, const mps::SpatialHashParam& hash)
 {
 	constexpr auto nBlockSize = 256u;
-}
 
-void mps::kernel::sph::ComputeDensity(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
-{
-	const auto nSize = sph.GetSize();
+	const auto nSize = boundaryParticle.GetSize();
 	if (nSize == 0) return;
 
-	ComputeDensity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(sph, material, hash);
+	ComputeBoundaryParticleVolume_0_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(boundaryParticle, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+void mps::kernel::sph::ComputeBoundaryParticleVolume_1(
+	const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& material, const mps::SpatialHashParam& hash,
+	const mps::BoundaryParticleParam& refBoundaryParticle, const mps::MeshMaterialParam& refMaterial, const mps::SpatialHashParam& refHash)
+{
+	constexpr auto nBlockSize = 256u;
+
+	const auto nSize = boundaryParticle.GetSize();
+	if (nSize == 0) return;
+
+	ComputeBoundaryParticleVolume_1_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(boundaryParticle, material, hash, refBoundaryParticle, refMaterial, refHash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+void mps::kernel::sph::ComputeBoundaryParticleVolume_2(const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& material)
+{
+	constexpr auto nBlockSize = 1024u;
+
+	const auto nSize = boundaryParticle.GetSize();
+	if (nSize == 0) return;
+
+	ComputeBoundaryParticleVolume_2_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(boundaryParticle, material);
 	CUDA_CHECK(cudaPeekAtLastError());
 }
 
-void mps::kernel::sph::ComputeDFSPHFactor(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+void mps::kernel::sph::ComputeDensity_0(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
 {
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
-	ComputeDFSPHFactor_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+	ComputeDensity_0_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
 		(sph, material, hash);
 	CUDA_CHECK(cudaPeekAtLastError());
 }
-
-void mps::kernel::sph::ComputeDFSPHConstantDensity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+void mps::kernel::sph::ComputeDensity_1(
+	const mps::SPHParam& sph, const mps::SPHMaterialParam& sphMaterial, const mps::SpatialHashParam& sphHash, 
+	const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& boundaryParticleMaterial, const mps::SpatialHashParam& boundarhParticleHash)
 {
+	constexpr auto nBlockSize = 256u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeDensity_1_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, sphMaterial, sphHash, boundaryParticle, boundaryParticleMaterial, boundarhParticleHash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+void mps::kernel::sph::ComputeDensity_2(const mps::SPHParam& sph, const mps::SPHMaterialParam& material)
+{
+	constexpr auto nBlockSize = 1024u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeDensity_2_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+
+void mps::kernel::sph::ComputeDFSPHFactor_0(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+{
+	constexpr auto nBlockSize = 256u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeDFSPHFactor_0_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+void mps::kernel::sph::ComputeDFSPHFactor_1(
+	const mps::SPHParam& sph, const mps::SPHMaterialParam& sphMaterial, const mps::SpatialHashParam& sphHash,
+	const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& boundaryParticleMaterial, const mps::SpatialHashParam& boundarhParticleHash)
+{
+	constexpr auto nBlockSize = 256u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeDFSPHFactor_1_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, sphMaterial, sphHash, boundaryParticle, boundaryParticleMaterial, boundarhParticleHash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+void mps::kernel::sph::ComputeDFSPHFactor_2(const mps::SPHParam& sph, const mps::SPHMaterialParam& material)
+{
+	constexpr auto nBlockSize = 1024u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeDFSPHFactor_2_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+
+void mps::kernel::sph::ComputeDensityDelta_0(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+{
+	constexpr auto nBlockSize = 256u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeDensityDelta_0_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+void mps::kernel::sph::ComputeDensityDelta_1(const mps::SPHParam& sph, const mps::SPHMaterialParam& sphMaterial, const mps::SpatialHashParam& sphHash, const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& boundaryParticleMaterial, const mps::SpatialHashParam& boundarhParticleHash)
+{
+	constexpr auto nBlockSize = 256u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ComputeDensityDelta_1_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, sphMaterial, sphHash, boundaryParticle, boundaryParticleMaterial, boundarhParticleHash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+
+void mps::kernel::sph::ApplyDFSPH_0(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+{
+	constexpr auto nBlockSize = 256u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ApplyDFSPH_0_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material, hash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+void mps::kernel::sph::ApplyDFSPH_1(const mps::SPHParam& sph, const mps::SPHMaterialParam& sphMaterial, const mps::SpatialHashParam& sphHash, const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& boundaryParticleMaterial, const mps::SpatialHashParam& boundarhParticleHash)
+{
+	constexpr auto nBlockSize = 256u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ApplyDFSPH_1_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, sphMaterial, sphHash, boundaryParticle, boundaryParticleMaterial, boundarhParticleHash);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+void mps::kernel::sph::ApplyDFSPH_2(const mps::SPHParam& sph, const mps::SPHMaterialParam& material)
+{
+	constexpr auto nBlockSize = 1024u;
+
+	const auto nSize = sph.GetSize();
+	if (nSize == 0) return;
+
+	ApplyDFSPH_2_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+		(sph, material);
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+
+void mps::kernel::sph::ComputeDFSPHConstantDensity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& sphMaterial, const mps::SpatialHashParam& sphHash, const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& boundaryParticleMaterial, const mps::SpatialHashParam& boundarhParticleHash)
+{
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
@@ -44,8 +187,10 @@ void mps::kernel::sph::ComputeDFSPHConstantDensity(const mps::PhysicsParam& phys
 	{
 		d_error.front() = static_cast<REAL>(0.0);
 
+		ComputeDensityDelta_0(sph, sphMaterial, sphHash);
+		ComputeDensityDelta_1(sph, sphMaterial, sphHash, boundaryParticle, boundaryParticleMaterial, boundarhParticleHash);
 		ComputeCDStiffness_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize, nBlockSize * sizeof(REAL) >> >
-			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_error.data()));
+			(physParam, sph, sphMaterial, thrust::raw_pointer_cast(d_error.data()));
 		CUDA_CHECK(cudaPeekAtLastError());
 
 		h_error = d_error;
@@ -58,17 +203,18 @@ void mps::kernel::sph::ComputeDFSPHConstantDensity(const mps::PhysicsParam& phys
 		OutputDebugStringA(ss.str().c_str());
 	#endif
 
-		mps::kernel::ResetForce(sph);
-		ApplyDFSPH_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-			(sph, material, hash);
-		CUDA_CHECK(cudaPeekAtLastError());
+		ApplyDFSPH_0(sph, sphMaterial, sphHash);
+		ApplyDFSPH_1(sph, sphMaterial, sphHash, boundaryParticle, boundaryParticleMaterial, boundarhParticleHash);
+		ApplyDFSPH_2(sph, sphMaterial);
 		mps::kernel::UpdateVelocity(physParam, sph);
 		l++;
 	}
 }
 
-void mps::kernel::sph::ComputeDFSPHDivergenceFree(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+void mps::kernel::sph::ComputeDFSPHDivergenceFree(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& sphMaterial, const mps::SpatialHashParam& sphHash, const mps::BoundaryParticleParam& boundaryParticle, const mps::MeshMaterialParam& boundaryParticleMaterial, const mps::SpatialHashParam& boundarhParticleHash)
 {
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
@@ -80,8 +226,10 @@ void mps::kernel::sph::ComputeDFSPHDivergenceFree(const mps::PhysicsParam& physP
 	{
 		d_error.front() = static_cast<REAL>(0.0);
 
+		ComputeDensityDelta_0(sph, sphMaterial, sphHash);
+		ComputeDensityDelta_1(sph, sphMaterial, sphHash, boundaryParticle, boundaryParticleMaterial, boundarhParticleHash);
 		ComputeDFStiffness_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize, nBlockSize * sizeof(REAL) >> >
-			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_error.data()));
+			(physParam, sph, sphMaterial, thrust::raw_pointer_cast(d_error.data()));
 		CUDA_CHECK(cudaPeekAtLastError());
 
 		h_error = d_error;
@@ -94,10 +242,9 @@ void mps::kernel::sph::ComputeDFSPHDivergenceFree(const mps::PhysicsParam& physP
 		OutputDebugStringA(ss.str().c_str());
 	#endif
 
-		mps::kernel::ResetForce(sph);
-		ApplyDFSPH_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-			(sph, material, hash);
-		CUDA_CHECK(cudaPeekAtLastError());
+		ApplyDFSPH_0(sph, sphMaterial, sphHash);
+		ApplyDFSPH_1(sph, sphMaterial, sphHash, boundaryParticle, boundaryParticleMaterial, boundarhParticleHash);
+		ApplyDFSPH_2(sph, sphMaterial);
 		mps::kernel::UpdateVelocity(physParam, sph);
 		l++;
 	}
@@ -105,6 +252,8 @@ void mps::kernel::sph::ComputeDFSPHDivergenceFree(const mps::PhysicsParam& physP
 
 void mps::kernel::sph::ApplyExplicitViscosity(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
 {
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
@@ -115,6 +264,8 @@ void mps::kernel::sph::ApplyExplicitViscosity(const mps::SPHParam& sph, const mp
 
 void mps::kernel::sph::ApplyExplicitSurfaceTension(const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
 {
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
@@ -123,51 +274,64 @@ void mps::kernel::sph::ApplyExplicitSurfaceTension(const mps::SPHParam& sph, con
 	CUDA_CHECK(cudaPeekAtLastError());
 }
 
-void mps::kernel::sph::ApplyImplicitViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+void mps::kernel::sph::ApplyImplicitJacobiViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
 {
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
 	thrust::device_vector<REAL> d_error(1);
 	thrust::host_vector<REAL> h_error(1);
 
+	thrust::device_vector<REAL3> d_tmp(sph.GetSize());
+
 	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVelArray()));
 	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPreviousVelArray()));
 
+	constexpr REAL rho = 0.9962;
+	REAL underRelax = 1.0;
 	REAL omega = 1.0;
-	REAL prevError = 0.0;
+
 	uint32_t l = 0u;
-	while (l < 100u)
+	while (l < 300u)
 	{
+		if (l < 10u) { omega = 1.0; underRelax = 1.0; }
+		else if (l == 10u) { omega = 2.0 / (2.0 - rho * rho); underRelax = 0.9; }
+		else { omega = 4.0 / (4.0 - rho * rho * omega); underRelax = 0.8; }
+
 		d_error.front() = static_cast<REAL>(0.0);
 
 		ComputeJacobiViscosity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize, nBlockSize * sizeof(REAL) >> >
-			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_error.data()));
+			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_tmp.data()), omega, underRelax, thrust::raw_pointer_cast(d_error.data()));
 		CUDA_CHECK(cudaPeekAtLastError());
 
 		h_error = d_error;
-		//h_error.front() /= static_cast<REAL>(sph.GetSize() + DBL_EPSILON);
-		if (h_error.front() < 1.0e-3 && l >= 0u) break;
-		{
-			std::stringstream ss;
-			ss << "Implicit Viscosity Error " << l << " : " << h_error.front() << std::endl;
-			OutputDebugStringA(ss.str().c_str());
-		}
-		omega = omega * ((prevError > 1.0e-5) ? std::min(prevError / h_error.front(), 1.0) : 1.0);
-		//omega = std::min((prevError > 1.0e-5) ? std::min(prevError / h_error.front(), 1.0) : 1.0, omega);
-		prevError = h_error.front();
+		if (h_error.front() < 1.0e-1 * physParam.dt) break;
+
+	#if DEBUG_PRINT
+		std::stringstream ss;
+		ss << "Implicit Jacobi Viscosity Error " << l << " : " << h_error.front() << std::endl;
+		ss << "Omega " << l << " : " << omega << std::endl;
+		OutputDebugStringA(ss.str().c_str());
+	#endif
 
 		ApplyJacobiViscosity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-			(sph, omega);
+			(sph, thrust::raw_pointer_cast(d_tmp.data()));
 		CUDA_CHECK(cudaPeekAtLastError());
 		l++;
 	}
 
 	thrust::copy(thrust::device_pointer_cast(sph.GetPredictVelArray()), thrust::device_pointer_cast(sph.GetPredictVelArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetVelocityArray()));
+	std::stringstream ss;
+	ss << "Implicit Jacobi Viscosity Loop : " << l << std::endl;
+	OutputDebugStringA(ss.str().c_str());
 }
 
 void mps::kernel::sph::ApplyImplicitGDViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
 {
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
@@ -211,6 +375,8 @@ void mps::kernel::sph::ApplyImplicitGDViscosity(const mps::PhysicsParam& physPar
 
 void mps::kernel::sph::ApplyImplicitCGViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
 {
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
@@ -226,14 +392,10 @@ void mps::kernel::sph::ApplyImplicitCGViscosity(const mps::PhysicsParam& physPar
 	CUDA_CHECK(cudaPeekAtLastError());
 	thrust::copy(d_R.begin(), d_R.end(), d_V.begin());
 
-	REAL factor = 0.01;
+	constexpr REAL factor = 0.01;
 	uint32_t l = 0u;
 	while (l < 100u)
 	{
-		if (l < 18u)		factor = 0.01;
-		else if (l == 18u)	factor = 0.1;
-		else				factor += l * 0.016;
-		
 		ComputeCGViscosityAv_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
 			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_V.data()), thrust::raw_pointer_cast(d_Av.data()), factor);
 		CUDA_CHECK(cudaPeekAtLastError());
@@ -278,6 +440,8 @@ void mps::kernel::sph::ApplyImplicitCGViscosity(const mps::PhysicsParam& physPar
 
 void mps::kernel::sph::DensityColorTest(const mps::SPHParam& sph, const mps::SPHMaterialParam& material)
 {
+	constexpr auto nBlockSize = 256u;
+
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 

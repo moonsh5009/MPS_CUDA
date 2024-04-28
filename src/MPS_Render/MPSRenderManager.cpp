@@ -3,12 +3,16 @@
 
 #include "../MPS_Object/MPSGBArchiver.h"
 
+#include "../MPS_Object/MPSObstacleModel.h"
+#include "../MPS_Object/MPSMeshObject.h"
+
 #include "../MPS_Object/MPSSPHModel.h"
-#include "../MPS_Object/MPSSPHMaterial.h"
 #include "../MPS_Object/MPSSPHObject.h"
+#include "../MPS_Object/MPSSPHMaterial.h"
 
 #include "../MPS_Object/MPSSpatialHash.h"
 
+#include "MPSMeshRenderer.h"
 #include "MPSSPHRenderer.h"
 
 mps::rndr::RenderManager::RenderManager() : m_pGLPArchiver{ std::make_unique<GLPArchiver>() }
@@ -16,9 +20,11 @@ mps::rndr::RenderManager::RenderManager() : m_pGLPArchiver{ std::make_unique<GLP
 	m_pGLPArchiver->Initalize();
 
 	m_mRndrID.reserve(RENDERER::Size);
+	m_mRndrID.emplace(typeid(mps::ObstacleModel).hash_code(), RENDERER::Mesh);
 	m_mRndrID.emplace(typeid(mps::SPHModel).hash_code(), RENDERER::SPH);
 
 	m_aRenderer.resize(RENDERER::Size);
+	m_aRenderer[RENDERER::Mesh] = std::make_shared<mps::rndr::MeshRenderer>();
 	m_aRenderer[RENDERER::SPH] = std::make_shared<mps::rndr::SPHRenderer>();
 
 	m_aModel.resize(RENDERER::Size);

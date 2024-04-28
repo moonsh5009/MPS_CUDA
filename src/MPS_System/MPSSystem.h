@@ -63,6 +63,7 @@ namespace mps
 		void ResizeParticle(size_t size);
 		void ViscosityTestScene(size_t size, size_t height);
 		std::shared_ptr<mps::Model> m_pSPHModel;
+		std::shared_ptr<mps::Model> m_pBoundaryModel;
 	};
 }
 

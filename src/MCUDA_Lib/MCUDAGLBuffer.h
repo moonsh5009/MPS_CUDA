@@ -39,8 +39,8 @@ namespace mcuda
 			DeviceResource& operator=(DeviceResource&& other) = default;
 
 		public:
-			T* GetData() const { return m_ptr; }
-			size_t GetSize() const { return m_size; }
+			constexpr T* GetData() const { return m_ptr; }
+			constexpr size_t GetSize() const { return m_size; }
 
 		private:
 			std::weak_ptr<CudaGLResource> m_pCuRes;

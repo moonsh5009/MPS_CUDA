@@ -6,10 +6,10 @@
 #include "../MPS_Render/MPSRenderManager.h"
 #include "../MPS_Render/MPSCamera.h"
 
+#include "../MPS_Object/MPSObstacleModel.h"
 #include "../MPS_Object/MPSSPHModel.h"
-#include "../MPS_Object/MPSSPHObject.h"
-#include "../MPS_Object/MPSSPHMaterial.h"
-#include "../MPS_Object/MPSSpatialHash.h"
+
+#include "../MPS_Computer/MPSParticleSamplingUtil.h"
 
 mps::System::System() : SystemEventHandler{}, m_frame{ 0 }, b_runSim{ false }
 {}
@@ -36,12 +36,43 @@ void mps::System::Initalize()
         m_pCamera = std::make_shared<mps::rndr::Camera>();
         m_pCameraHandler = std::make_unique<mps::rndr::CameraUserInputEventHandler>(m_pCamera.get());
 
-        m_pSPHModel = std::make_shared<mps::SPHModel>(
-            std::make_unique<mps::SPHMaterial>(),
-            std::make_unique<mps::SPHObject>(),
-            std::make_unique<mps::SpatialHash>());
-        //ResizeParticle(5);
-        ViscosityTestScene(5, 300);
+        constexpr auto radius = 0.1;
+        {
+            m_pSPHModel = std::make_shared<mps::SPHModel>(
+                std::make_unique<mps::SPHObject>(),
+                std::make_unique<mps::SPHMaterial>(),
+                std::make_unique<mps::SpatialHash>());
+
+            auto pSPHMaterial = static_cast<mps::SPHMaterial*>(m_pSPHModel->GetMaterial());
+            pSPHMaterial->SetRadius(radius * 4);
+        }
+        {
+            m_pBoundaryModel = std::make_shared<mps::ObstacleModel>(
+                std::make_unique<mps::MeshObject>(),
+                std::make_unique<mps::BoundaryParticleObject>(),
+                std::make_unique<mps::MeshMaterial>(),
+                std::make_unique<mps::SpatialHash>());
+
+            auto pMeshObject = m_pBoundaryModel->GetTarget<mps::MeshObject>();
+            auto pMeshMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
+            auto pBoundaryParticle = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
+            auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
+            pMeshObject->LoadMesh("../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
+            pMeshMaterial->SetParam(radius * 4, 1.0);
+
+            auto pMeshRes = pMeshObject->GetDeviceResource<mps::MeshResource>();
+            auto pMeshParam = pMeshRes->GetMeshParam().lock();
+            mps::kernel::ParticleSampling::ParticleSampling(*pMeshParam, pMeshMaterial->GetParam(), *pBoundaryParticle);
+
+            pBoundaryParticleHash->SetObjectSize(pBoundaryParticle->GetSize());
+            pBoundaryParticleHash->SetCeilSize(radius * 4);
+            pBoundaryParticleHash->SetHashSize({ 64, 64, 64 });
+        }
+
+        ResizeParticle(5);
+        //ViscosityTestScene(5, 300);
+
+        m_pRenderManager->AddModel(m_pBoundaryModel);
         m_pRenderManager->AddModel(m_pSPHModel);
     }
 
@@ -70,7 +101,7 @@ void mps::System::OnMouseWheel(mevent::Flag flag, glm::ivec2 offset, glm::ivec2 
 
 void mps::System::OnKeyDown(uint32_t key, uint32_t repCnt, mevent::Flag flag)
 {
-    auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
+    auto pSPHObject = m_pSPHModel->GetTarget<mps::SPHObject>();
     uint32_t sqNumParticles = static_cast<uint32_t>(powf(static_cast<float>(pSPHObject->GetSize()), 1.0f / 3.0f));
     uint32_t offset = 5;
     switch (key)
@@ -147,45 +178,75 @@ void mps::System::OnUpdate()
 {
     if (!b_runSim) return;
 
-    auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
-    auto pSPHMaterial = static_cast<mps::SPHMaterial*>(m_pSPHModel->GetMaterial());
-    auto pSpatialHash = static_cast<mps::SpatialHash*>(m_pSPHModel->GetTree());
+    auto pBoundaryParticleObject = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
+    auto pBoundaryParticleMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
+    auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
 
-    const auto sphRes = pSPHObject->GetDeviceResource<mps::SPHResource>();
-    const auto pSPHParam = sphRes->GetSPHParam().lock();
+    auto pSPHObject = m_pSPHModel->GetTarget<mps::SPHObject>();
+    auto pSPHMaterial = static_cast<mps::SPHMaterial*>(m_pSPHModel->GetMaterial());
+    auto pSPHHash = static_cast<mps::SpatialHash*>(m_pSPHModel->GetTree());
+
+    const auto pBoundaryParticleRes = pBoundaryParticleObject->GetDeviceResource<mps::BoundaryParticleResource>();
+    const auto pBoundaryParticleParam = pBoundaryParticleRes->GetBoundaryParticleParam().lock();
+    if (!pBoundaryParticleParam) return;
+
+    const auto pSphRes = pSPHObject->GetDeviceResource<mps::SPHResource>();
+    const auto pSPHParam = pSphRes->GetSPHParam().lock();
     if (!pSPHParam) return;
 
+    const auto& boundaryParticleMaterialParam = pBoundaryParticleMaterial->GetParam();
+    const auto& boundaryParticleHashParam = pBoundaryParticleHash->GetParam();
+
     const auto& sphMaterialParam = pSPHMaterial->GetParam();
-    const auto& hashParam = pSpatialHash->GetParam();
+    const auto& sphHashParam = pSPHHash->GetParam();
+
     const auto& physParam = m_pGBArchiver->m_physicsParam;
-    pSpatialHash->UpdateHash(*pSPHParam);
+
+    pBoundaryParticleHash->UpdateHash(*pBoundaryParticleParam);
+    pSPHHash->UpdateHash(*pSPHParam);
+
+    mps::kernel::sph::ComputeBoundaryParticleVolume_0(*pBoundaryParticleParam, boundaryParticleMaterialParam, boundaryParticleHashParam);
+    mps::kernel::sph::ComputeBoundaryParticleVolume_2(*pBoundaryParticleParam, boundaryParticleMaterialParam);
     
-    mps::kernel::sph::ComputeDensity(*pSPHParam, sphMaterialParam, hashParam);
-    mps::kernel::sph::ComputeDFSPHFactor(*pSPHParam, sphMaterialParam, hashParam);
+    mps::kernel::sph::ComputeDensity_0(*pSPHParam, sphMaterialParam, sphHashParam);
+    mps::kernel::sph::ComputeDensity_1(*pSPHParam, sphMaterialParam, sphHashParam,
+        *pBoundaryParticleParam, boundaryParticleMaterialParam, boundaryParticleHashParam);
+    mps::kernel::sph::ComputeDensity_2(*pSPHParam, sphMaterialParam);
+    
     //mps::kernel::sph::DensityColorTest(*pSPHParam, sphMaterialParam);
 
-    mps::kernel::sph::ComputeDFSPHDivergenceFree(physParam, *pSPHParam, sphMaterialParam, hashParam);
+    mps::kernel::sph::ComputeDFSPHFactor_0(*pSPHParam, sphMaterialParam, sphHashParam);
+    mps::kernel::sph::ComputeDFSPHFactor_1(*pSPHParam, sphMaterialParam, sphHashParam,
+        *pBoundaryParticleParam, boundaryParticleMaterialParam, boundaryParticleHashParam);
+    mps::kernel::sph::ComputeDFSPHFactor_2(*pSPHParam, sphMaterialParam);
+
+    mps::kernel::sph::ComputeDFSPHDivergenceFree(physParam, *pSPHParam, sphMaterialParam, sphHashParam,
+        *pBoundaryParticleParam, boundaryParticleMaterialParam, boundaryParticleHashParam);
 
     mps::kernel::ResetForce(*pSPHParam);
     mps::kernel::ApplyGravity(physParam, *pSPHParam);
-    //mps::kernel::sph::ApplyExplicitSurfaceTension(*pSPHParam, sphMaterialParam, hashParam);
     mps::kernel::UpdateVelocity(physParam, *pSPHParam);
+
+   /* mps::kernel::ResetForce(*pSPHParam);
+    mps::kernel::sph::ApplyExplicitSurfaceTension(*pSPHParam, sphMaterialParam, sphHashParam);
+    mps::kernel::UpdateVelocity(physParam, *pSPHParam);*/
 
     /*mps::kernel::ResetForce(*pSPHParam);
     mps::kernel::sph::ApplyExplicitViscosity(*pSPHParam, sphMaterialParam, hashParam);
     mps::kernel::UpdateVelocity(physParam, *pSPHParam);*/
 
-    //mps::kernel::sph::ApplyImplicitViscosity(physParam, *pSPHParam, sphMaterialParam, hashParam);
-    //mps::kernel::sph::ApplyImplicitGDViscosity(physParam, *pSPHParam, sphMaterialParam, hashParam);
-    mps::kernel::sph::ApplyImplicitCGViscosity(physParam, *pSPHParam, sphMaterialParam, hashParam);
+    //mps::kernel::sph::ApplyImplicitJacobiViscosity(physParam, *pSPHParam, sphMaterialParam, sphHashParam);
+    //mps::kernel::sph::ApplyImplicitGDViscosity(physParam, *pSPHParam, sphMaterialParam, sphHashParam);
+    mps::kernel::sph::ApplyImplicitCGViscosity(physParam, *pSPHParam, sphMaterialParam, sphHashParam);
 
-    mps::kernel::sph::ComputeDFSPHConstantDensity(physParam, *pSPHParam, sphMaterialParam, hashParam);
+    mps::kernel::sph::ComputeDFSPHConstantDensity(physParam, *pSPHParam, sphMaterialParam, sphHashParam,
+        *pBoundaryParticleParam, boundaryParticleMaterialParam, boundaryParticleHashParam);
 
-    mps::kernel::BoundaryCollision(physParam, *pSPHParam);
+    //mps::kernel::BoundaryCollision(physParam, *pSPHParam);
     mps::kernel::UpdatePosition(physParam, *pSPHParam);
     
-    m_pCamera->GetTransform()->Set({ 6.04415, 9.72579, -10.5085 }, { 0.86881, 0, 0.495144 }, { -0.217152, 0.898697, 0.381028 }, { -0.444984, -0.438562, 0.780798 });
-    Capture(300, 4);
+    //m_pCamera->GetTransform()->Set({ 6.04415, 9.72579, -10.5085 }, { 0.86881, 0, 0.495144 }, { -0.217152, 0.898697, 0.381028 }, { -0.444984, -0.438562, 0.780798 });
+    //Capture(300, 4);
     m_frame++;
 }
 
@@ -255,7 +316,7 @@ void mps::System::Capture(uint32_t endFrame, uint32_t step)
 
 void mps::System::ResizeParticle(size_t size)
 {
-    auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
+    auto pSPHObject = m_pSPHModel->GetTarget<mps::SPHObject>();
     auto pSPHMaterial = static_cast<mps::SPHMaterial*>(m_pSPHModel->GetMaterial());
     auto pSpatialHash = static_cast<mps::SpatialHash*>(m_pSPHModel->GetTree());
     if (pSPHObject->GetSize() == size * size * size)
@@ -287,7 +348,7 @@ void mps::System::ResizeParticle(size_t size)
 
     std::vector<REAL3> h_pos;
     std::vector<REAL> h_radius;
-    std::vector<REAL3> h_vel(size * size * size, REAL3{ 1.0, 0.0, 0.0 });
+    std::vector<REAL3> h_vel(size * size * size, REAL3{ 0.0, 0.0, 0.0 });
     std::vector<REAL> h_mass(size * size * size, pSPHMaterial->GetMass());
     std::vector<glm::fvec4> h_color(size * size * size, glm::fvec4{ 0.0f, 0.0f, 1.0f, 1.0f });
 
@@ -328,11 +389,27 @@ void mps::System::ResizeParticle(size_t size)
         ss << "Number Of Particle" << " : " << pSPHObject->GetSize() << std::endl;
         OutputDebugStringA(ss.str().c_str());
     }
+    {
+        auto pMeshObject = m_pBoundaryModel->GetTarget<mps::MeshObject>();
+        auto pMeshMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
+        auto pBoundaryParticle = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
+        auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
+        pMeshObject->LoadMesh("../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
+        pMeshMaterial->SetParam(radius * 4, 1.0);
+
+        auto pMeshRes = pMeshObject->GetDeviceResource<mps::MeshResource>();
+        auto pMeshParam = pMeshRes->GetMeshParam().lock();
+        mps::kernel::ParticleSampling::ParticleSampling(*pMeshParam, pMeshMaterial->GetParam(), *pBoundaryParticle);
+
+        pBoundaryParticleHash->SetObjectSize(pBoundaryParticle->GetSize());
+        pBoundaryParticleHash->SetCeilSize(radius * 4);
+        pBoundaryParticleHash->SetHashSize({ 64, 64, 64 });
+    }
 }
 
 void mps::System::ViscosityTestScene(size_t size, size_t height)
 {
-    auto pSPHObject = static_cast<mps::SPHObject*>(m_pSPHModel->GetTarget());
+    auto pSPHObject = m_pSPHModel->GetTarget<mps::SPHObject>();
     auto pSPHMaterial = static_cast<mps::SPHMaterial*>(m_pSPHModel->GetMaterial());
     auto pSpatialHash = static_cast<mps::SpatialHash*>(m_pSPHModel->GetTree());
 
@@ -362,7 +439,7 @@ void mps::System::ViscosityTestScene(size_t size, size_t height)
     m_pGBArchiver->m_physicsParam.max =
     {
         startPos + (size - 1) * stride + gap + 5.5,
-        startH - (height - 1) * stride + gap + 5.5,
+        startH + (height - 1) * stride + gap + 5.5,
         startPos + (size - 1) * stride + gap + 5.5
     };
 

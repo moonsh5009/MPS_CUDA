@@ -49,6 +49,15 @@
     <Filter Include="Object\Mesh">
       <UniqueIdentifier>{5371b985-5c0f-4a72-b791-0eeb643687c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tree\BVH">
+      <UniqueIdentifier>{4468ede5-4769-4a5e-b464-5e131ec73fb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Model\Obstacle">
+      <UniqueIdentifier>{0c6f0152-fb11-4162-af5d-6d88488a5d75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Material\Obstacle">
+      <UniqueIdentifier>{6db8ed6f-d8d3-4e53-8461-d0ff318e6378}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -60,14 +69,17 @@
     <ClCompile Include="MPSSPHMaterial.cpp">
       <Filter>Material\SPH</Filter>
     </ClCompile>
-    <ClCompile Include="MPSModel.cpp">
-      <Filter>Model\Base</Filter>
-    </ClCompile>
     <ClCompile Include="MPSSPHModel.cpp">
       <Filter>Model\SPH</Filter>
     </ClCompile>
     <ClCompile Include="MPSParticleObject.cpp">
       <Filter>Object\Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSObstacleModel.cpp">
+      <Filter>Model\Obstacle</Filter>
+    </ClCompile>
+    <ClCompile Include="MPSMeshMaterial.cpp">
+      <Filter>Material\Obstacle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +147,31 @@
     <ClInclude Include="MPSMeshParam.h">
       <Filter>Object\Mesh</Filter>
     </ClInclude>
+    <ClInclude Include="MPSBVH.h">
+      <Filter>Tree\BVH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSBVHParam.h">
+      <Filter>Tree\BVH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSAABB.h" />
+    <ClInclude Include="MPSObstacleModel.h">
+      <Filter>Model\Obstacle</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSBoundaryParticleObject.h">
+      <Filter>Object\SPH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSBoundaryParticleParam.h">
+      <Filter>Object\SPH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSMeshObject.cuh">
+      <Filter>Object\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSMeshMaterial.h">
+      <Filter>Material\Obstacle</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSRTriangleUtil.cuh">
+      <Filter>Object\Mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="MPSSPHObject.cu">
@@ -148,6 +185,9 @@
     </CudaCompile>
     <CudaCompile Include="MPSMeshObject.cu">
       <Filter>Object\Mesh</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSBoundaryParticleObject.cu">
+      <Filter>Object\SPH</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

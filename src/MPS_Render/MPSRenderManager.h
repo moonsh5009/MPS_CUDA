@@ -32,7 +32,7 @@ namespace mps
 		private:
 			enum RENDERER
 			{
-				//Any,
+				Mesh,
 				SPH,
 				Size
 			};

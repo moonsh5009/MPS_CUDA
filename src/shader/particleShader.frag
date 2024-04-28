@@ -1,18 +1,4 @@
-#include <particleShader.glsl>
-
-layout (std140, binding = 0) uniform Camera
-{
-    mat4 viewMat;
-    mat4 projMat;
-    mat4 viewInvMat;
-    mat4 projInvMat;
-} uCamera;
-
-layout (std140, binding = 1) uniform Light
-{
-    vec3 pos;
-    vec4 color;
-} uLight;
+#include <ParticleShader.glsl>
 
 in VertexShaderOut vsOut;
 
@@ -27,7 +13,7 @@ void main(void)
 
     norm.z = sqrt(1.0 - norm.z);
 
-    vec4 curPos = uCamera.projMat * (vec4(vsOut.pos, 1.0f) + vec4(norm * vsOut.radius, 0.0f));
+    vec4 curPos = uCamera.projMat * vec4(vsOut.pos + norm * vsOut.radius, 1.0f);
     gl_FragDepth = curPos.z / curPos.w;
 
     float ambientStrength = 0.1;

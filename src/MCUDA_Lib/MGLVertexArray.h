@@ -74,14 +74,14 @@ namespace mgl
 			else static_assert("Invalid Type");
 		}
 
-		template<typename T>
+		template<typename T, typename T2 = T>
 		void AddVertexBuffer(const mgl::Buffer<T>& vbo, const VertexStepMode stepMode)
 		{
 			if (!IsAssigned()) return;
 
-			const auto[size, type] = GetBufferType<T>();
+			const auto[size, type] = GetBufferType<T2>();
 
-			glVertexArrayVertexBuffer(m_id, m_index, vbo.GetID(), 0, sizeof(T));
+			glVertexArrayVertexBuffer(m_id, m_index, vbo.GetID(), 0, sizeof(T2));
 			glEnableVertexArrayAttrib(m_id, m_index);
 			glVertexArrayAttribFormat(m_id, m_index, size, type, GL_FALSE, 0);
 			switch (stepMode)

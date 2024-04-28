@@ -13,16 +13,25 @@
   <ItemGroup>
     <ClInclude Include="HeaderPost.h" />
     <ClInclude Include="HeaderPre.h" />
+    <ClInclude Include="MPSBoundaryParticleObject.h" />
+    <ClInclude Include="MPSBoundaryParticleParam.h" />
+    <ClInclude Include="MPSBVH.h" />
+    <ClInclude Include="MPSBVHParam.h" />
     <ClInclude Include="MPSDef.h" />
     <ClInclude Include="MPSGBArchiver.h" />
     <ClInclude Include="MPSMaterial.h" />
+    <ClInclude Include="MPSMeshObject.cuh" />
     <ClInclude Include="MPSMeshObject.h" />
     <ClInclude Include="MPSMeshParam.h" />
     <ClInclude Include="MPSModel.h" />
     <ClInclude Include="MPSObject.h" />
+    <ClInclude Include="MPSAABB.h" />
     <ClInclude Include="MPSObjectParam.h" />
+    <ClInclude Include="MPSMeshMaterial.h" />
+    <ClInclude Include="MPSObstacleModel.h" />
     <ClInclude Include="MPSParticleObject.h" />
     <ClInclude Include="MPSParticleParam.h" />
+    <ClInclude Include="MPSRTriangleUtil.cuh" />
     <ClInclude Include="MPSSpatialHash.cuh" />
     <ClInclude Include="MPSSpatialHash.h" />
     <ClInclude Include="MPSSpatialHashParam.h" />
@@ -36,13 +45,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MPSGBArchiver.cpp" />
-    <ClCompile Include="MPSModel.cpp" />
+    <ClCompile Include="MPSMeshMaterial.cpp" />
+    <ClCompile Include="MPSObstacleModel.cpp" />
     <ClCompile Include="MPSParticleObject.cpp" />
     <ClCompile Include="MPSSPHMaterial.cpp" />
     <ClCompile Include="MPSSPHModel.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="MPSBoundaryParticleObject.cu" />
     <CudaCompile Include="MPSMeshObject.cu" />
     <CudaCompile Include="MPSObject.cu" />
     <CudaCompile Include="MPSSpatialHash.cu" />
