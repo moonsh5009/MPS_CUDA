@@ -24,16 +24,16 @@ namespace mps
 		MCUDA_DEVICE_FUNC uint32_t& ShortEdgeId(uint32_t idx) { return m_pShortestEdgeID[idx]; }
 		MCUDA_DEVICE_FUNC uint32_t& SamplingParticleSize(uint32_t idx) { return m_pSamplingParticleSize[idx]; }
 
-		MCUDA_DEVICE_FUNC const glm::uvec3 Face(uint32_t idx) const { return m_pFace[idx]; }
-		MCUDA_DEVICE_FUNC const REAL3 FaceNorm(uint32_t idx) const { return m_pFaceNorm[idx]; }
-		MCUDA_DEVICE_FUNC const REAL FaceArea(uint32_t idx) const { return m_pFaceArea[idx]; }
-		MCUDA_DEVICE_FUNC const uint32_t NbFaces(uint32_t idx) const { return m_pNbFaces[idx]; }
-		MCUDA_DEVICE_FUNC const uint32_t NbFacesIdx(uint32_t idx) const { return m_pNbFacesIdx[idx]; }
-		MCUDA_DEVICE_FUNC const uint32_t NbNodes(uint32_t idx) const { return m_pNbNodes[idx]; }
-		MCUDA_DEVICE_FUNC const uint32_t NbNodesIdx(uint32_t idx) const { return m_pNbNodesIdx[idx]; }
-		MCUDA_DEVICE_FUNC const uint32_t RTriangle(uint32_t idx) const { return m_pRTri[idx]; }
-		MCUDA_DEVICE_FUNC const uint32_t ShortEdgeId(uint32_t idx) const { return m_pShortestEdgeID[idx]; }
-		MCUDA_DEVICE_FUNC const uint32_t SamplingParticleSize(uint32_t idx) const { return m_pSamplingParticleSize[idx]; }
+		MCUDA_DEVICE_FUNC glm::uvec3 Face(uint32_t idx) const { return m_pFace[idx]; }
+		MCUDA_DEVICE_FUNC REAL3 FaceNorm(uint32_t idx) const { return m_pFaceNorm[idx]; }
+		MCUDA_DEVICE_FUNC REAL FaceArea(uint32_t idx) const { return m_pFaceArea[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t NbFaces(uint32_t idx) const { return m_pNbFaces[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t NbFacesIdx(uint32_t idx) const { return m_pNbFacesIdx[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t NbNodes(uint32_t idx) const { return m_pNbNodes[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t NbNodesIdx(uint32_t idx) const { return m_pNbNodesIdx[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t RTriangle(uint32_t idx) const { return m_pRTri[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t ShortEdgeId(uint32_t idx) const { return m_pShortestEdgeID[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t SamplingParticleSize(uint32_t idx) const { return m_pSamplingParticleSize[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC glm::uvec3* GetFaceArray() const { return m_pFace; }

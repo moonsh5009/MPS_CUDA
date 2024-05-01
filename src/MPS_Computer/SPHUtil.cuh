@@ -10,7 +10,21 @@
 #include "../MPS_Object/MPSSpatialHash.h"
 #include "../MPS_Object/MPSSpatialHash.cuh"
 
-__global__ void ComputeBoundaryParticleVolume_0_kernel(mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam material, const mps::SpatialHashParam hash)
+template<class Fn>
+__device__ void NeighborSearch(uint32_t id, const uint32_t* nei, const uint32_t* neiIdx, Fn func)
+{
+	const auto iEnd = neiIdx[id + 1u];
+#pragma unroll
+	for (auto idx = neiIdx[id]; idx < iEnd; ++idx)
+	{
+		func(nei[idx]);
+	}
+}
+
+__global__ void ComputeBoundaryParticleVolume_0_kernel(
+	mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= boundaryParticle.GetSize()) return;
@@ -22,10 +36,8 @@ __global__ void ComputeBoundaryParticleVolume_0_kernel(mps::BoundaryParticlePara
 
 	REAL volume = mps::kernel::sph::WKernel(0.0, invH);
 
-	hash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
-		if (id == jd) return;
-
 		const auto xj = boundaryParticle.Position(jd);
 		auto xij = xi - xj;
 
@@ -39,8 +51,10 @@ __global__ void ComputeBoundaryParticleVolume_0_kernel(mps::BoundaryParticlePara
 	boundaryParticle.Volume(id) = volume;
 }
 __global__ void ComputeBoundaryParticleVolume_1_kernel(
-	mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam material, const mps::SpatialHashParam hash,
-	mps::BoundaryParticleParam refBoundaryParticle, const mps::MeshMaterialParam refMaterial, const mps::SpatialHashParam refHash)
+	mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam material,
+	mps::BoundaryParticleParam refBoundaryParticle, const mps::MeshMaterialParam refMaterial,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= boundaryParticle.GetSize()) return;
@@ -52,10 +66,8 @@ __global__ void ComputeBoundaryParticleVolume_1_kernel(
 
 	REAL volume = boundaryParticle.Volume(id);
 
-	refHash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
-		if (id == jd) return;
-
 		const auto xj = refBoundaryParticle.Position(jd);
 		auto xij = xi - xj;
 
@@ -77,7 +89,10 @@ __global__ void ComputeBoundaryParticleVolume_2_kernel(mps::BoundaryParticlePara
 	boundaryParticle.Volume(id) = 1.0 / volume;
 }
 
-__global__ void ComputeDensity_0_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+__global__ void ComputeDensity_0_kernel(
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -89,10 +104,8 @@ __global__ void ComputeDensity_0_kernel(mps::SPHParam sph, const mps::SPHMateria
 
 	REAL density = material.volume * mps::kernel::sph::WKernel(0.0, invH);
 
-	hash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
-		if (id == jd) return;
-
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -106,8 +119,10 @@ __global__ void ComputeDensity_0_kernel(mps::SPHParam sph, const mps::SPHMateria
 	sph.Density(id) = density;
 }
 __global__ void ComputeDensity_1_kernel(
-	mps::SPHParam sph, const mps::SPHMaterialParam sphMaterial, const mps::SpatialHashParam sphHash,
-	const mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam boundaryParticleMaterial, const mps::SpatialHashParam boundaryParticleHash)
+	mps::SPHParam sph, const mps::SPHMaterialParam sphMaterial,
+	const mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam boundaryParticleMaterial,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -119,7 +134,7 @@ __global__ void ComputeDensity_1_kernel(
 
 	REAL density = sph.Density(id);
 
-	boundaryParticleHash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
 		const auto xj = boundaryParticle.Position(jd);
 		auto xij = xi - xj;
@@ -142,7 +157,10 @@ __global__ void ComputeDensity_2_kernel(mps::SPHParam sph, const mps::SPHMateria
 	sph.Density(id) = density * material.density;
 }
 
-__global__ void ComputeDFSPHFactor_0_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+__global__ void ComputeDFSPHFactor_0_kernel(
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -155,10 +173,8 @@ __global__ void ComputeDFSPHFactor_0_kernel(mps::SPHParam sph, const mps::SPHMat
 	REAL3 grads{ 0.0 };
 	REAL ai = 0.0;
 
-	hash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
-		if (id == jd) return;
-
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -175,8 +191,10 @@ __global__ void ComputeDFSPHFactor_0_kernel(mps::SPHParam sph, const mps::SPHMat
 	sph.FactorA(id) = ai;
 }
 __global__ void ComputeDFSPHFactor_1_kernel(
-	mps::SPHParam sph, const mps::SPHMaterialParam sphMaterial, const mps::SpatialHashParam sphHash,
-	const mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam boundaryParticleMaterial, const mps::SpatialHashParam boundaryParticleHash)
+	mps::SPHParam sph, const mps::SPHMaterialParam sphMaterial,
+	const mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam boundaryParticleMaterial,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -189,7 +207,7 @@ __global__ void ComputeDFSPHFactor_1_kernel(
 	REAL3 grads = sph.TempVec3(id);
 	REAL ai = sph.FactorA(id);
 
-	boundaryParticleHash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
 		const auto xj = boundaryParticle.Position(jd);
 		auto xij = xi - xj;
@@ -219,7 +237,10 @@ __global__ void ComputeDFSPHFactor_2_kernel(mps::SPHParam sph, const mps::SPHMat
 	sph.FactorA(id) = ai;
 }
 
-__global__ void ComputeDensityDelta_0_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+__global__ void ComputeDensityDelta_0_kernel(
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -232,10 +253,8 @@ __global__ void ComputeDensityDelta_0_kernel(mps::SPHParam sph, const mps::SPHMa
 
 	REAL delta = 0.0;
 
-	hash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
-		if (id == jd) return;
-
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -251,8 +270,10 @@ __global__ void ComputeDensityDelta_0_kernel(mps::SPHParam sph, const mps::SPHMa
 	sph.Pressure(id) = delta;
 }
 __global__ void ComputeDensityDelta_1_kernel(
-	mps::SPHParam sph, const mps::SPHMaterialParam sphMaterial, const mps::SpatialHashParam sphHash,
-	const mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam boundaryParticleMaterial, const mps::SpatialHashParam boundaryParticleHash)
+	mps::SPHParam sph, const mps::SPHMaterialParam sphMaterial,
+	const mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam boundaryParticleMaterial,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -265,7 +286,7 @@ __global__ void ComputeDensityDelta_1_kernel(
 
 	REAL delta = sph.Pressure(id);
 
-	boundaryParticleHash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
 		const auto xj = boundaryParticle.Position(jd);
 		auto xij = xi - xj;
@@ -356,7 +377,10 @@ __global__ void ComputeDFStiffness_kernel(const mps::PhysicsParam physParam, mps
 	}
 }
 
-__global__ void ApplyDFSPH_0_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+__global__ void ApplyDFSPH_0_kernel(
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -369,10 +393,8 @@ __global__ void ApplyDFSPH_0_kernel(mps::SPHParam sph, const mps::SPHMaterialPar
 
 	REAL3 force{ 0.0 };
 
-	hash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
-		if (id == jd) return;
-
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -388,8 +410,10 @@ __global__ void ApplyDFSPH_0_kernel(mps::SPHParam sph, const mps::SPHMaterialPar
 	sph.Force(id) = force;
 }
 __global__ void ApplyDFSPH_1_kernel(
-	mps::SPHParam sph, const mps::SPHMaterialParam sphMaterial, const mps::SpatialHashParam sphHash,
-	const mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam boundaryParticleMaterial, const mps::SpatialHashParam boundaryParticleHash)
+	mps::SPHParam sph, const mps::SPHMaterialParam sphMaterial,
+	const mps::BoundaryParticleParam boundaryParticle, const mps::MeshMaterialParam boundaryParticleMaterial,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -402,7 +426,7 @@ __global__ void ApplyDFSPH_1_kernel(
 
 	REAL3 force = sph.Force(id);
 
-	boundaryParticleHash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
 		const auto xj = boundaryParticle.Position(jd);
 		auto xij = xi - xj;
@@ -427,7 +451,10 @@ __global__ void ApplyDFSPH_2_kernel(mps::SPHParam sph, const mps::SPHMaterialPar
 	sph.Force(id) = force;
 }
 
-__global__ void ApplyExplicitViscosity_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+__global__ void ApplyExplicitViscosity_kernel(
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -441,10 +468,9 @@ __global__ void ApplyExplicitViscosity_kernel(mps::SPHParam sph, const mps::SPHM
 	const auto volumei = sph.Volume(id);
 
 	REAL3 viscForce{ 0.0 };
-	hash.Research(xi, [&](uint32_t jd)
-	{
-		if (id == jd) return;
 
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
+	{
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -459,11 +485,15 @@ __global__ void ApplyExplicitViscosity_kernel(mps::SPHParam sph, const mps::SPHM
 			viscForce += forceij;
 		}
 	});
+
 	auto force = sph.Force(id);
 	force += 10.0 * material.viscosity * volumei * viscForce;
 	sph.Force(id) = force;
 }
-__global__ void ApplyExplicitSurfaceTension_kernel(mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash)
+__global__ void ApplyExplicitSurfaceTension_kernel(
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sph.GetSize()) return;
@@ -476,10 +506,8 @@ __global__ void ApplyExplicitSurfaceTension_kernel(mps::SPHParam sph, const mps:
 
 	REAL3 forceST{ 0.0 };
 
-	hash.Research(xi, [&](uint32_t jd)
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
 	{
-		if (id == jd) return;
-
 		const auto& xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -497,7 +525,10 @@ __global__ void ApplyExplicitSurfaceTension_kernel(mps::SPHParam sph, const mps:
 	sph.Force(id) = force;
 }
 
-__global__ void ComputeJacobiViscosity_0_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+__global__ void ComputeJacobiViscosity_0_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
 	REAL3* MCUDA_RESTRICT vTemp)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
@@ -511,10 +542,9 @@ __global__ void ComputeJacobiViscosity_0_kernel(const mps::PhysicsParam physPara
 
 	REAL3x3 Avi{ 0.0 };
 	REAL3 Avj{ 0.0 };
-	hash.Research(xi, [&](uint32_t jd)
-	{
-		if (id == jd) return;
 
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
+	{
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -533,6 +563,7 @@ __global__ void ComputeJacobiViscosity_0_kernel(const mps::PhysicsParam physPara
 			Avi -= Aij;
 		}
 	});
+
 	const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
 	Avj *= alpha;
 	Avi *= alpha;
@@ -544,7 +575,10 @@ __global__ void ComputeJacobiViscosity_0_kernel(const mps::PhysicsParam physPara
 	const auto newVi = (sph.Velocity(id) + Avj) * invAvi;
 	vTemp[id] = newVi;
 }
-__global__ void ComputeJacobiViscosity_1_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+__global__ void ComputeJacobiViscosity_1_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
 	REAL3* MCUDA_RESTRICT vTemp0, REAL3* MCUDA_RESTRICT vTemp1, REAL3* MCUDA_RESTRICT vTemp2,
 	uint32_t l, REAL underRelax, REAL* MCUDA_RESTRICT omega)
 {
@@ -559,10 +593,9 @@ __global__ void ComputeJacobiViscosity_1_kernel(const mps::PhysicsParam physPara
 
 	REAL3x3 Avi{ 0.0 };
 	REAL3 Avj{ 0.0 };
-	hash.Research(xi, [&](uint32_t jd)
-	{
-		if (id == jd) return;
 
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
+	{
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -581,6 +614,7 @@ __global__ void ComputeJacobiViscosity_1_kernel(const mps::PhysicsParam physPara
 			Avi -= Aij;
 		}
 	});
+
 	const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
 	Avj *= alpha;
 	Avi *= alpha;
@@ -596,7 +630,10 @@ __global__ void ComputeJacobiViscosity_1_kernel(const mps::PhysicsParam physPara
 	vTemp1[id] = omega[1] * (underRelax * (newVi - currVi) + currVi - prevVi) + prevVi;
 	vTemp2[id] = omega[2] * (underRelax * (newVi - currVi) + currVi - prevVi) + prevVi;
 }
-__global__ void ComputeJacobiError_0_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+__global__ void ComputeJacobiError_0_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
 	REAL3* MCUDA_RESTRICT vTemp, REAL* MCUDA_RESTRICT sumError)
 {
 	extern __shared__ REAL s_sumErrors[];
@@ -613,10 +650,9 @@ __global__ void ComputeJacobiError_0_kernel(const mps::PhysicsParam physParam, m
 		const auto predictVi = vTemp[id];
 
 		REAL3 Avij{ 0.0 };
-		hash.Research(xi, [&](uint32_t jd)
-		{
-			if (id == jd) return;
 
+		NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
+		{
 			const auto xj = sph.Position(jd);
 			auto xij = xi - xj;
 
@@ -629,6 +665,7 @@ __global__ void ComputeJacobiError_0_kernel(const mps::PhysicsParam physParam, m
 				Avij += glm::dot(xij, predictVi - predictVj) * grad;
 			}
 		});
+
 		const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
 		Avij *= alpha;
 
@@ -650,7 +687,10 @@ __global__ void ComputeJacobiError_0_kernel(const mps::PhysicsParam physParam, m
 			mcuda::util::AtomicAdd(sumError, s_sumErrors[0]);
 	}
 }
-__global__ void ComputeJacobiError_1_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+__global__ void ComputeJacobiError_1_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
 	REAL3* MCUDA_RESTRICT vTemp0, REAL3* MCUDA_RESTRICT vTemp1, REAL3* MCUDA_RESTRICT vTemp2, REAL* MCUDA_RESTRICT sumError)
 {
 	extern __shared__ REAL s_sumErrors[];
@@ -673,10 +713,9 @@ __global__ void ComputeJacobiError_1_kernel(const mps::PhysicsParam physParam, m
 		REAL3 Avij0{ 0.0 };
 		REAL3 Avij1{ 0.0 };
 		REAL3 Avij2{ 0.0 };
-		hash.Research(xi, [&](uint32_t jd)
-		{
-			if (id == jd) return;
 
+		NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
+		{
 			const auto xj = sph.Position(jd);
 			auto xij = xi - xj;
 
@@ -693,6 +732,7 @@ __global__ void ComputeJacobiError_1_kernel(const mps::PhysicsParam physParam, m
 				Avij2 += glm::dot(xij, predictVi2 - predictVj2) * grad;
 			}
 		});
+
 		const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
 		Avij0 *= alpha;
 		Avij1 *= alpha;
@@ -820,7 +860,10 @@ __global__ void ApplyJacobiViscosity_kernel(mps::SPHParam sph, REAL3* vTemp)
 	sph.PredictVel(id) = newVi;
 }
 
-__global__ void ComputeGDViscosityR_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+__global__ void ComputeGDViscosityR_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
 	REAL3* R)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
@@ -837,10 +880,9 @@ __global__ void ComputeGDViscosityR_kernel(const mps::PhysicsParam physParam, mp
 	const auto di = sph.Density(id);
 
 	REAL3 dv{ 0.0 };
-	hash.Research(xi, [&](uint32_t jd)
-	{
-		if (id == jd) return;
 
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
+	{
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -856,10 +898,14 @@ __global__ void ComputeGDViscosityR_kernel(const mps::PhysicsParam physParam, mp
 			dv += dvij;
 		}
 	});
+
 	dv *= physParam.dt * 10.0 * material.viscosity / di;
 	R[id] = v0i - (predictVi - dv);
 }
-__global__ void UpdateGDViscosityGama_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+__global__ void UpdateGDViscosityGama_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
 	REAL3* R, REAL* gama)
 {
 	extern __shared__ REAL s_temp[];
@@ -879,10 +925,9 @@ __global__ void UpdateGDViscosityGama_kernel(const mps::PhysicsParam physParam, 
 		const auto Ri = R[id];
 
 		REAL3 AR{ 0.0 };
-		hash.Research(xi, [&](uint32_t jd)
-		{
-			if (id == jd) return;
 
+		NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
+		{
 			const auto xj = sph.Position(jd);
 			auto xij = xi - xj;
 
@@ -898,6 +943,7 @@ __global__ void UpdateGDViscosityGama_kernel(const mps::PhysicsParam physParam, 
 				AR += dvij;
 			}
 		});
+
 		AR *= physParam.dt * 10.0 * material.viscosity / di;
 		AR = Ri - AR;// +Ri * 0.1;
 		s_temp[threadIdx.x] = glm::dot(Ri, Ri);
@@ -934,7 +980,10 @@ __global__ void UpdateGDViscosity_kernel(mps::SPHParam sph, REAL3* R, REAL gama)
 	sph.PredictVel(id) = newPredictVel;
 }
 
-__global__ void ComputeCGViscosityAv_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+__global__ void ComputeCGViscosityAv_kernel(const mps::PhysicsParam physParam,
+	mps::SPHParam sph, const mps::SPHMaterialParam material,
+	const uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
 	REAL3* V, REAL3* Av, REAL factor)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
@@ -950,10 +999,9 @@ __global__ void ComputeCGViscosityAv_kernel(const mps::PhysicsParam physParam, m
 	const auto di = sph.Density(id);
 
 	REAL3 av{ 0.0 };
-	hash.Research(xi, [&](uint32_t jd)
-	{
-		if (id == jd) return;
 
+	NeighborSearch(id, nei, neiIdx, [&](uint32_t jd)
+	{
 		const auto xj = sph.Position(jd);
 		auto xij = xi - xj;
 
@@ -969,6 +1017,7 @@ __global__ void ComputeCGViscosityAv_kernel(const mps::PhysicsParam physParam, m
 			av += dvij;
 		}
 	});
+
 	av *= physParam.dt * 10.0 * material.viscosity / di;
 	av = vi - av;
 	Av[id] = av + vi * factor;

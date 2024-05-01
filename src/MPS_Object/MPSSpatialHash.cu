@@ -5,11 +5,6 @@
 #include "MPSSPHParam.h"
 #include "MPSBoundaryParticleParam.h"
 
-namespace
-{
-	constexpr auto nBlockSize = 1024u;
-}
-
 mps::SpatialHash::SpatialHash() : mps::VirtualTree<SpatialHashParam>{}
 {
 }
@@ -40,8 +35,17 @@ void mps::SpatialHash::SetHashSize(const glm::uvec3& size)
 	GetParam().SetEndIdxArray(thrust::raw_pointer_cast(m_endIdx.data()));
 }
 
+std::optional<std::tuple<const uint32_t*, const uint32_t*>> mps::SpatialHash::GetNeighborhood(const ObjectParam& objParam) const
+{
+	const auto iter = m_mapNei.find(objParam.GetPhaseID());
+	if (iter == m_mapNei.end()) return {};
+	return std::tuple{ thrust::raw_pointer_cast(iter->second.data.data()), thrust::raw_pointer_cast(iter->second.idx.data()) };
+}
+
 void mps::SpatialHash::UpdateHash(const mps::ObjectParam& objParam)
 {
+	constexpr auto nBlockSize = 1024u;
+
 	const auto nSize = objParam.GetSize();
 	if (nSize == 0) return;
 
@@ -61,6 +65,8 @@ void mps::SpatialHash::UpdateHash(const mps::ObjectParam& objParam)
 
 void mps::SpatialHash::ZSort(mps::ObjectParam& objParam)
 {
+	constexpr auto nBlockSize = 1024u;
+
 	const auto nSize = objParam.GetSize();
 	if (nSize == 0) return;
 
@@ -80,6 +86,8 @@ void mps::SpatialHash::ZSort(mps::ObjectParam& objParam)
 
 void mps::SpatialHash::ZSort(mps::SPHParam& sphParam)
 {
+	constexpr auto nBlockSize = 1024u;
+
 	const auto nSize = sphParam.GetSize();
 	if (nSize == 0) return;
 
@@ -100,6 +108,8 @@ void mps::SpatialHash::ZSort(mps::SPHParam& sphParam)
 
 void mps::SpatialHash::ZSort(mps::BoundaryParticleParam& boundaryParticleParam)
 {
+	constexpr auto nBlockSize = 1024u;
+
 	const auto nSize = boundaryParticleParam.GetSize();
 	if (nSize == 0) return;
 
@@ -115,4 +125,50 @@ void mps::SpatialHash::ZSort(mps::BoundaryParticleParam& boundaryParticleParam)
 		thrust::device_pointer_cast(boundaryParticleParam.GetRadiusArray()),
 		thrust::device_pointer_cast(boundaryParticleParam.GetFaceIDArray()),
 		thrust::device_pointer_cast(boundaryParticleParam.GetBCCArray())));
+}
+
+void mps::SpatialHash::BuildNeighorhood(const ObjectParam& objParam, REAL radius)
+{
+	constexpr auto nBlockSize = 512u;
+
+	const auto nSize = objParam.GetSize();
+	if (nSize == 0) return;
+
+	const auto emp = m_mapNei.emplace(objParam.GetPhaseID(), NeiBuffer{});
+	auto& nei = emp.first->second;
+	nei.idx.resize(objParam.GetSize() + 1u);
+
+	ComputeNeighborhoodSize_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >(
+		thrust::raw_pointer_cast(nei.idx.data()), radius, objParam, GetParam());
+	CUDA_CHECK(cudaPeekAtLastError());
+
+	thrust::inclusive_scan(nei.idx.begin(), nei.idx.end(), nei.idx.begin());
+	nei.data.resize(nei.idx.back());
+
+	BuildNeighborhood_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >(
+		thrust::raw_pointer_cast(nei.data.data()), thrust::raw_pointer_cast(nei.idx.data()), radius, objParam, GetParam());
+	CUDA_CHECK(cudaPeekAtLastError());
+}
+
+void mps::SpatialHash::BuildNeighorhood(const ObjectParam& objParam, REAL radius, const ObjectParam& refObjParam, const SpatialHash* pRefHash)
+{
+	constexpr auto nBlockSize = 512u;
+
+	const auto nSize = objParam.GetSize();
+	if (nSize == 0 || refObjParam.GetSize() == 0) return;
+
+	const auto emp = m_mapNei.emplace(refObjParam.GetPhaseID(), NeiBuffer{});
+	auto& nei = emp.first->second;
+	nei.idx.resize(objParam.GetSize() + 1u);
+
+	ComputeNeighborhoodSize_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> > (
+		thrust::raw_pointer_cast(nei.idx.data()), radius, objParam, refObjParam, pRefHash->GetParam());
+	CUDA_CHECK(cudaPeekAtLastError());
+
+	thrust::inclusive_scan(nei.idx.begin(), nei.idx.end(), nei.idx.begin());
+	nei.data.resize(nei.idx.back());
+
+	BuildNeighborhood_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> > (
+		thrust::raw_pointer_cast(nei.data.data()), thrust::raw_pointer_cast(nei.idx.data()), radius, objParam, refObjParam, pRefHash->GetParam());
+	CUDA_CHECK(cudaPeekAtLastError());
 }

@@ -58,6 +58,9 @@
     <Filter Include="Material\Obstacle">
       <UniqueIdentifier>{6db8ed6f-d8d3-4e53-8461-d0ff318e6378}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Base">
+      <UniqueIdentifier>{70e81860-ef0d-4b69-aeb4-569888005b41}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -104,7 +107,6 @@
     <ClInclude Include="MPSSPHMaterial.h">
       <Filter>Material\SPH</Filter>
     </ClInclude>
-    <ClInclude Include="MPSDef.h" />
     <ClInclude Include="MPSModel.h">
       <Filter>Model\Base</Filter>
     </ClInclude>
@@ -153,7 +155,6 @@
     <ClInclude Include="MPSBVHParam.h">
       <Filter>Tree\BVH</Filter>
     </ClInclude>
-    <ClInclude Include="MPSAABB.h" />
     <ClInclude Include="MPSObstacleModel.h">
       <Filter>Model\Obstacle</Filter>
     </ClInclude>
@@ -171,6 +172,12 @@
     </ClInclude>
     <ClInclude Include="MPSRTriangleUtil.cuh">
       <Filter>Object\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSDef.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSAABB.h">
+      <Filter>Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

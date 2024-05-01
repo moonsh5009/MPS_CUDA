@@ -7,9 +7,15 @@
 
 namespace mps
 {
+	class Object;
 	class ObjectParam;
 	class SPHParam;
 	class BoundaryParticleParam;
+	struct NeiBuffer
+	{
+		thrust::device_vector<uint32_t> data;
+		thrust::device_vector<uint32_t> idx;
+	};
 	class __MY_EXT_CLASS__ SpatialHash : public VirtualTree<SpatialHashParam>
 	{
 	public:
@@ -29,17 +35,24 @@ namespace mps
 		const thrust::device_vector<uint32_t>& GetStartIdx() const { return m_startIdx; };
 		const thrust::device_vector<uint32_t>& GetEndIdx() const { return m_endIdx; };
 
+		std::optional<std::tuple<const uint32_t*, const uint32_t*>> GetNeighborhood(const ObjectParam& objParam) const;
+
 	public:
-		void UpdateHash(const mps::ObjectParam& objParam);
-		void ZSort(mps::ObjectParam& objParam);
-		void ZSort(mps::SPHParam& sphParam);
-		void ZSort(mps::BoundaryParticleParam& boundaryParticleParam);
+		void UpdateHash(const ObjectParam& objParam);
+		void ZSort(ObjectParam& objParam);
+		void ZSort(SPHParam& sphParam);
+		void ZSort(BoundaryParticleParam& boundaryParticleParam);
+
+		void BuildNeighorhood(const ObjectParam& objParam, REAL radius);
+		void BuildNeighorhood(const ObjectParam& objParam, REAL radius, const ObjectParam& refObjParam, const SpatialHash* pRefHash);
 
 	private:
 		thrust::device_vector<uint32_t> m_key;
 		thrust::device_vector<uint32_t> m_ID;
 		thrust::device_vector<uint32_t> m_startIdx;
 		thrust::device_vector<uint32_t> m_endIdx;
+
+		std::unordered_map<size_t, NeiBuffer> m_mapNei;
 	};
 };
 

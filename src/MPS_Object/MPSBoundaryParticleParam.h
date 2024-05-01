@@ -20,12 +20,12 @@ namespace mps
 		MCUDA_DEVICE_FUNC REAL3& PreviousVel(uint32_t idx) { return m_pPreviousVel[idx]; }
 		MCUDA_DEVICE_FUNC REAL3& PredictVel(uint32_t idx) { return m_pPredictVel[idx]; }
 
-		MCUDA_DEVICE_FUNC const uint32_t FaceID(uint32_t idx) const { return m_pFaceID[idx]; }
-		MCUDA_DEVICE_FUNC const REAL2 BCC(uint32_t idx) const { return m_pBCC[idx]; }
-		MCUDA_DEVICE_FUNC const REAL Volume(uint32_t idx) const { return m_pVolume[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t FaceID(uint32_t idx) const { return m_pFaceID[idx]; }
+		MCUDA_DEVICE_FUNC REAL2 BCC(uint32_t idx) const { return m_pBCC[idx]; }
+		MCUDA_DEVICE_FUNC REAL Volume(uint32_t idx) const { return m_pVolume[idx]; }
 
-		MCUDA_DEVICE_FUNC const REAL3 PreviousVel(uint32_t idx) const { return m_pPreviousVel[idx]; }
-		MCUDA_DEVICE_FUNC const REAL3 PredictVel(uint32_t idx) const { return m_pPredictVel[idx]; }
+		MCUDA_DEVICE_FUNC REAL3 PreviousVel(uint32_t idx) const { return m_pPreviousVel[idx]; }
+		MCUDA_DEVICE_FUNC REAL3 PredictVel(uint32_t idx) const { return m_pPredictVel[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC uint32_t* GetFaceIDArray() const { return m_pFaceID; }

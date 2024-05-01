@@ -38,6 +38,7 @@ namespace mps
 
 	public:
 		size_t m_size;
+		const size_t m_phaseID;
 
 		mcuda::gl::Buffer<glm::fvec4> m_color;
 		mcuda::gl::Buffer<REAL3> m_pos;

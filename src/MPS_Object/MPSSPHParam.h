@@ -21,19 +21,19 @@ namespace mps
 		MCUDA_DEVICE_FUNC REAL3& PreviousVel(uint32_t idx) { return m_pPreviousVel[idx]; }
 		MCUDA_DEVICE_FUNC REAL3& PredictVel(uint32_t idx) { return m_pPredictVel[idx]; }
 
-		MCUDA_DEVICE_FUNC const REAL Density(uint32_t idx) const { return m_pDensity[idx]; }
-		MCUDA_DEVICE_FUNC const REAL Pressure(uint32_t idx) const { return m_pPressure[idx]; }
-		MCUDA_DEVICE_FUNC const REAL FactorA(uint32_t idx) const { return m_pFactorA[idx]; }
-		MCUDA_DEVICE_FUNC const REAL Volume(uint32_t idx) const
+		MCUDA_DEVICE_FUNC REAL Density(uint32_t idx) const { return m_pDensity[idx]; }
+		MCUDA_DEVICE_FUNC REAL Pressure(uint32_t idx) const { return m_pPressure[idx]; }
+		MCUDA_DEVICE_FUNC REAL FactorA(uint32_t idx) const { return m_pFactorA[idx]; }
+		MCUDA_DEVICE_FUNC REAL Volume(uint32_t idx) const
 		{
 			if (const auto d = Density(idx); d > 1.0e-10)
 				return Mass(idx) / d;
 			return 0.0;
 		}
 
-		MCUDA_DEVICE_FUNC const REAL3 TempVec3(uint32_t idx) const { return m_pTempVec3[idx]; }
-		MCUDA_DEVICE_FUNC const REAL3 PreviousVel(uint32_t idx) const { return m_pPreviousVel[idx]; }
-		MCUDA_DEVICE_FUNC const REAL3 PredictVel(uint32_t idx) const { return m_pPredictVel[idx]; }
+		MCUDA_DEVICE_FUNC REAL3 TempVec3(uint32_t idx) const { return m_pTempVec3[idx]; }
+		MCUDA_DEVICE_FUNC REAL3 PreviousVel(uint32_t idx) const { return m_pPreviousVel[idx]; }
+		MCUDA_DEVICE_FUNC REAL3 PredictVel(uint32_t idx) const { return m_pPredictVel[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC REAL* GetDensityArray() const { return m_pDensity; }

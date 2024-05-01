@@ -1,8 +1,14 @@
 #include "stdafx.h"
 #include "MPSObject.h"
 
-mps::Object::Object() : m_size{ 0ull }
-{}
+namespace
+{
+	static size_t phaseID = 0ull;
+}
+
+mps::Object::Object() : m_size{ 0ull }, m_phaseID{ phaseID++ }
+{
+}
 
 void mps::Object::Clear()
 {
@@ -34,7 +40,7 @@ std::shared_ptr<mps::ObjectResource> mps::Object::GenerateDeviceResource()
 	auto optPosRes = m_pos.GetDeviceResource();
 	if (!optPosRes) return {};
 
-	return std::make_shared<ObjectResource>(m_size,
+	return std::make_shared<ObjectResource>(m_size, m_phaseID,
 		std::move(optColorRes.value()),
 		std::move(optPosRes.value()),
 		thrust::raw_pointer_cast(m_mass.data()),

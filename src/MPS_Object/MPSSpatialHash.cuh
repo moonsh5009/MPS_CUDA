@@ -69,22 +69,22 @@ MCUDA_DEVICE_FUNC void mps::SpatialHashParam::Research(const REAL3& pos, Fn func
 	}
 }
 
-__global__ void InitHash_kernel(mps::SpatialHashParam hash, const mps::ObjectParam objParam)
+__global__ void InitHash_kernel(mps::SpatialHashParam hash, const mps::ObjectParam obj)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
-	if (id >= objParam.GetSize()) return;
+	if (id >= obj.GetSize()) return;
 	
-	const auto gridPos = hash.GetGridPos(objParam.Position(id));
+	const auto gridPos = hash.GetGridPos(obj.Position(id));
 	const auto gridIdx = hash.GetGridIndex(gridPos);
 	hash.Key(id) = gridIdx;
 	hash.ID(id) = id;
 }
-__global__ void InitHashZIndex_kernel(mps::SpatialHashParam hash, const mps::ObjectParam objParam)
+__global__ void InitHashZIndex_kernel(mps::SpatialHashParam hash, const mps::ObjectParam obj)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
-	if (id >= objParam.GetSize()) return;
+	if (id >= obj.GetSize()) return;
 
-	const auto gridPos = hash.GetGridPos(objParam.Position(id));
+	const auto gridPos = hash.GetGridPos(obj.Position(id));
 	const auto gridIdx = hash.GetGridZIndex(gridPos);
 	hash.Key(id) = gridIdx;
 }
@@ -115,4 +115,90 @@ __global__ void ReorderHash_kernel(mps::SpatialHashParam hash)
 		if (id == hash.GetObjectSize() - 1)
 			hash.EndIdx(hashId) = hash.GetObjectSize();
 	}
+}
+
+__global__ void ComputeNeighborhoodSize_kernel(
+	uint32_t* MCUDA_RESTRICT neiIdx,
+	REAL radius,
+	const mps::ObjectParam obj,
+	const mps::SpatialHashParam hash)
+{
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+	if (id >= obj.GetSize()) return;
+	
+	const auto xi = obj.Position(id);
+	uint32_t num = 0u;
+	hash.Research(xi, [&](uint32_t jd)
+	{
+		if (id == jd) return;
+
+		const auto xj = obj.Position(jd);
+		num += static_cast<uint32_t>(glm::length(xi - xj) < radius);
+	});
+	if (id == 0) neiIdx[0] = 0u;
+	neiIdx[id + 1u] = num;
+}
+
+__global__ void ComputeNeighborhoodSize_kernel(
+	uint32_t* MCUDA_RESTRICT neiIdx,
+	REAL radius,
+	const mps::ObjectParam obj,
+	const mps::ObjectParam refObj,
+	const mps::SpatialHashParam refHash)
+{
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+	if (id >= obj.GetSize()) return;
+
+	const auto xi = obj.Position(id);
+	uint32_t num = 0u;
+	refHash.Research(xi, [&](uint32_t jd)
+	{
+		const auto xj = refObj.Position(jd);
+		num += static_cast<uint32_t>(glm::length(xi - xj) < radius);
+	});
+	if (id == 0) neiIdx[0] = 0u;
+	neiIdx[id + 1u] = num;
+}
+
+__global__ void BuildNeighborhood_kernel(
+	uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
+	REAL radius,
+	const mps::ObjectParam obj,
+	const mps::SpatialHashParam hash)
+{
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+	if (id >= obj.GetSize()) return;
+
+	const auto xi = obj.Position(id);
+	uint32_t idx = neiIdx[id];
+	hash.Research(xi, [&](uint32_t jd)
+	{
+		if (id == jd) return;
+
+		const auto xj = obj.Position(jd);
+		if (glm::length(xi - xj) < radius)
+			nei[idx++] = jd;
+	});
+}
+
+__global__ void BuildNeighborhood_kernel(
+	uint32_t* MCUDA_RESTRICT nei,
+	const uint32_t* MCUDA_RESTRICT neiIdx,
+	REAL radius,
+	const mps::ObjectParam obj,
+	const mps::ObjectParam refObj,
+	const mps::SpatialHashParam refHash)
+{
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+	if (id >= obj.GetSize()) return;
+
+	const auto xi = obj.Position(id);
+	uint32_t idx = neiIdx[id];
+	refHash.Research(xi, [&](uint32_t jd)
+	{
+		const auto xj = refObj.Position(jd);
+		if (glm::length(xi - xj) < radius)
+			nei[idx++] = jd;
+	});
 }
