@@ -164,24 +164,6 @@ void mps::MeshObject::InitFaceInfo(REAL density)
 	thrust::fill(m_mass.begin(), m_mass.end(), mass / static_cast<REAL>(GetVertexSize()));
 }
 
-struct SortUint2CMP
-{
-	MCUDA_HOST_DEVICE_FUNC constexpr bool operator()(const uint2& a, const uint2& b) const
-	{
-		if (a.x != b.x)
-			return a.x < b.x;
-		return a.y < b.y;
-	}
-};
-
-struct TransformUint2CMP
-{
-	MCUDA_HOST_DEVICE_FUNC constexpr uint32_t operator()(const uint2& a) const
-	{
-		return a.y;
-	}
-};
-
 void mps::MeshObject::buildAdjacency()
 {
 	constexpr auto nBlockSize = 256u;
@@ -206,8 +188,8 @@ void mps::MeshObject::buildAdjacency()
 		(optFaceRes->GetData(), GetSize(), thrust::raw_pointer_cast(d_vertexID.data()), thrust::raw_pointer_cast(d_nbFacesID.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
-	thrust::sort(d_vertexID.begin(), d_vertexID.end(), SortUint2CMP());
-	thrust::transform(d_vertexID.begin(), d_vertexID.end(), m_nbFaces.begin(), TransformUint2CMP());
+	thrust::sort(d_vertexID.begin(), d_vertexID.end(), mcuda::util::SortUint2CMP());
+	thrust::transform(d_vertexID.begin(), d_vertexID.end(), m_nbFaces.begin(), mcuda::util::TransformUint2CMP());
 
 	RTriangleBuild_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> >
 		(optFaceRes->GetData(), GetSize(), thrust::raw_pointer_cast(m_nbFaces.data()), thrust::raw_pointer_cast(m_nbFacesIdx.data()), thrust::raw_pointer_cast(m_rTri.data()));
@@ -226,6 +208,6 @@ void mps::MeshObject::buildAdjacency()
 		(optFaceRes->GetData(), GetSize(), thrust::raw_pointer_cast(m_rTri.data()), thrust::raw_pointer_cast(d_vertexID.data()), thrust::raw_pointer_cast(d_nbNodesID.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
-	thrust::sort(d_vertexID.begin(), d_vertexID.end(), SortUint2CMP());
-	thrust::transform(d_vertexID.begin(), d_vertexID.end(), m_nbNodes.begin(), TransformUint2CMP());
+	thrust::sort(d_vertexID.begin(), d_vertexID.end(), mcuda::util::SortUint2CMP());
+	thrust::transform(d_vertexID.begin(), d_vertexID.end(), m_nbNodes.begin(), mcuda::util::TransformUint2CMP());
 }

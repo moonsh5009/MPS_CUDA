@@ -17,9 +17,9 @@
 
 #if defined(__CUDACC__)
 #	define MCUDA_INLINE_FUNC		__forceinline__
-#	define MCUDA_HOST_DEVICE_FUNC	__host__ __device__
+#	define MCUDA_HOST_DEVICE_FUNC	__host__ __device__ __forceinline__
 #	define MCUDA_HOST_FUNC			__host__
-#	define MCUDA_DEVICE_FUNC		__device__
+#	define MCUDA_DEVICE_FUNC		__device__ __forceinline__
 #	define MCUDA_RESTRICT			__restrict__
 #else
 #	define MCUDA_INLINE_FUNC inline
@@ -60,5 +60,23 @@ namespace mcuda
 			while (n < num) n = n << 1u;
 			return n;
 		}
+
+		struct SortUint2CMP
+		{
+			MCUDA_HOST_DEVICE_FUNC constexpr bool operator()(const uint2& a, const uint2& b) const
+			{
+				if (a.x != b.x)
+					return a.x < b.x;
+				return a.y < b.y;
+			}
+		};
+
+		struct TransformUint2CMP
+		{
+			MCUDA_HOST_DEVICE_FUNC constexpr uint32_t operator()(const uint2& a) const
+			{
+				return a.y;
+			}
+		};
 	}
 }

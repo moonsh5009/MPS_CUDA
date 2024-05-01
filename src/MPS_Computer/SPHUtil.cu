@@ -277,48 +277,98 @@ void mps::kernel::sph::ApplyExplicitSurfaceTension(const mps::SPHParam& sph, con
 void mps::kernel::sph::ApplyImplicitJacobiViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
 {
 	constexpr auto nBlockSize = 256u;
+	constexpr auto nApplyBlockSize = 1024u;
 
 	const auto nSize = sph.GetSize();
 	if (nSize == 0) return;
 
-	thrust::device_vector<REAL> d_error(1);
-	thrust::host_vector<REAL> h_error(1);
+	thrust::device_vector<REAL> d_error(3);
+	thrust::host_vector<REAL> h_error(3);
+	thrust::device_vector<REAL> d_omega(3, 1.0);
+	thrust::host_vector<REAL> h_omega(3, 1.0);
 
-	thrust::device_vector<REAL3> d_tmp(sph.GetSize());
+	std::vector<thrust::device_vector<REAL3>> d_tmp(3, thrust::device_vector<REAL3>{ sph.GetSize() });
 
 	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVelArray()));
 	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPreviousVelArray()));
 
-	constexpr REAL rho = 0.9962;
-	REAL underRelax = 1.0;
+	REAL underRelax = 0.9;
 	REAL omega = 1.0;
+	REAL rho = 0.995;
+	constexpr REAL delta = 0.005;
 
 	uint32_t l = 0u;
-	while (l < 300u)
+	while (l < 100u)
 	{
-		if (l < 10u) { omega = 1.0; underRelax = 1.0; }
-		else if (l == 10u) { omega = 2.0 / (2.0 - rho * rho); underRelax = 0.9; }
-		else { omega = 4.0 / (4.0 - rho * rho * omega); underRelax = 0.8; }
+		uint32_t minErrorID = 0u;
+		if (l < 10u)
+		{
+			d_error[0] = static_cast<REAL>(0.0);
 
-		d_error.front() = static_cast<REAL>(0.0);
+			ComputeJacobiViscosity_0_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> > (
+				physParam, sph, material, hash, thrust::raw_pointer_cast(d_tmp[0].data()));
+			CUDA_CHECK(cudaPeekAtLastError());
 
-		ComputeJacobiViscosity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize, nBlockSize * sizeof(REAL) >> >
-			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_tmp.data()), omega, underRelax, thrust::raw_pointer_cast(d_error.data()));
+			ComputeJacobiError_0_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize, nBlockSize * sizeof(REAL) >> > (
+				physParam, sph, material, hash, thrust::raw_pointer_cast(d_tmp[0].data()), thrust::raw_pointer_cast(d_error.data()));
+			CUDA_CHECK(cudaPeekAtLastError());
+
+			h_error[0] = d_error[0];
+		}
+		else
+		{
+			if (l == 10u)
+			{
+				h_omega[0] = 2.0 / (2.0 - rho * rho);
+				h_omega[1] = 2.0 / (2.0 - (rho + delta) * (rho + delta));
+				h_omega[2] = 2.0 / (2.0 - (rho - delta) * (rho - delta));
+				d_omega = h_omega;
+			}
+			else if (l > 10u)
+			{
+				h_omega[0] = 4.0 / (4.0 - rho * rho * omega);
+				h_omega[1] = 4.0 / (4.0 - (rho + delta) * (rho + delta) * omega);
+				h_omega[2] = 4.0 / (4.0 - (rho - delta) * (rho - delta) * omega);
+				d_omega = h_omega;
+			}
+
+			h_error[0] = h_error[1] = h_error[2] = static_cast<REAL>(0.0);
+			d_error = h_error;
+
+			ComputeJacobiViscosity_1_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> > (
+				physParam, sph, material, hash, thrust::raw_pointer_cast(d_tmp[0].data()), thrust::raw_pointer_cast(d_tmp[1].data()), thrust::raw_pointer_cast(d_tmp[2].data()),
+				l, underRelax, thrust::raw_pointer_cast(d_omega.data()));
+			CUDA_CHECK(cudaPeekAtLastError());
+
+			ComputeJacobiError_1_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize, nBlockSize * 3 * sizeof(REAL) >> > (
+				physParam, sph, material, hash, thrust::raw_pointer_cast(d_tmp[0].data()), thrust::raw_pointer_cast(d_tmp[1].data()), thrust::raw_pointer_cast(d_tmp[2].data()),
+				thrust::raw_pointer_cast(d_error.data()));
+			CUDA_CHECK(cudaPeekAtLastError());
+
+			h_error = d_error;
+			if (h_error[minErrorID] > h_error[1]) minErrorID = 1u;
+			if (h_error[minErrorID] > h_error[2]) minErrorID = 2u;
+
+			if (minErrorID == 1u) rho += delta;
+			else if (minErrorID == 2u) rho -= delta;
+			rho = std::min(std::max(0.9 + delta, rho), 1.0 - delta);
+			omega = d_omega[minErrorID];
+		}
+
+		ApplyJacobiViscosity_kernel << < mcuda::util::DivUp(nSize, nApplyBlockSize), nApplyBlockSize >> >
+			(sph, thrust::raw_pointer_cast(d_tmp[minErrorID].data()));
 		CUDA_CHECK(cudaPeekAtLastError());
 
-		h_error = d_error;
-		if (h_error.front() < 1.0e-1 * physParam.dt) break;
+		h_error[minErrorID] *= physParam.dt / static_cast<REAL>(nSize);
+		if (h_error[minErrorID] < 1.0e-4) break;
+
 
 	#if DEBUG_PRINT
 		std::stringstream ss;
-		ss << "Implicit Jacobi Viscosity Error " << l << " : " << h_error.front() << std::endl;
-		ss << "Omega " << l << " : " << omega << std::endl;
+		ss << "Implicit Jacobi Viscosity Error " << l << " : " << h_error[minErrorID];
+		ss << ", Omega/MinID " << l << " : " << omega << ", " << minErrorID << std::endl;
 		OutputDebugStringA(ss.str().c_str());
 	#endif
-
-		ApplyJacobiViscosity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-			(sph, thrust::raw_pointer_cast(d_tmp.data()));
-		CUDA_CHECK(cudaPeekAtLastError());
 		l++;
 	}
 
@@ -327,6 +377,60 @@ void mps::kernel::sph::ApplyImplicitJacobiViscosity(const mps::PhysicsParam& phy
 	ss << "Implicit Jacobi Viscosity Loop : " << l << std::endl;
 	OutputDebugStringA(ss.str().c_str());
 }
+
+//void mps::kernel::sph::ApplyImplicitJacobiViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
+//{
+//	constexpr auto nBlockSize = 256u;
+//
+//	const auto nSize = sph.GetSize();
+//	if (nSize == 0) return;
+//
+//	thrust::device_vector<REAL> d_error(1);
+//	thrust::host_vector<REAL> h_error(1);
+//
+//	thrust::device_vector<REAL3> d_tmp(sph.GetSize());
+//
+//	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPredictVelArray()));
+//	thrust::copy(thrust::device_pointer_cast(sph.GetVelocityArray()), thrust::device_pointer_cast(sph.GetVelocityArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetPreviousVelArray()));
+//
+//	constexpr REAL rho = 0.9962;
+//	REAL underRelax = 1.0;
+//	REAL omega = 1.0;
+//
+//	uint32_t l = 0u;
+//	while (l < 300u)
+//	{
+//		if (l < 10u) { omega = 1.0; underRelax = 1.0; }
+//		else if (l == 10u) { omega = 2.0 / (2.0 - rho * rho); underRelax = 0.9; }
+//		else { omega = 4.0 / (4.0 - rho * rho * omega); underRelax = 0.8; }
+//
+//		d_error.front() = static_cast<REAL>(0.0);
+//
+//		ComputeJacobiViscosity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize, nBlockSize * sizeof(REAL) >> >
+//			(physParam, sph, material, hash, thrust::raw_pointer_cast(d_tmp.data()), omega, underRelax, thrust::raw_pointer_cast(d_error.data()));
+//		CUDA_CHECK(cudaPeekAtLastError());
+//
+//		h_error = d_error;
+//		if (h_error.front() / static_cast<REAL>(nSize) < 1.0e-1 * physParam.dt) break;
+//
+//	#if DEBUG_PRINT
+//		std::stringstream ss;
+//		ss << "Implicit Jacobi Viscosity Error " << l << " : " << h_error.front() << std::endl;
+//		ss << "Omega " << l << " : " << omega << std::endl;
+//		OutputDebugStringA(ss.str().c_str());
+//	#endif
+//
+//		ApplyJacobiViscosity_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
+//			(sph, thrust::raw_pointer_cast(d_tmp.data()));
+//		CUDA_CHECK(cudaPeekAtLastError());
+//		l++;
+//	}
+//
+//	thrust::copy(thrust::device_pointer_cast(sph.GetPredictVelArray()), thrust::device_pointer_cast(sph.GetPredictVelArray() + sph.GetSize()), thrust::device_pointer_cast(sph.GetVelocityArray()));
+//	std::stringstream ss;
+//	ss << "Implicit Jacobi Viscosity Loop : " << l << std::endl;
+//	OutputDebugStringA(ss.str().c_str());
+//}
 
 void mps::kernel::sph::ApplyImplicitGDViscosity(const mps::PhysicsParam& physParam, const mps::SPHParam& sph, const mps::SPHMaterialParam& material, const mps::SpatialHashParam& hash)
 {
@@ -392,7 +496,7 @@ void mps::kernel::sph::ApplyImplicitCGViscosity(const mps::PhysicsParam& physPar
 	CUDA_CHECK(cudaPeekAtLastError());
 	thrust::copy(d_R.begin(), d_R.end(), d_V.begin());
 
-	constexpr REAL factor = 0.01;
+	constexpr REAL factor = 0.1;
 	uint32_t l = 0u;
 	while (l < 100u)
 	{

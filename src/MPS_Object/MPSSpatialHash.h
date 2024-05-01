@@ -8,6 +8,8 @@
 namespace mps
 {
 	class ObjectParam;
+	class SPHParam;
+	class BoundaryParticleParam;
 	class __MY_EXT_CLASS__ SpatialHash : public VirtualTree<SpatialHashParam>
 	{
 	public:
@@ -29,6 +31,9 @@ namespace mps
 
 	public:
 		void UpdateHash(const mps::ObjectParam& objParam);
+		void ZSort(mps::ObjectParam& objParam);
+		void ZSort(mps::SPHParam& sphParam);
+		void ZSort(mps::BoundaryParticleParam& boundaryParticleParam);
 
 	private:
 		thrust::device_vector<uint32_t> m_key;

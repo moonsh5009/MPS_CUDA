@@ -51,6 +51,7 @@ __global__ void RTriangleBuild_kernel(
 
 	jStart = inbFs[face[0]];
 	jEnd = inbFs[face[0] + 1u];
+#pragma unroll
 	for (auto i = 0u, j = 1u; i < 3u; i++, j = (j == 2u ? 0u : j + 1u))
 	{
 		ino = jStart;
@@ -63,6 +64,7 @@ __global__ void RTriangleBuild_kernel(
 		jEnd = inbFs[face[j] + 1u];
 
 		uint32_t of = 0xffffffff;
+	#pragma unroll
 		for (jno = jStart; jno < jEnd; jno++)
 		{
 			jTri = nbFs[jno];
@@ -72,9 +74,11 @@ __global__ void RTriangleBuild_kernel(
 				break;
 			}
 		}
+	#pragma unroll
 		for (; ino < iEnd && of == 0xffffffff; ino++)
 		{
 			iTri = nbFs[ino];
+		#pragma unroll
 			for (jno = jStart; jno < jEnd; jno++)
 			{
 				jTri = nbFs[jno];

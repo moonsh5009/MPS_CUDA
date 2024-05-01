@@ -18,10 +18,15 @@ namespace mps
 		MCUDA_HOST_DEVICE_FUNC REAL GetCeilSize() const { return m_ceilSize; }
 		MCUDA_HOST_DEVICE_FUNC const glm::uvec3& GetHashSize() const { return m_hashSize; }
 
-		MCUDA_DEVICE_FUNC uint32_t& Key(uint32_t idx) const { return m_pKey[idx]; }
-		MCUDA_DEVICE_FUNC uint32_t& ID(uint32_t idx) const { return m_pID[idx]; }
-		MCUDA_DEVICE_FUNC uint32_t& StartIdx(uint32_t idx) const { return m_pStartIdx[idx]; }
-		MCUDA_DEVICE_FUNC uint32_t& EndIdx(uint32_t idx) const { return m_pEndIdx[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t& Key(uint32_t idx) { return m_pKey[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t& ID(uint32_t idx) { return m_pID[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t& StartIdx(uint32_t idx) { return m_pStartIdx[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t& EndIdx(uint32_t idx) { return m_pEndIdx[idx]; }
+
+		MCUDA_DEVICE_FUNC uint32_t Key(uint32_t idx) const { return m_pKey[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t ID(uint32_t idx) const { return m_pID[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t StartIdx(uint32_t idx) const { return m_pStartIdx[idx]; }
+		MCUDA_DEVICE_FUNC uint32_t EndIdx(uint32_t idx) const { return m_pEndIdx[idx]; }
 
 	public:
 		MCUDA_HOST_FUNC void SetObjectSize(uint32_t objSize) { m_objSize = objSize; }
@@ -36,7 +41,7 @@ namespace mps
 	public:
 		MCUDA_DEVICE_FUNC glm::ivec3 GetGridPos(const REAL3& x) const;
 		MCUDA_DEVICE_FUNC uint32_t GetGridIndex(const glm::ivec3& p) const;
-		MCUDA_DEVICE_FUNC uint32_t GetGridZindex(const glm::ivec3& p) const;
+		MCUDA_DEVICE_FUNC uint32_t GetGridZIndex(const glm::ivec3& p) const;
 
 		template<class Fn>
 		MCUDA_DEVICE_FUNC void Research(const REAL3& pos, Fn func) const;

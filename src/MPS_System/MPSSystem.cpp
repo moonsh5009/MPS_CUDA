@@ -69,8 +69,8 @@ void mps::System::Initalize()
             pBoundaryParticleHash->SetHashSize({ 64, 64, 64 });
         }
 
-        ResizeParticle(5);
-        //ViscosityTestScene(5, 300);
+        //ResizeParticle(5);
+        ViscosityTestScene(5, 300);
 
         m_pRenderManager->AddModel(m_pBoundaryModel);
         m_pRenderManager->AddModel(m_pSPHModel);
@@ -178,6 +178,13 @@ void mps::System::OnUpdate()
 {
     if (!b_runSim) return;
 
+    {
+        cudaDeviceSynchronize();
+        std::stringstream ss;
+        ss << "Frame " << m_frame;
+        MTimer::Start(ss.str());
+    }
+
     auto pBoundaryParticleObject = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
     auto pBoundaryParticleMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
     auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
@@ -202,6 +209,11 @@ void mps::System::OnUpdate()
 
     const auto& physParam = m_pGBArchiver->m_physicsParam;
 
+    if ((m_frame % 50u) == 1u)
+    {
+        pBoundaryParticleHash->ZSort(*pBoundaryParticleParam);
+        pSPHHash->ZSort(*pSPHParam);
+    }
     pBoundaryParticleHash->UpdateHash(*pBoundaryParticleParam);
     pSPHHash->UpdateHash(*pSPHParam);
 
@@ -213,7 +225,7 @@ void mps::System::OnUpdate()
         *pBoundaryParticleParam, boundaryParticleMaterialParam, boundaryParticleHashParam);
     mps::kernel::sph::ComputeDensity_2(*pSPHParam, sphMaterialParam);
     
-    //mps::kernel::sph::DensityColorTest(*pSPHParam, sphMaterialParam);
+    mps::kernel::sph::DensityColorTest(*pSPHParam, sphMaterialParam);
 
     mps::kernel::sph::ComputeDFSPHFactor_0(*pSPHParam, sphMaterialParam, sphHashParam);
     mps::kernel::sph::ComputeDFSPHFactor_1(*pSPHParam, sphMaterialParam, sphHashParam,
@@ -235,16 +247,23 @@ void mps::System::OnUpdate()
     mps::kernel::sph::ApplyExplicitViscosity(*pSPHParam, sphMaterialParam, hashParam);
     mps::kernel::UpdateVelocity(physParam, *pSPHParam);*/
 
-    //mps::kernel::sph::ApplyImplicitJacobiViscosity(physParam, *pSPHParam, sphMaterialParam, sphHashParam);
+    mps::kernel::sph::ApplyImplicitJacobiViscosity(physParam, *pSPHParam, sphMaterialParam, sphHashParam);
     //mps::kernel::sph::ApplyImplicitGDViscosity(physParam, *pSPHParam, sphMaterialParam, sphHashParam);
-    mps::kernel::sph::ApplyImplicitCGViscosity(physParam, *pSPHParam, sphMaterialParam, sphHashParam);
+    //mps::kernel::sph::ApplyImplicitCGViscosity(physParam, *pSPHParam, sphMaterialParam, sphHashParam);
 
     mps::kernel::sph::ComputeDFSPHConstantDensity(physParam, *pSPHParam, sphMaterialParam, sphHashParam,
         *pBoundaryParticleParam, boundaryParticleMaterialParam, boundaryParticleHashParam);
 
     //mps::kernel::BoundaryCollision(physParam, *pSPHParam);
     mps::kernel::UpdatePosition(physParam, *pSPHParam);
-    
+
+    {
+        cudaDeviceSynchronize();
+        std::stringstream ss;
+        ss << "Frame " << m_frame;
+        MTimer::End(ss.str());
+        OutputDebugStringA("\n");
+    }
     //m_pCamera->GetTransform()->Set({ 6.04415, 9.72579, -10.5085 }, { 0.86881, 0, 0.495144 }, { -0.217152, 0.898697, 0.381028 }, { -0.444984, -0.438562, 0.780798 });
     //Capture(300, 4);
     m_frame++;
@@ -485,5 +504,21 @@ void mps::System::ViscosityTestScene(size_t size, size_t height)
         std::stringstream ss;
         ss << "Number Of Particle" << " : " << pSPHObject->GetSize() << std::endl;
         OutputDebugStringA(ss.str().c_str());
+    }
+    {
+        auto pMeshObject = m_pBoundaryModel->GetTarget<mps::MeshObject>();
+        auto pMeshMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
+        auto pBoundaryParticle = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
+        auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
+        pMeshObject->LoadMesh("../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
+        pMeshMaterial->SetParam(radius * 4, 1.0);
+
+        auto pMeshRes = pMeshObject->GetDeviceResource<mps::MeshResource>();
+        auto pMeshParam = pMeshRes->GetMeshParam().lock();
+        mps::kernel::ParticleSampling::ParticleSampling(*pMeshParam, pMeshMaterial->GetParam(), *pBoundaryParticle);
+
+        pBoundaryParticleHash->SetObjectSize(pBoundaryParticle->GetSize());
+        pBoundaryParticleHash->SetCeilSize(radius * 4);
+        pBoundaryParticleHash->SetHashSize({ 64, 64, 64 });
     }
 }

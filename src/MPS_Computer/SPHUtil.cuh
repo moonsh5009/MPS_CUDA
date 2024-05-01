@@ -303,6 +303,7 @@ __global__ void ComputeCDStiffness_kernel(const mps::PhysicsParam physParam, mps
 
 		sph.Pressure(id) = stiffness;
 	}
+#pragma unroll
 	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
 	{
 		__syncthreads();
@@ -339,6 +340,7 @@ __global__ void ComputeDFStiffness_kernel(const mps::PhysicsParam physParam, mps
 
 		sph.Pressure(id) = stiffness;
 	}
+#pragma unroll
 	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
 	{
 		__syncthreads();
@@ -495,13 +497,247 @@ __global__ void ApplyExplicitSurfaceTension_kernel(mps::SPHParam sph, const mps:
 	sph.Force(id) = force;
 }
 
-//__global__ void ComputeJacobiViscosity_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash, 
-//	REAL omega, REAL* maxError)
+__global__ void ComputeJacobiViscosity_0_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+	REAL3* MCUDA_RESTRICT vTemp)
+{
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+	if (id >= sph.GetSize()) return;
+
+	const auto h = material.radius;
+	const auto invH = 1.0 / h;
+	const auto onePercentHSq = 0.01 * h * h;
+
+	const auto xi = sph.Position(id);
+
+	REAL3x3 Avi{ 0.0 };
+	REAL3 Avj{ 0.0 };
+	hash.Research(xi, [&](uint32_t jd)
+	{
+		if (id == jd) return;
+
+		const auto xj = sph.Position(jd);
+		auto xij = xi - xj;
+
+		const auto dist = glm::length(xij);
+		if (dist < h)
+		{
+			const auto predictVj = sph.PredictVel(jd);
+			const auto volumej = sph.Volume(jd);
+			const auto Aij = volumej * mps::kernel::sph::GKernel(dist, invH) / ((dist * dist + onePercentHSq) * dist) * REAL3x3
+			{
+				xij.x * xij.x, xij.y * xij.x, xij.z * xij.x,
+				xij.x * xij.y, xij.y * xij.y, xij.z * xij.y,
+				xij.x * xij.z, xij.y * xij.z, xij.z * xij.z,
+			};
+			Avj -= predictVj * Aij;
+			Avi -= Aij;
+		}
+	});
+	const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
+	Avj *= alpha;
+	Avi *= alpha;
+	Avi += REAL3x3{ 1.0 };
+	auto invAvi = glm::inverse(Avi);
+	if (isinf(invAvi[0][0]) || isnan(invAvi[0][0]))
+		invAvi = REAL3x3{ 0.0 };
+
+	const auto newVi = (sph.Velocity(id) + Avj) * invAvi;
+	vTemp[id] = newVi;
+}
+__global__ void ComputeJacobiViscosity_1_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+	REAL3* MCUDA_RESTRICT vTemp0, REAL3* MCUDA_RESTRICT vTemp1, REAL3* MCUDA_RESTRICT vTemp2,
+	uint32_t l, REAL underRelax, REAL* MCUDA_RESTRICT omega)
+{
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+	if (id >= sph.GetSize()) return;
+
+	const auto h = material.radius;
+	const auto invH = 1.0 / h;
+	const auto onePercentHSq = 0.01 * h * h;
+
+	const auto xi = sph.Position(id);
+
+	REAL3x3 Avi{ 0.0 };
+	REAL3 Avj{ 0.0 };
+	hash.Research(xi, [&](uint32_t jd)
+	{
+		if (id == jd) return;
+
+		const auto xj = sph.Position(jd);
+		auto xij = xi - xj;
+
+		const auto dist = glm::length(xij);
+		if (dist < h)
+		{
+			const auto predictVj = sph.PredictVel(jd);
+			const auto volumej = sph.Volume(jd);
+			const auto Aij = volumej * mps::kernel::sph::GKernel(dist, invH) / ((dist * dist + onePercentHSq) * dist) * REAL3x3
+			{
+				xij.x * xij.x, xij.y * xij.x, xij.z * xij.x,
+				xij.x * xij.y, xij.y * xij.y, xij.z * xij.y,
+				xij.x * xij.z, xij.y * xij.z, xij.z * xij.z,
+			};
+			Avj -= predictVj * Aij;
+			Avi -= Aij;
+		}
+	});
+	const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
+	Avj *= alpha;
+	Avi *= alpha;
+	Avi += REAL3x3{ 1.0 };
+	auto invAvi = glm::inverse(Avi);
+	if (isinf(invAvi[0][0]) || isnan(invAvi[0][0]))
+		invAvi = REAL3x3{ 0.0 };
+
+	const auto prevVi = sph.PreviousVel(id);
+	const auto currVi = sph.PredictVel(id);
+	const auto newVi = (sph.Velocity(id) + Avj) * invAvi;
+	vTemp0[id] = omega[0] * (underRelax * (newVi - currVi) + currVi - prevVi) + prevVi;
+	vTemp1[id] = omega[1] * (underRelax * (newVi - currVi) + currVi - prevVi) + prevVi;
+	vTemp2[id] = omega[2] * (underRelax * (newVi - currVi) + currVi - prevVi) + prevVi;
+}
+__global__ void ComputeJacobiError_0_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+	REAL3* MCUDA_RESTRICT vTemp, REAL* MCUDA_RESTRICT sumError)
+{
+	extern __shared__ REAL s_sumErrors[];
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+
+	s_sumErrors[threadIdx.x] = 0.0;
+	if (id < sph.GetSize())
+	{
+		const auto h = material.radius;
+		const auto invH = 1.0 / h;
+		const auto onePercentHSq = 0.01 * h * h;
+
+		const auto xi = sph.Position(id);
+		const auto predictVi = vTemp[id];
+
+		REAL3 Avij{ 0.0 };
+		hash.Research(xi, [&](uint32_t jd)
+		{
+			if (id == jd) return;
+
+			const auto xj = sph.Position(jd);
+			auto xij = xi - xj;
+
+			const auto dist = glm::length(xij);
+			if (dist < h)
+			{
+				const auto predictVj = vTemp[jd];
+				const auto volumej = sph.Volume(jd);
+				const auto grad = volumej * mps::kernel::sph::GKernel(dist, invH) / ((dist * dist + onePercentHSq) * dist) * xij;
+				Avij += glm::dot(xij, predictVi - predictVj) * grad;
+			}
+		});
+		const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
+		Avij *= alpha;
+
+		const auto v0 = sph.Velocity(id);
+		s_sumErrors[threadIdx.x] = glm::length(predictVi - Avij - v0);
+	}
+#pragma unroll
+	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
+	{
+		__syncthreads();
+		if (threadIdx.x < s)
+			s_sumErrors[threadIdx.x] += s_sumErrors[threadIdx.x + s];
+	}
+	__syncthreads();
+	if (threadIdx.x < 32u)
+	{
+		mcuda::util::warpSum(s_sumErrors, threadIdx.x);
+		if (threadIdx.x == 0)
+			mcuda::util::AtomicAdd(sumError, s_sumErrors[0]);
+	}
+}
+__global__ void ComputeJacobiError_1_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+	REAL3* MCUDA_RESTRICT vTemp0, REAL3* MCUDA_RESTRICT vTemp1, REAL3* MCUDA_RESTRICT vTemp2, REAL* MCUDA_RESTRICT sumError)
+{
+	extern __shared__ REAL s_sumErrors[];
+	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
+
+	s_sumErrors[threadIdx.x] = 0.0;
+	s_sumErrors[threadIdx.x + blockDim.x] = 0.0;
+	s_sumErrors[threadIdx.x + (blockDim.x << 1u)] = 0.0;
+	if (id < sph.GetSize())
+	{
+		const auto h = material.radius;
+		const auto invH = 1.0 / h;
+		const auto onePercentHSq = 0.01 * h * h;
+
+		const auto xi = sph.Position(id);
+		const auto predictVi0 = vTemp0[id];
+		const auto predictVi1 = vTemp1[id];
+		const auto predictVi2 = vTemp2[id];
+
+		REAL3 Avij0{ 0.0 };
+		REAL3 Avij1{ 0.0 };
+		REAL3 Avij2{ 0.0 };
+		hash.Research(xi, [&](uint32_t jd)
+		{
+			if (id == jd) return;
+
+			const auto xj = sph.Position(jd);
+			auto xij = xi - xj;
+
+			const auto dist = glm::length(xij);
+			if (dist < h)
+			{
+				const auto predictVj0 = vTemp0[jd];
+				const auto predictVj1 = vTemp1[jd];
+				const auto predictVj2 = vTemp2[jd];
+				const auto volumej = sph.Volume(jd);
+				const auto grad = volumej * mps::kernel::sph::GKernel(dist, invH) / ((dist * dist + onePercentHSq) * dist) * xij;
+				Avij0 += glm::dot(xij, predictVi0 - predictVj0) * grad;
+				Avij1 += glm::dot(xij, predictVi1 - predictVj1) * grad;
+				Avij2 += glm::dot(xij, predictVi2 - predictVj2) * grad;
+			}
+		});
+		const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
+		Avij0 *= alpha;
+		Avij1 *= alpha;
+		Avij2 *= alpha;
+
+		const auto v0 = sph.Velocity(id);
+		s_sumErrors[threadIdx.x] = glm::length(predictVi0 - Avij0 - v0);
+		s_sumErrors[threadIdx.x + blockDim.x] = glm::length(predictVi1 - Avij1 - v0);
+		s_sumErrors[threadIdx.x + (blockDim.x << 1u)] = glm::length(predictVi2 - Avij2 - v0);
+	}
+#pragma unroll
+	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
+	{
+		__syncthreads();
+		if (threadIdx.x < s)
+		{
+			s_sumErrors[threadIdx.x] += s_sumErrors[threadIdx.x + s];
+			s_sumErrors[threadIdx.x + blockDim.x] += s_sumErrors[threadIdx.x + blockDim.x + s];
+			s_sumErrors[threadIdx.x + (blockDim.x << 1u)] += s_sumErrors[threadIdx.x + (blockDim.x << 1u) + s];
+		}
+	}
+
+	__syncthreads();
+	if (threadIdx.x < 32u)
+	{
+		mcuda::util::warpSum(s_sumErrors, threadIdx.x);
+		mcuda::util::warpSum(s_sumErrors + blockDim.x, threadIdx.x);
+		mcuda::util::warpSum(s_sumErrors + (blockDim.x << 1u), threadIdx.x);
+		if (threadIdx.x == 0)
+		{
+			mcuda::util::AtomicAdd(sumError, s_sumErrors[0]);
+			mcuda::util::AtomicAdd(sumError + 1, s_sumErrors[blockDim.x]);
+			mcuda::util::AtomicAdd(sumError + 2, s_sumErrors[(blockDim.x << 1u)]);
+		}
+	}
+}
+
+
+//__global__ void ComputeJacobiViscosity_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
+//	REAL3* vTemp, REAL omega, REAL underRelax, REAL* sumError)
 //{
-//	extern __shared__ REAL s_maxErrors[];
+//	extern __shared__ REAL s_sumErrors[];
 //	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 //
-//	s_maxErrors[threadIdx.x] = 0u;
+//	s_sumErrors[threadIdx.x] = 0u;
 //	if (id < sph.GetSize())
 //	{
 //		const auto h = material.radius;
@@ -509,10 +745,9 @@ __global__ void ApplyExplicitSurfaceTension_kernel(mps::SPHParam sph, const mps:
 //		const auto onePercentHSq = 0.01 * h * h;
 //
 //		const auto xi = sph.Position(id);
-//		const auto predictVi = sph.PredictVel(id);
-//		const auto di = sph.Density(id);
 //
-//		REAL3 dv{ 0.0 };
+//		REAL3x3 Avi{ 0.0 };
+//		REAL3 Avj{ 0.0 };
 //		hash.Research(xi, [&](uint32_t jd)
 //		{
 //			if (id == jd) return;
@@ -523,164 +758,56 @@ __global__ void ApplyExplicitSurfaceTension_kernel(mps::SPHParam sph, const mps:
 //			const auto dist = glm::length(xij);
 //			if (dist < h)
 //			{
-//				const auto predictVj = sph.PreviousVel(jd);
+//				const auto predictVj = sph.PredictVel(jd);
 //				const auto volumej = sph.Volume(jd);
-//
-//				const auto vij = predictVi - predictVj;
-//				const auto dvij = volumej * glm::dot(vij, xij) / (dist * dist + onePercentHSq) * mps::kernel::sph::GKernel(dist, invH) / dist * xij;
-//				dv += dvij;
+//				const auto Aij = volumej * mps::kernel::sph::GKernel(dist, invH) / ((dist * dist + onePercentHSq) * dist)
+//					* REAL3x3
+//				{
+//					xij.x* xij.x, xij.y* xij.x, xij.z* xij.x,
+//						xij.x* xij.y, xij.y* xij.y, xij.z* xij.y,
+//						xij.x* xij.z, xij.y* xij.z, xij.z* xij.z,
+//				};
+//				Avj -= predictVj * Aij;
+//				Avi -= Aij;
 //			}
 //		});
-//		dv *= physParam.dt * 10.0 * material.viscosity / di;
-//		const auto v0i = sph.Velocity(id);
-//		const auto newVi = v0i + dv;
-//		const auto prevVi = sph.PreviousVel(id);
+//		const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
+//		Avj *= alpha;
+//		Avi *= alpha;
+//		Avi += REAL3x3{ 1.0 };
+//		auto invAvi = glm::inverse(Avi);
+//		if (isinf(invAvi[0][0]) || isnan(invAvi[0][0]))
+//			invAvi = REAL3x3{ 0.0 };
 //
 //		const auto GetErrorBetweenV = [](const REAL3& v1, const REAL3& v2)
 //		{
 //			return mcuda::util::max(mcuda::util::max(fabs(v1.x - v2.x), fabs(v1.y - v2.y)), fabs(v1.z - v2.z));
-//			//return fabs(glm::length(v1 - v2));
 //		};
-//
-//		//const auto newPredictVi = errorRelaxation * (newVi - predictVi) + predictVi;
-//		const auto newPredictVi = omega * (newVi - predictVi) + predictVi;
-//		//const auto newPredictVi = omega * (errorRelaxation * (newVi - predictVi) + predictVi - prevVi) + prevVi;
-//
-//		s_maxErrors[threadIdx.x] = GetErrorBetweenV(newPredictVi, predictVi);
-//		sph.PreviousVel(id) = predictVi;
-//		sph.PredictVel(id) = newPredictVi;
+//		const auto prevVi = sph.PreviousVel(id);
+//		const auto currVi = sph.PredictVel(id);
+//		auto newVi = (sph.Velocity(id) + Avj) * invAvi;
+//		newVi = omega * (underRelax * (newVi - currVi) + currVi - prevVi) + prevVi;
+//		s_sumErrors[threadIdx.x] = GetErrorBetweenV(newVi, sph.PredictVel(id));
+//		vTemp[id] = newVi;
 //	}
 //	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
 //	{
 //		__syncthreads();
 //		if (threadIdx.x < s)
 //		{
-//			if (s_maxErrors[threadIdx.x] < s_maxErrors[threadIdx.x + s])
-//				s_maxErrors[threadIdx.x] = s_maxErrors[threadIdx.x + s];
+//			s_sumErrors[threadIdx.x] += s_sumErrors[threadIdx.x + s];
 //		}
 //	}
 //	__syncthreads();
 //	if (threadIdx.x < 32u)
 //	{
-//		mcuda::util::warpMax(s_maxErrors, threadIdx.x);
+//		mcuda::util::warpSum(s_sumErrors, threadIdx.x);
 //		if (threadIdx.x == 0)
-//			mcuda::util::AtomicMax(maxError, s_maxErrors[0]);
+//		{
+//			mcuda::util::AtomicAdd(sumError, s_sumErrors[0]);
+//		}
 //	}
 //}
-__global__ void ComputeJacobiViscosity_kernel(const mps::PhysicsParam physParam, mps::SPHParam sph, const mps::SPHMaterialParam material, const mps::SpatialHashParam hash,
-	REAL3* vTemp, REAL omega, REAL underRelax, REAL* maxError)
-{
-	extern __shared__ REAL s_maxErrors[];
-	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
-
-	s_maxErrors[threadIdx.x] = 0u;
-	if (id < sph.GetSize())
-	{
-		/*const auto h = material.radius;
-		const auto invH = 1.0 / h;
-		const auto onePercentHSq = 0.01 * h * h;
-
-		const auto xi = sph.Position(id);
-		const auto predictVi = sph.PredictVel(id);
-
-		REAL3 dv{ 0.0 };
-		hash.Research(xi, [&](uint32_t jd)
-		{
-			if (id == jd) return;
-
-			const auto xj = sph.Position(jd);
-			auto xij = xi - xj;
-
-			const auto dist = glm::length(xij);
-			if (dist < h)
-			{
-				const auto predictVj = sph.PreviousVel(jd);
-				const auto volumej = sph.Volume(jd);
-				const auto vij = predictVi - predictVj;
-				const auto dvij = volumej * glm::dot(vij, xij) / (dist * dist + onePercentHSq) * mps::kernel::sph::GKernel(dist, invH) / dist * xij;
-				dv += dvij;
-			}
-		});
-		dv *= physParam.dt * 10.0 * material.viscosity / sph.Density(id);
-		predictVi - dv = v;
-		const auto vi = sph.Velocity(id);
-		vi - predictVi
-		const auto GetErrorBetweenV = [](const REAL3& v1, const REAL3& v2)
-		{
-			return mcuda::util::max(mcuda::util::max(fabs(v1.x - v2.x), fabs(v1.y - v2.y)), fabs(v1.z - v2.z));
-		};
-		const auto newPredictVi = sph.Velocity(id) + dv;
-		s_maxErrors[threadIdx.x] = GetErrorBetweenV(newPredictVi, predictVi);
-		sph.PreviousVel(id) = predictVi;
-		sph.PredictVel(id) = newPredictVi;*/
-
-		const auto h = material.radius;
-		const auto invH = 1.0 / h;
-		const auto onePercentHSq = 0.01 * h * h;
-
-		const auto xi = sph.Position(id);
-
-		REAL3x3 Avi{ 0.0 };
-		REAL3 Avj{ 0.0 };
-		hash.Research(xi, [&](uint32_t jd)
-		{
-			if (id == jd) return;
-
-			const auto xj = sph.Position(jd);
-			auto xij = xi - xj;
-
-			const auto dist = glm::length(xij);
-			if (dist < h)
-			{
-				const auto predictVj = sph.PredictVel(jd);
-				const auto volumej = sph.Volume(jd);
-				const auto Aij = volumej * mps::kernel::sph::GKernel(dist, invH) / ((dist * dist + onePercentHSq) * dist)
-					* REAL3x3
-				{
-					xij.x * xij.x, xij.y * xij.x, xij.z * xij.x,
-					xij.z * xij.y, xij.y * xij.y, xij.z * xij.y,
-					xij.x * xij.z, xij.y * xij.z, xij.z * xij.z,
-				};
-				Avj -= predictVj * Aij;
-				Avi -= Aij;
-			}
-		});
-		const auto alpha = physParam.dt * 10.0 * material.viscosity / sph.Density(id);
-		Avj *= alpha;
-		Avi *= alpha;
-		Avi += REAL3x3{ 1.0 };
-		auto invAvi = glm::inverse(Avi);
-		if (isinf(invAvi[0][0]) || isnan(invAvi[0][0]))
-			invAvi = REAL3x3{ 0.0 };
-
-		const auto GetErrorBetweenV = [](const REAL3& v1, const REAL3& v2)
-		{
-			return mcuda::util::max(mcuda::util::max(fabs(v1.x - v2.x), fabs(v1.y - v2.y)), fabs(v1.z - v2.z));
-		};
-		const auto prevVi = sph.PreviousVel(id);
-		const auto currVi = sph.PredictVel(id);
-		auto newVi = (sph.Velocity(id) + Avj) * invAvi;
-		newVi = omega * (underRelax * (newVi - currVi) + currVi - prevVi) + prevVi;
-		s_maxErrors[threadIdx.x] = GetErrorBetweenV(newVi, sph.PredictVel(id));
-		vTemp[id] = newVi;
-	}
-	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
-	{
-		__syncthreads();
-		if (threadIdx.x < s)
-		{
-			if (s_maxErrors[threadIdx.x] < s_maxErrors[threadIdx.x + s])
-				s_maxErrors[threadIdx.x] = s_maxErrors[threadIdx.x + s];
-		}
-	}
-	__syncthreads();
-	if (threadIdx.x < 32u)
-	{
-		mcuda::util::warpMax(s_maxErrors, threadIdx.x);
-		if (threadIdx.x == 0)
-			mcuda::util::AtomicMax(maxError, s_maxErrors[0]);
-	}
-}
 __global__ void ApplyJacobiViscosity_kernel(mps::SPHParam sph, REAL3* vTemp)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
@@ -776,6 +903,7 @@ __global__ void UpdateGDViscosityGama_kernel(const mps::PhysicsParam physParam, 
 		s_temp[threadIdx.x] = glm::dot(Ri, Ri);
 		s_temp[threadIdx.x + blockDim.x] = glm::dot(Ri, AR);
 	}
+#pragma unroll
 	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
 	{
 		__syncthreads();
@@ -861,6 +989,7 @@ __global__ void UpdateCGViscosityAlphaParam_kernel(mps::SPHParam sph, REAL3* R, 
 		s_temp[threadIdx.x] = glm::dot(ri, ri);
 		s_temp[threadIdx.x + blockDim.x] = glm::dot(vi, avi);
 	}
+#pragma unroll
 	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
 	{
 		__syncthreads();
@@ -905,6 +1034,7 @@ __global__ void UpdateCGViscosityBetaParam_kernel(mps::SPHParam sph, REAL3* R, R
 		const auto ri = R[id];
 		s_temp[threadIdx.x] = glm::dot(ri, ri);
 	}
+#pragma unroll
 	for (uint32_t s = blockDim.x >> 1u; s > 32u; s >>= 1u)
 	{
 		__syncthreads();
