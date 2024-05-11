@@ -16,8 +16,8 @@ namespace mps
 		{}
 
 	public:
-		T& GetParam() { return m_param; }
-		const T& GetParam() const { return m_param; }
+		constexpr T& GetParam() { return m_param; }
+		constexpr const T& GetParam() const { return m_param; }
 
 	private:
 		T m_param;

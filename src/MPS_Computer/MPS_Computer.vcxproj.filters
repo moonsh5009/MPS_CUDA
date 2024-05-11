@@ -13,6 +13,18 @@
     <Filter Include="Mesh">
       <UniqueIdentifier>{ac013fa1-bcee-40f4-a3f3-b1811b3d5a1d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SPH\Base">
+      <UniqueIdentifier>{03e0c7d3-5439-4839-814a-deddea79e55d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SPH\DFSPH">
+      <UniqueIdentifier>{e28817ec-fd73-44a6-9365-efe6e54b1c30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SPH\NonPressure">
+      <UniqueIdentifier>{9e550624-e5e6-441f-9e06-c52022f1b962}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Solver">
+      <UniqueIdentifier>{26f8730c-abc7-4812-b549-d19cd24b6c38}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HeaderPost.h">
@@ -24,19 +36,16 @@
     <ClInclude Include="stdafx.h">
       <Filter>.generate</Filter>
     </ClInclude>
-    <ClInclude Include="AdvectUtil.h">
+    <ClInclude Include="MPSAdvectUtil.h">
       <Filter>Advect</Filter>
     </ClInclude>
-    <ClInclude Include="AdvectUtil.cuh">
+    <ClInclude Include="MPSAdvectUtil.cuh">
       <Filter>Advect</Filter>
     </ClInclude>
-    <ClInclude Include="SPHUtil.h">
+    <ClInclude Include="MPSSPHUtil.h">
       <Filter>SPH</Filter>
     </ClInclude>
     <ClInclude Include="SPHUtil.cuh">
-      <Filter>SPH</Filter>
-    </ClInclude>
-    <ClInclude Include="SPHKernel.cuh">
       <Filter>SPH</Filter>
     </ClInclude>
     <ClInclude Include="MPSParticleSamplingUtil.h">
@@ -45,6 +54,37 @@
     <ClInclude Include="MPSParticleSamplingUtil.cuh">
       <Filter>Mesh</Filter>
     </ClInclude>
+    <ClInclude Include="MPSSPHBaseUtil.cuh">
+      <Filter>SPH\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHBaseUtil.h">
+      <Filter>SPH\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHDFSPHUtil.cuh">
+      <Filter>SPH\DFSPH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHDFSPHUtil.h">
+      <Filter>SPH\DFSPH</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHKernel.cuh">
+      <Filter>SPH\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHUtilDef.h">
+      <Filter>SPH\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHNonPressureUtil.h">
+      <Filter>SPH\NonPressure</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSSPHNonPressureUtil.cuh">
+      <Filter>SPH\NonPressure</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSBaseUtil.cuh" />
+    <ClInclude Include="MPSSolver.cuh">
+      <Filter>Solver</Filter>
+    </ClInclude>
+    <ClInclude Include="MPSCGKernel.cuh">
+      <Filter>Solver</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -52,7 +92,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="AdvectUtil.cu">
+    <CudaCompile Include="MPSAdvectUtil.cu">
       <Filter>Advect</Filter>
     </CudaCompile>
     <CudaCompile Include="SPHUtil.cu">
@@ -60,6 +100,15 @@
     </CudaCompile>
     <CudaCompile Include="MPSParticleSamplingUtil.cu">
       <Filter>Mesh</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSSPHBaseUtil.cu">
+      <Filter>SPH\Base</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSSPHDFSPHUtil.cu">
+      <Filter>SPH\DFSPH</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSSPHNonPressureUtil.cu">
+      <Filter>SPH\NonPressure</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

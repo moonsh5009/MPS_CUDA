@@ -24,7 +24,7 @@ namespace mps
 		MeshMaterial();
 
 	public:
-		void SetParam(const REAL radius, const REAL density);
+		void SetParam(REAL radius, REAL density);
 	};
 };
 

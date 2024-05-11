@@ -21,3 +21,8 @@ typedef glm::fmat3			REAL3x3;
 typedef glm::fmat4			REAL4x4;
 typedef unsigned int		REAL_INT;
 #endif
+
+namespace mps::device::SPH
+{
+	constexpr auto H_RATIO = 4.0;
+}

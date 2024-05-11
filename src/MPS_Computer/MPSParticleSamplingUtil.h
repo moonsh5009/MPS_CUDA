@@ -4,14 +4,14 @@
 
 namespace mps
 {
-	class MeshParam;
+	struct MeshParam;
 	struct MeshMaterialParam;
-	class BoundaryParticleParam;
+	struct BoundaryParticleParam;
 	class BoundaryParticleObject;
 	namespace kernel::ParticleSampling
 	{
-		bool __MY_EXT_CLASS__ IsSamplingParticleRequired(const MeshParam& obj, const MeshMaterialParam& material, uint32_t* prevIdx, uint32_t* currIdx, bool* isGenerateds);
-		void __MY_EXT_CLASS__ ParticleSampling(const MeshParam& obj, const MeshMaterialParam& material, BoundaryParticleObject& boundaryParticle);
+		bool __MY_EXT_CLASS__ IsSamplingParticleRequired(const MeshMaterialParam& material, const MeshParam& obj, uint32_t* prevIdx, uint32_t* currIdx, bool* isGenerateds);
+		void __MY_EXT_CLASS__ ParticleSampling(const MeshMaterialParam& material, const MeshParam& obj, BoundaryParticleObject& boundaryParticle);
 
 		/*void CompNodeWeights(Cloth* cloth, PoreParticle* poreParticles);
 		void LerpPosition(MeshObject* obj, BoundaryParticle* boundaryParticles);

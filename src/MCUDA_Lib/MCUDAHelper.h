@@ -17,9 +17,9 @@
 
 #if defined(__CUDACC__)
 #	define MCUDA_INLINE_FUNC		__forceinline__
-#	define MCUDA_HOST_DEVICE_FUNC	__host__ __device__ __forceinline__
+#	define MCUDA_HOST_DEVICE_FUNC	__host__ __device__
 #	define MCUDA_HOST_FUNC			__host__
-#	define MCUDA_DEVICE_FUNC		__device__ __forceinline__
+#	define MCUDA_DEVICE_FUNC		__device__
 #	define MCUDA_RESTRICT			__restrict__
 #else
 #	define MCUDA_INLINE_FUNC inline

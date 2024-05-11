@@ -5,8 +5,9 @@
 #include "../MCUDA_Lib/MCUDAHelper.cuh"
 
 __global__ void ComputeMeshFaceInfo_kernel(
-	const glm::uvec3* MCUDA_RESTRICT pFace, size_t numFaces,
-	const REAL3* MCUDA_RESTRICT pPos,
+	const glm::uvec3* MCUDA_RESTRICT pFace,
+	size_t numFaces,
+	const REAL3* MCUDA_RESTRICT pPosition,
 	REAL3* MCUDA_RESTRICT pNorm,
 	REAL* MCUDA_RESTRICT pArea)
 {
@@ -14,9 +15,9 @@ __global__ void ComputeMeshFaceInfo_kernel(
 	if (id >= numFaces) return;
 
 	const auto face = pFace[id];
-	const auto x0 = pPos[face[0]];
-	const auto x1 = pPos[face[1]];
-	const auto x2 = pPos[face[2]];
+	const auto x0 = pPosition[face[0]];
+	const auto x1 = pPosition[face[1]];
+	const auto x2 = pPosition[face[2]];
 
 	auto norm = glm::cross(x1 - x0, x2 - x0);
 	const auto area2 = glm::length(norm);
@@ -25,19 +26,23 @@ __global__ void ComputeMeshFaceInfo_kernel(
 }
 
 __global__ void TranslateMesh_kernel(
-	REAL3* MCUDA_RESTRICT pPos, size_t numVertices,
-	REAL3 oriCenter, REAL3 center, REAL3 scale)
+	REAL3* MCUDA_RESTRICT pPosition,
+	size_t numVertices,
+	REAL3 oriCenter,
+	REAL3 center,
+	REAL3 scale)
 {
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= numVertices) return;
 
-	const auto x = pPos[id];
-	pPos[id] = (x - oriCenter) * scale + center;
+	pPosition[id] = (pPosition[id] - oriCenter) * scale + center;
 }
 
 __global__ void RTriangleBuild_kernel(
-	const glm::uvec3* MCUDA_RESTRICT pFace, size_t numFaces,
-	const uint32_t* MCUDA_RESTRICT nbFs, const uint32_t* MCUDA_RESTRICT inbFs,
+	const glm::uvec3* MCUDA_RESTRICT pFace,
+	size_t numFaces,
+	const uint32_t* MCUDA_RESTRICT nbFs,
+	const uint32_t* MCUDA_RESTRICT inbFs,
 	uint32_t* MCUDA_RESTRICT pRTri)
 {
 	uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -58,7 +63,7 @@ __global__ void RTriangleBuild_kernel(
 		iEnd = jEnd;
 		iTri = nbFs[ino++];
 		if (iTri == id)
-			mps::SetRTriVertex(info, i);
+			mps::device::RTri::SetRTriVertex(info, i);
 
 		jStart = inbFs[face[j]];
 		jEnd = inbFs[face[j] + 1u];
@@ -90,13 +95,14 @@ __global__ void RTriangleBuild_kernel(
 			}
 		}
 		if (id < of)
-			mps::SetRTriEdge(info, i);
+			mps::device::RTri::SetRTriEdge(info, i);
 	}
 	pRTri[id] = info;
 }
 
 __global__ void ComputeNbFacesSize_kernel(
-	const glm::uvec3* MCUDA_RESTRICT pFace, size_t numFaces,
+	const glm::uvec3* MCUDA_RESTRICT pFace,
+	size_t numFaces,
 	uint32_t* MCUDA_RESTRICT nbFacesID)
 {
 	uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -109,8 +115,10 @@ __global__ void ComputeNbFacesSize_kernel(
 }
 
 __global__ void ComputeNbFaces_kernel(
-	const glm::uvec3* MCUDA_RESTRICT pFace, size_t numFaces,
-	uint2* MCUDA_RESTRICT vertexID, uint32_t* MCUDA_RESTRICT nbFacesID)
+	const glm::uvec3* MCUDA_RESTRICT pFace,
+	size_t numFaces,
+	uint2* MCUDA_RESTRICT vertexID,
+	uint32_t* MCUDA_RESTRICT nbFacesID)
 {
 	uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
 	if (id >= numFaces) return;
@@ -125,7 +133,9 @@ __global__ void ComputeNbFaces_kernel(
 }
 
 __global__ void ComputeNbNodesSize_kernel(
-	const glm::uvec3* MCUDA_RESTRICT pFace, size_t numFaces, const uint32_t* MCUDA_RESTRICT pRTri,
+	const glm::uvec3* MCUDA_RESTRICT pFace,
+	size_t numFaces,
+	const uint32_t* MCUDA_RESTRICT pRTri,
 	uint32_t* MCUDA_RESTRICT nbNodesID)
 {
 	uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -133,17 +143,17 @@ __global__ void ComputeNbNodesSize_kernel(
 
 	const auto face = pFace[id];
 	const auto rTri = pRTri[id];
-	if (mps::RTriEdge(rTri, 0u))
+	if (mps::device::RTri::RTriEdge(rTri, 0u))
 	{
 		mcuda::util::AtomicAdd(nbNodesID + face[0], 1u);
 		mcuda::util::AtomicAdd(nbNodesID + face[1], 1u);
 	}
-	if (mps::RTriEdge(rTri, 1u))
+	if (mps::device::RTri::RTriEdge(rTri, 1u))
 	{
 		mcuda::util::AtomicAdd(nbNodesID + face[1], 1u);
 		mcuda::util::AtomicAdd(nbNodesID + face[2], 1u);
 	}
-	if (mps::RTriEdge(rTri, 2u))
+	if (mps::device::RTri::RTriEdge(rTri, 2u))
 	{
 		mcuda::util::AtomicAdd(nbNodesID + face[2], 1u);
 		mcuda::util::AtomicAdd(nbNodesID + face[0], 1u);
@@ -151,29 +161,32 @@ __global__ void ComputeNbNodesSize_kernel(
 }
 
 __global__ void ComputeNbNodes_kernel(
-	const glm::uvec3* MCUDA_RESTRICT pFace, size_t numFaces, const uint32_t* MCUDA_RESTRICT pRTri,
-	uint2* MCUDA_RESTRICT vertexID, uint32_t* MCUDA_RESTRICT nbNodesID)
+	const glm::uvec3* MCUDA_RESTRICT pFace,
+	size_t numFaces,
+	const uint32_t* MCUDA_RESTRICT pRTri,
+	uint2* MCUDA_RESTRICT vertexID,
+	uint32_t* MCUDA_RESTRICT nbNodesID)
 {
 	uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
 	if (id >= numFaces) return;
 
 	const auto face = pFace[id];
 	const auto rTri = pRTri[id];
-	if (mps::RTriEdge(rTri, 0u))
+	if (mps::device::RTri::RTriEdge(rTri, 0u))
 	{
 		const auto ino0 = mcuda::util::AtomicAdd(nbNodesID + face[0], 1u);
 		const auto ino1 = mcuda::util::AtomicAdd(nbNodesID + face[1], 1u);
 		vertexID[ino0] = make_uint2(face[0], face[1]);
 		vertexID[ino1] = make_uint2(face[1], face[0]);
 	}
-	if (mps::RTriEdge(rTri, 1u))
+	if (mps::device::RTri::RTriEdge(rTri, 1u))
 	{
 		const auto ino0 = mcuda::util::AtomicAdd(nbNodesID + face[1], 1u);
 		const auto ino1 = mcuda::util::AtomicAdd(nbNodesID + face[2], 1u);
 		vertexID[ino0] = make_uint2(face[1], face[2]);
 		vertexID[ino1] = make_uint2(face[2], face[1]);
 	}
-	if (mps::RTriEdge(rTri, 2u))
+	if (mps::device::RTri::RTriEdge(rTri, 2u))
 	{
 		const auto ino0 = mcuda::util::AtomicAdd(nbNodesID + face[2], 1u);
 		const auto ino1 = mcuda::util::AtomicAdd(nbNodesID + face[0], 1u);

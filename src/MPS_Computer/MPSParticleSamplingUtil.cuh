@@ -1,53 +1,89 @@
 #pragma once
+
 #include "MPSParticleSamplingUtil.h"
 
 #include "../MPS_Object/MPSMeshParam.h"
-#include "../MPS_Object/MPSBoundaryParticleObject.h"
+#include "../MPS_Object/MPSBoundaryParticleParam.h"
 #include "../MPS_Object/MPSMeshMaterial.h"
 #include "../MPS_Object/MPSRTriangleUtil.cuh"
 
-__device__ uint32_t GetLineSamplingNum(REAL l, REAL d)
+namespace mps::device::ParticleSampling
 {
-	const auto x = (l - d * static_cast<REAL>(1.01)) / d;
-	if (x <= static_cast<REAL>(0.0)) return 0u;
-	return static_cast<uint32_t>(ceilf(static_cast<float>(x)));
-}
-
-__device__ void GenerateParticle(const REAL3& x, uint32_t faceID, const mps::MeshMaterialParam& objMaterial, mps::BoundaryParticleParam& boundaryParticle, uint32_t& iCurr)
-{
-	boundaryParticle.Position(iCurr) = x;
-	boundaryParticle.BCC(iCurr) = { static_cast<REAL>(10.0), static_cast<REAL>(10.0) };
-	boundaryParticle.FaceID(iCurr) = faceID;
-	boundaryParticle.Radius(iCurr) = objMaterial.radius * 0.25;
-	boundaryParticle.Color(iCurr++) = objMaterial.frontColor;
-}
-
-__device__ void GenerateLineParticle(REAL3 a, REAL3 b, float d, uint32_t faceID, const mps::MeshMaterialParam& objMaterial, mps::BoundaryParticleParam& boundaryParticle, uint32_t& iCurr)
-{
-	b -= a;
-	const auto l = glm::length(b);
-	const auto num = GetLineSamplingNum(l, d);
-	if (num == 0u) return;
-
-	d = l / static_cast<REAL>(num + 1u);
-	b *= d / l;
-	for (auto i = 0u; i < num; i++)
+	MCUDA_DEVICE_FUNC constexpr uint32_t GetLineSamplingNum(REAL l, REAL d)
 	{
-		a += b;
-		GenerateParticle(a, faceID, objMaterial, boundaryParticle, iCurr);
+		const auto x = (l - d * static_cast<REAL>(1.01)) / d;
+		if (x <= static_cast<REAL>(0.0)) return 0u;
+		return static_cast<uint32_t>(ceilf(static_cast<float>(x)));
+	}
+
+	MCUDA_DEVICE_FUNC void GenerateParticle(
+		const REAL3& x, uint32_t faceID,
+		const mps::MeshMaterialParam& objMaterial,
+		uint32_t* pFaceID,
+		REAL2* pBCC,
+		REAL3* pPosition,
+		REAL* pRadius,
+		glm::fvec4* pColor,
+		uint32_t& iCurr)
+	{
+		pFaceID[iCurr] = faceID;
+		pBCC[iCurr] = { static_cast<REAL>(10.0), static_cast<REAL>(10.0) };
+		pPosition[iCurr] = x;
+		pRadius[iCurr] = objMaterial.radius * 0.25;
+		pColor[iCurr++] = objMaterial.frontColor;
+	}
+
+	MCUDA_DEVICE_FUNC void GenerateLineParticle(
+		REAL3 a, REAL3 b, float d, uint32_t faceID,
+		const mps::MeshMaterialParam& objMaterial,
+		uint32_t* pFaceID,
+		REAL2* pBCC,
+		REAL3* pPosition,
+		REAL* pRadius,
+		glm::fvec4* pColor,
+		uint32_t& iCurr)
+	{
+		b -= a;
+		const auto l = glm::length(b);
+		const auto num = GetLineSamplingNum(l, d);
+		if (num == 0u) return;
+
+		d = l / static_cast<REAL>(num + 1u);
+		b *= d / l;
+		for (auto i = 0u; i < num; i++)
+		{
+			a += b;
+			GenerateParticle(
+				a, faceID,
+				objMaterial,
+				pFaceID,
+				pBCC,
+				pPosition,
+				pRadius,
+				pColor,
+				iCurr);
+		}
 	}
 }
 
 __global__ void ComputeSamplingNum_kernel(
-	mps::MeshParam obj, mps::MeshMaterialParam objMaterial,
-	uint32_t* MCUDA_RESTRICT prevIdx, uint32_t* MCUDA_RESTRICT currIdx,
-	bool* MCUDA_RESTRICT isGenerateds, bool* MCUDA_RESTRICT isApplied)
+	mps::MeshMaterialParam objMaterial,
+	const glm::uvec3* MCUDA_RESTRICT pObjFace,
+	const REAL3* MCUDA_RESTRICT pObjPosition,
+	const uint32_t* MCUDA_RESTRICT pObjRTri,
+	uint32_t* MCUDA_RESTRICT pObjSamplingParticleSize,
+	uint32_t* MCUDA_RESTRICT pObjShortEdgeID,
+	size_t objSize,
+	uint32_t* MCUDA_RESTRICT pPrevIdx,
+	uint32_t* MCUDA_RESTRICT pCurrIdx,
+	bool* MCUDA_RESTRICT pIsGenerated,
+	bool* MCUDA_RESTRICT isApplied)
 {
 	uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
-	if (id >= obj.GetSize()) return;
+	if (id >= objSize) return;
 
-	const auto face = obj.Face(id);
-	REAL3 ns[3] = { obj.Position(face[0]), obj.Position(face[1]), obj.Position(face[2]) };
+	const auto face = pObjFace[id];
+	REAL3 ns[3] = { pObjPosition[face[0]], pObjPosition[face[1]], pObjPosition[face[2]] };
 	REAL3 es[3] = { ns[1] - ns[0], ns[2] - ns[1], ns[0] - ns[2] };
 	REAL ls[3] = { glm::length(es[0]), glm::length(es[1]), glm::length(es[2]) };
 
@@ -58,14 +94,14 @@ __global__ void ComputeSamplingNum_kernel(
 	const auto d = (objMaterial.radius + objMaterial.radius) * 0.25;
 
 	// Compute Vertex, Edge
-	const auto rTri = obj.RTriangle(id);
+	const auto rTri = pObjRTri[id];
 	auto num = 0u;
 	for (auto i = 0u; i < 3u; i++)
 	{
-		if (mps::RTriVertex(rTri, i))
+		if (mps::device::RTri::RTriVertex(rTri, i))
 			num++;
-		if (mps::RTriEdge(rTri, i))
-			num += GetLineSamplingNum(ls[i], d);
+		if (mps::device::RTri::RTriEdge(rTri, i))
+			num += mps::device::ParticleSampling::GetLineSamplingNum(ls[i], d);
 	}
 
 	// Compute Scanline
@@ -77,7 +113,7 @@ __global__ void ComputeSamplingNum_kernel(
 	es[ino1] = -es[ino1];
 
 	const auto l = glm::dot(s, es[ino0]);
-	const auto nt = GetLineSamplingNum(l, d);
+	const auto nt = mps::device::ParticleSampling::GetLineSamplingNum(l, d);
 	if (nt > 0u)
 	{
 		const auto stride = (l / static_cast<REAL>(nt + 1u)) / l;
@@ -85,57 +121,86 @@ __global__ void ComputeSamplingNum_kernel(
 		{
 			ns[ino0] += stride * es[ino0];
 			ns[ino1] += stride * es[ino1];
-			num += GetLineSamplingNum(glm::length(ns[ino0] - ns[ino1]), d);
+			num += mps::device::ParticleSampling::GetLineSamplingNum(glm::length(ns[ino0] - ns[ino1]), d);
 		}
 	}
 
-	prevIdx[id] = obj.SamplingParticleSize(id);
-	currIdx[id] = num;
+	pPrevIdx[id] = pObjSamplingParticleSize[id];
+	pCurrIdx[id] = num;
 
 	auto isGenerated = false;
-	if (iShort != obj.ShortEdgeId(id))
+	if (iShort != pObjShortEdgeID[id])
 	{
-		obj.ShortEdgeId(id) = iShort;
+		pObjShortEdgeID[id] = iShort;
 		isGenerated = true;
 	}
-	if (num != obj.SamplingParticleSize(id))
+	if (num != pObjSamplingParticleSize[id])
 	{
-		obj.SamplingParticleSize(id) = num;
+		pObjSamplingParticleSize[id] = num;
 		isGenerated = true;
 	}
-	isGenerateds[id] = isGenerated;
+	pIsGenerated[id] = isGenerated;
 	if (isGenerated) *isApplied = true;
 }
 
 __global__ void GenerateBoundaryParticle_kernel(
-	mps::MeshParam obj, mps::MeshMaterialParam objMaterial, mps::BoundaryParticleParam boundaryParticle,
-	REAL3* MCUDA_RESTRICT prevX, REAL2* MCUDA_RESTRICT prevBCC, uint32_t* MCUDA_RESTRICT prevFaceID,
-	uint32_t* MCUDA_RESTRICT prevIdx, uint32_t* MCUDA_RESTRICT currIdx, bool* MCUDA_RESTRICT isGenerateds)
+	mps::MeshMaterialParam objMaterial,
+	const glm::uvec3* MCUDA_RESTRICT pObjFace,
+	const REAL3* MCUDA_RESTRICT pObjPosition,
+	const uint32_t* MCUDA_RESTRICT pObjRTri,
+	const uint32_t* MCUDA_RESTRICT pObjShortEdgeID,
+	size_t objSize,
+	uint32_t* MCUDA_RESTRICT pBoundaryParticleFaceID,
+	REAL2* MCUDA_RESTRICT pBoundaryParticleBCC,
+	REAL3* MCUDA_RESTRICT pBoundaryParticlePosition,
+	REAL* MCUDA_RESTRICT pBoundaryParticleRadius,
+	glm::fvec4* MCUDA_RESTRICT pBoundaryParticleColor,
+	const uint32_t* MCUDA_RESTRICT pPrevFaceID,
+	const REAL2* MCUDA_RESTRICT pPrevBCC,
+	const REAL3* MCUDA_RESTRICT pPrevPosition,
+	const REAL* MCUDA_RESTRICT pPrevRadius,
+	const glm::fvec4* MCUDA_RESTRICT pPrevColor,
+	const uint32_t* MCUDA_RESTRICT pPrevIdx,
+	const uint32_t* MCUDA_RESTRICT pCurrIdx,
+	const bool* MCUDA_RESTRICT pIsGenerated)
 {
 	uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
-	if (id >= obj.GetSize()) return;
+	if (id >= objSize) return;
 
-	auto iCurr = currIdx[id];
-	const auto iEnd = currIdx[id + 1u];
-	if (isGenerateds[id])
+	auto iCurr = pCurrIdx[id];
+	const auto iEnd = pCurrIdx[id + 1u];
+	if (pIsGenerated[id])
 	{
-		const auto face = obj.Face(id);
-
-		REAL3 ns[3] = { obj.Position(face[0]), obj.Position(face[1]), obj.Position(face[2]) };
+		const auto face = pObjFace[id];
+		REAL3 ns[3] = { pObjPosition[face[0]], pObjPosition[face[1]], pObjPosition[face[2]] };
 		REAL3 es[3] = { ns[1] - ns[0], ns[2] - ns[1], ns[0] - ns[2] };
-		const auto iShort = obj.ShortEdgeId(id);
+		const auto iShort = pObjShortEdgeID[id];
 		const auto lshort = glm::length(es[iShort]);
 
 		const auto d = (objMaterial.radius + objMaterial.radius) * 0.25;
 
 		// Compute Vertex, Edge
-		const auto rTri = obj.RTriangle(id);
+		const auto rTri = pObjRTri[id];
 		for (auto i = 0u; i < 3u; i++)
 		{
-			if (mps::RTriVertex(rTri, i))
-				GenerateParticle(ns[i], id, objMaterial, boundaryParticle, iCurr);
-			if (mps::RTriEdge(rTri, i))
-				GenerateLineParticle(ns[i], ns[(i + 1u) % 3u], d, id, objMaterial, boundaryParticle, iCurr);
+			if (mps::device::RTri::RTriVertex(rTri, i))
+				mps::device::ParticleSampling::GenerateParticle(ns[i], id,
+					objMaterial,
+					pBoundaryParticleFaceID,
+					pBoundaryParticleBCC,
+					pBoundaryParticlePosition,
+					pBoundaryParticleRadius,
+					pBoundaryParticleColor,
+					iCurr);
+			if (mps::device::RTri::RTriEdge(rTri, i))
+				mps::device::ParticleSampling::GenerateLineParticle(ns[i], ns[(i + 1u) % 3u], d, id,
+					objMaterial,
+					pBoundaryParticleFaceID,
+					pBoundaryParticleBCC,
+					pBoundaryParticlePosition,
+					pBoundaryParticleRadius,
+					pBoundaryParticleColor,
+					iCurr);
 		}
 
 		// Compute Scanline
@@ -147,7 +212,7 @@ __global__ void GenerateBoundaryParticle_kernel(
 		es[ino1] = -es[ino1];
 
 		const auto l = glm::dot(s, es[ino0]);
-		const auto nt = GetLineSamplingNum(l, d);
+		const auto nt = mps::device::ParticleSampling::GetLineSamplingNum(l, d);
 		if (nt > 0u)
 		{
 			const auto stride = (l / static_cast<REAL>(nt + 1u)) / l;
@@ -155,35 +220,52 @@ __global__ void GenerateBoundaryParticle_kernel(
 			{
 				ns[ino0] += stride * es[ino0];
 				ns[ino1] += stride * es[ino1];
-				GenerateLineParticle(ns[ino0], ns[ino1], d, id, objMaterial, boundaryParticle, iCurr);
+				mps::device::ParticleSampling::GenerateLineParticle(ns[ino0], ns[ino1], d, id,
+					objMaterial,
+					pBoundaryParticleFaceID,
+					pBoundaryParticleBCC,
+					pBoundaryParticlePosition,
+					pBoundaryParticleRadius,
+					pBoundaryParticleColor,
+					iCurr);
 			}
 		}
 	}
 	else
 	{
-		auto iPrev = prevIdx[id];
+		auto iPrev = pPrevIdx[id];
 		while (iCurr < iEnd)
 		{
-			boundaryParticle.Position(iCurr) = prevX[iPrev];
-			boundaryParticle.BCC(iCurr) = prevBCC[iPrev];
-			boundaryParticle.FaceID(iCurr++) = prevFaceID[iPrev++];
+			pBoundaryParticleFaceID[iCurr] = pPrevFaceID[iPrev];
+			pBoundaryParticleBCC[iCurr] = pPrevBCC[iPrev];
+			pBoundaryParticlePosition[iCurr] = pPrevPosition[iPrev];
+			pBoundaryParticleRadius[iCurr] = pPrevRadius[iPrev];
+			pBoundaryParticleColor[iCurr++] = pPrevColor[iPrev++];
 		}
 	}
 }
 
-__global__ void SetBarycentric_kernel(mps::MeshParam obj, mps::MeshMaterialParam objMaterial, mps::BoundaryParticleParam boundaryParticle)
+__global__ void SetBarycentric_kernel(
+	const uint32_t* MCUDA_RESTRICT pBoundaryParticleFaceID,
+	REAL2* MCUDA_RESTRICT pBoundaryParticleBCC,
+	const REAL3* MCUDA_RESTRICT pBoundaryParticlePosition,
+	REAL* MCUDA_RESTRICT pBoundaryParticleMass,
+	size_t boundaryParticleSize,
+	const glm::uvec3* MCUDA_RESTRICT pObjFace,
+	const REAL3* MCUDA_RESTRICT pObjPosition,
+	const REAL* MCUDA_RESTRICT pObjMass)
 {
 	uint32_t id = blockDim.x * blockIdx.x + threadIdx.x;
-	if (id >= boundaryParticle.GetSize()) return;
+	if (id >= boundaryParticleSize) return;
 
-	const auto faceID = boundaryParticle.FaceID(id);
-	const auto face = obj.Face(faceID);
+	const auto faceID = pBoundaryParticleFaceID[id];
+	const auto face = pObjFace[faceID];
 
-	auto bcc = boundaryParticle.BCC(id);
+	auto bcc = pBoundaryParticleBCC[id];
 	if (bcc[0] == 10.0)
 	{
-		REAL3 ns[3] = { obj.Position(face[0]), obj.Position(face[1]), obj.Position(face[2]) };
-		const auto x = boundaryParticle.Position(id);
+		REAL3 ns[3] = { pObjPosition[face[0]], pObjPosition[face[1]], pObjPosition[face[2]] };
+		const auto x = pBoundaryParticlePosition[id];
 
 		auto w0 = static_cast<REAL>(0.0);
 		auto w1 = static_cast<REAL>(0.0);
@@ -206,8 +288,8 @@ __global__ void SetBarycentric_kernel(mps::MeshParam obj, mps::MeshMaterialParam
 		else if (w0 > static_cast<REAL>(1.0))	w0 = static_cast<REAL>(1.0);
 		if (w1 < static_cast<REAL>(0.0))		w1 = static_cast<REAL>(0.0);
 		else if (w1 > static_cast<REAL>(1.0))	w1 = static_cast<REAL>(1.0);
-		boundaryParticle.BCC(id) = { w0, w1 };
-		boundaryParticle.Mass(id) = obj.Mass(face[0]) * w0 + obj.Mass(face[1]) * w1 + obj.Mass(face[2]) * (1.0 - w0 - w1);
+		pBoundaryParticleBCC[id] = { w0, w1 };
+		pBoundaryParticleMass[id] = pObjMass[face[0]] * w0 + pObjMass[face[1]] * w1 + pObjMass[face[2]] * (1.0 - w0 - w1);
 	}
 }
 

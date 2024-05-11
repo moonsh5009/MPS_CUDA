@@ -10,9 +10,10 @@ mps::MeshMaterial::MeshMaterial() : mps::VirtualMaterial<mps::MeshMaterialParam>
 	GetParam().backColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 }
 
-void mps::MeshMaterial::SetParam(const REAL radius, const REAL density)
+void mps::MeshMaterial::SetParam(REAL radius, REAL density)
 {
 	GetParam().radius = radius;
+
 	const auto volume = radius * radius * radius / 48.0 * 3.141592;
 	GetParam().density = density;
 	GetParam().mass = density * volume;

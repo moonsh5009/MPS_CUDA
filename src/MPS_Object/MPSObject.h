@@ -41,7 +41,7 @@ namespace mps
 		const size_t m_phaseID;
 
 		mcuda::gl::Buffer<glm::fvec4> m_color;
-		mcuda::gl::Buffer<REAL3> m_pos;
+		mcuda::gl::Buffer<REAL3> m_position;
 		thrust::device_vector<REAL> m_mass;
 		thrust::device_vector<REAL3> m_velocity;
 		thrust::device_vector<REAL3> m_force;

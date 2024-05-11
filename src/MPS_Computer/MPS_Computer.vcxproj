@@ -11,23 +11,36 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AdvectUtil.cuh" />
-    <ClInclude Include="AdvectUtil.h" />
+    <ClInclude Include="MPSAdvectUtil.cuh" />
+    <ClInclude Include="MPSAdvectUtil.h" />
     <ClInclude Include="HeaderPost.h" />
     <ClInclude Include="HeaderPre.h" />
+    <ClInclude Include="MPSBaseUtil.cuh" />
+    <ClInclude Include="MPSCGKernel.cuh" />
     <ClInclude Include="MPSParticleSamplingUtil.cuh" />
     <ClInclude Include="MPSParticleSamplingUtil.h" />
-    <ClInclude Include="SPHKernel.cuh" />
+    <ClInclude Include="MPSSolver.cuh" />
+    <ClInclude Include="MPSSPHBaseUtil.cuh" />
+    <ClInclude Include="MPSSPHBaseUtil.h" />
+    <ClInclude Include="MPSSPHDFSPHUtil.cuh" />
+    <ClInclude Include="MPSSPHDFSPHUtil.h" />
+    <ClInclude Include="MPSSPHKernel.cuh" />
+    <ClInclude Include="MPSSPHNonPressureUtil.cuh" />
+    <ClInclude Include="MPSSPHNonPressureUtil.h" />
     <ClInclude Include="SPHUtil.cuh" />
-    <ClInclude Include="SPHUtil.h" />
+    <ClInclude Include="MPSSPHUtil.h" />
+    <ClInclude Include="MPSSPHUtilDef.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="AdvectUtil.cu" />
+    <CudaCompile Include="MPSAdvectUtil.cu" />
     <CudaCompile Include="MPSParticleSamplingUtil.cu" />
+    <CudaCompile Include="MPSSPHBaseUtil.cu" />
+    <CudaCompile Include="MPSSPHDFSPHUtil.cu" />
+    <CudaCompile Include="MPSSPHNonPressureUtil.cu" />
     <CudaCompile Include="SPHUtil.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

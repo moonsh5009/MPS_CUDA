@@ -5,23 +5,29 @@
 #include "MPSSPHParam.h"
 #include "MPSBoundaryParticleParam.h"
 
+namespace
+{
+	constexpr auto nFullBlockSize = 1024u;
+	constexpr auto nSearchBlockSize = 256u;
+}
+
 mps::SpatialHash::SpatialHash() : mps::VirtualTree<SpatialHashParam>{}
 {
 }
 
-void mps::SpatialHash::SetObjectSize(const size_t size)
+void mps::SpatialHash::SetObjectSize(size_t size)
 {
 	m_key.resize(size);
 	m_ID.resize(size);
 
-	GetParam().SetObjectSize(size);
-	GetParam().SetKeyArray(thrust::raw_pointer_cast(m_key.data()));
-	GetParam().SetIDArray(thrust::raw_pointer_cast(m_ID.data()));
+	GetParam().objSize = size;
+	GetParam().pKey = thrust::raw_pointer_cast(m_key.data());
+	GetParam().pID = thrust::raw_pointer_cast(m_ID.data());
 }
 
-void mps::SpatialHash::SetCeilSize(const REAL size)
+void mps::SpatialHash::SetCeilSize(REAL size)
 {
-	GetParam().SetCeilSize(size);
+	GetParam().ceilSize = size;
 }
 
 void mps::SpatialHash::SetHashSize(const glm::uvec3& size)
@@ -30,145 +36,183 @@ void mps::SpatialHash::SetHashSize(const glm::uvec3& size)
 	m_startIdx.resize(hashCeilSize);
 	m_endIdx.resize(hashCeilSize);
 
-	GetParam().SetHashSize(size);
-	GetParam().SetStartIdxArray(thrust::raw_pointer_cast(m_startIdx.data()));
-	GetParam().SetEndIdxArray(thrust::raw_pointer_cast(m_endIdx.data()));
+	GetParam().hashSize = size;
+	GetParam().pStartIdx = thrust::raw_pointer_cast(m_startIdx.data());
+	GetParam().pEndIdx = thrust::raw_pointer_cast(m_endIdx.data());
 }
 
-std::optional<std::tuple<const uint32_t*, const uint32_t*>> mps::SpatialHash::GetNeighborhood(const ObjectParam& objParam) const
+std::optional<mps::NeiParam> mps::SpatialHash::GetNeighborhood(const ParticleParam& objParam) const
 {
-	const auto iter = m_mapNei.find(objParam.GetPhaseID());
+	const auto iter = m_mapNei.find(objParam.phaseID);
 	if (iter == m_mapNei.end()) return {};
-	return std::tuple{ thrust::raw_pointer_cast(iter->second.data.data()), thrust::raw_pointer_cast(iter->second.idx.data()) };
+
+	const auto& [nei, neiIdx] = iter->second;
+	return mps::NeiParam{ thrust::raw_pointer_cast(nei.data()), thrust::raw_pointer_cast(neiIdx.data()) };
 }
 
-void mps::SpatialHash::UpdateHash(const mps::ObjectParam& objParam)
+void mps::SpatialHash::UpdateHash(const mps::ParticleParam& particleParam)
 {
-	constexpr auto nBlockSize = 1024u;
-
-	const auto nSize = objParam.GetSize();
-	if (nSize == 0) return;
+	if (particleParam.size == 0) return;
 
 	thrust::fill(m_startIdx.begin(), m_startIdx.end(), 0xffffffff);
 	thrust::fill(m_endIdx.begin(), m_endIdx.end(), 0xffffffff);
 
-	InitHash_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(GetParam(), objParam);
+	InitHash_kernel << < mcuda::util::DivUp(particleParam.size, nFullBlockSize), nFullBlockSize >> > (
+		particleParam.pPosition,
+		particleParam.size,
+		GetParam().pKey,
+		GetParam().pID,
+		GetParam().hashSize,
+		GetParam().ceilSize);
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	thrust::sort_by_key(m_key.begin(), m_key.end(), m_ID.begin());
 
-	ReorderHash_kernel << <mcuda::util::DivUp(nSize, nBlockSize), nBlockSize, (nBlockSize + 1) * sizeof(uint32_t) >> >
-		(GetParam());
+	ReorderHash_kernel << <mcuda::util::DivUp(particleParam.size, nFullBlockSize), nFullBlockSize, (nFullBlockSize + 1) * sizeof(uint32_t) >> > (
+		particleParam.size,
+		GetParam().pKey,
+		GetParam().pStartIdx,
+		GetParam().pEndIdx);
 	CUDA_CHECK(cudaPeekAtLastError());
 }
 
-void mps::SpatialHash::ZSort(mps::ObjectParam& objParam)
+void mps::SpatialHash::ZSort(mps::ParticleParam& particleParam)
 {
-	constexpr auto nBlockSize = 1024u;
-
-	const auto nSize = objParam.GetSize();
-	if (nSize == 0) return;
+	if (particleParam.size == 0) return;
 
 	thrust::fill(m_startIdx.begin(), m_startIdx.end(), 0xffffffff);
 	thrust::fill(m_endIdx.begin(), m_endIdx.end(), 0xffffffff);
 
-	InitHashZIndex_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(GetParam(), objParam);
+	InitHashZIndex_kernel << < mcuda::util::DivUp(particleParam.size, nFullBlockSize), nFullBlockSize >> > (
+		particleParam.pPosition,
+		particleParam.size,
+		GetParam().pKey,
+		GetParam().hashSize,
+		GetParam().ceilSize);
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	thrust::sort_by_key(m_key.begin(), m_key.end(), thrust::make_zip_iterator(
-		thrust::device_pointer_cast(objParam.GetPosArray()),
-		thrust::device_pointer_cast(objParam.GetMassArray()),
-		thrust::device_pointer_cast(objParam.GetVelocityArray()),
-		thrust::device_pointer_cast(objParam.GetColorArray())));
+		thrust::device_pointer_cast(particleParam.pPosition),
+		thrust::device_pointer_cast(particleParam.pMass),
+		thrust::device_pointer_cast(particleParam.pVelocity),
+		thrust::device_pointer_cast(particleParam.pColor)));
 }
 
 void mps::SpatialHash::ZSort(mps::SPHParam& sphParam)
 {
-	constexpr auto nBlockSize = 1024u;
-
-	const auto nSize = sphParam.GetSize();
-	if (nSize == 0) return;
+	if (sphParam.size == 0) return;
 
 	thrust::fill(m_startIdx.begin(), m_startIdx.end(), 0xffffffff);
 	thrust::fill(m_endIdx.begin(), m_endIdx.end(), 0xffffffff);
 
-	InitHashZIndex_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(GetParam(), sphParam);
+	InitHashZIndex_kernel << < mcuda::util::DivUp(sphParam.size, nFullBlockSize), nFullBlockSize >> > (
+		sphParam.pPosition,
+		sphParam.size,
+		GetParam().pKey,
+		GetParam().hashSize,
+		GetParam().ceilSize);
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	thrust::sort_by_key(m_key.begin(), m_key.end(), thrust::make_zip_iterator(
-		thrust::device_pointer_cast(sphParam.GetPosArray()),
-		thrust::device_pointer_cast(sphParam.GetMassArray()),
-		thrust::device_pointer_cast(sphParam.GetVelocityArray()),
-		thrust::device_pointer_cast(sphParam.GetColorArray()),
-		thrust::device_pointer_cast(sphParam.GetRadiusArray())));
+		thrust::device_pointer_cast(sphParam.pPosition),
+		thrust::device_pointer_cast(sphParam.pMass),
+		thrust::device_pointer_cast(sphParam.pVelocity),
+		thrust::device_pointer_cast(sphParam.pColor),
+		thrust::device_pointer_cast(sphParam.pRadius)));
 }
 
 void mps::SpatialHash::ZSort(mps::BoundaryParticleParam& boundaryParticleParam)
 {
-	constexpr auto nBlockSize = 1024u;
+	if (boundaryParticleParam.size == 0) return;
 
-	const auto nSize = boundaryParticleParam.GetSize();
-	if (nSize == 0) return;
-
-	InitHashZIndex_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >
-		(GetParam(), boundaryParticleParam);
+	InitHashZIndex_kernel << < mcuda::util::DivUp(boundaryParticleParam.size, nFullBlockSize), nFullBlockSize >> > (
+		boundaryParticleParam.pPosition, boundaryParticleParam.size, GetParam().pKey, GetParam().hashSize, GetParam().ceilSize);
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	thrust::sort_by_key(m_key.begin(), m_key.end(), thrust::make_zip_iterator(
-		thrust::device_pointer_cast(boundaryParticleParam.GetPosArray()),
-		thrust::device_pointer_cast(boundaryParticleParam.GetMassArray()),
-		thrust::device_pointer_cast(boundaryParticleParam.GetVelocityArray()),
-		thrust::device_pointer_cast(boundaryParticleParam.GetColorArray()),
-		thrust::device_pointer_cast(boundaryParticleParam.GetRadiusArray()),
-		thrust::device_pointer_cast(boundaryParticleParam.GetFaceIDArray()),
-		thrust::device_pointer_cast(boundaryParticleParam.GetBCCArray())));
+		thrust::device_pointer_cast(boundaryParticleParam.pPosition),
+		thrust::device_pointer_cast(boundaryParticleParam.pMass),
+		thrust::device_pointer_cast(boundaryParticleParam.pVelocity),
+		thrust::device_pointer_cast(boundaryParticleParam.pColor),
+		thrust::device_pointer_cast(boundaryParticleParam.pRadius),
+		thrust::device_pointer_cast(boundaryParticleParam.pFaceID),
+		thrust::device_pointer_cast(boundaryParticleParam.pBCC)));
 }
 
-void mps::SpatialHash::BuildNeighorhood(const ObjectParam& objParam, REAL radius)
+void mps::SpatialHash::BuildNeighorhood(const mps::ParticleParam& particleParam)
 {
-	constexpr auto nBlockSize = 512u;
+	if (particleParam.size == 0) return;
 
-	const auto nSize = objParam.GetSize();
-	if (nSize == 0) return;
+	auto& [nei, neiIdx] = m_mapNei.emplace(particleParam.phaseID,
+		std::tuple<thrust::device_vector<uint32_t>, thrust::device_vector<uint32_t>>{}).first->second;
+	neiIdx.resize(particleParam.size + 1u);
 
-	const auto emp = m_mapNei.emplace(objParam.GetPhaseID(), NeiBuffer{});
-	auto& nei = emp.first->second;
-	nei.idx.resize(objParam.GetSize() + 1u);
-
-	ComputeNeighborhoodSize_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >(
-		thrust::raw_pointer_cast(nei.idx.data()), radius, objParam, GetParam());
+	ComputeNeighborhoodSize_kernel << < mcuda::util::DivUp(particleParam.size, nSearchBlockSize), nSearchBlockSize >> > (
+		particleParam.pPosition,
+		particleParam.pRadius,
+		particleParam.size,
+		GetParam().pStartIdx,
+		GetParam().pEndIdx,
+		GetParam().pID,
+		GetParam().hashSize,
+		GetParam().ceilSize,
+		thrust::raw_pointer_cast(neiIdx.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
-	thrust::inclusive_scan(nei.idx.begin(), nei.idx.end(), nei.idx.begin());
-	nei.data.resize(nei.idx.back());
+	thrust::inclusive_scan(neiIdx.begin(), neiIdx.end(), neiIdx.begin());
+	nei.resize(neiIdx.back());
 
-	BuildNeighborhood_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> >(
-		thrust::raw_pointer_cast(nei.data.data()), thrust::raw_pointer_cast(nei.idx.data()), radius, objParam, GetParam());
+	BuildNeighborhood_kernel << < mcuda::util::DivUp(particleParam.size, nSearchBlockSize), nSearchBlockSize >> > (
+		particleParam.pPosition,
+		particleParam.pRadius,
+		particleParam.size,
+		GetParam().pStartIdx,
+		GetParam().pEndIdx,
+		GetParam().pID,
+		GetParam().hashSize,
+		GetParam().ceilSize,
+		thrust::raw_pointer_cast(nei.data()),
+		thrust::raw_pointer_cast(neiIdx.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 }
 
-void mps::SpatialHash::BuildNeighorhood(const ObjectParam& objParam, REAL radius, const ObjectParam& refObjParam, const SpatialHash* pRefHash)
+void mps::SpatialHash::BuildNeighorhood(const mps::ParticleParam& particleParam, const mps::ParticleParam& refParticleParam, const SpatialHash* pRefHash)
 {
-	constexpr auto nBlockSize = 512u;
+	if (particleParam.size == 0 || refParticleParam.size == 0) return;
 
-	const auto nSize = objParam.GetSize();
-	if (nSize == 0 || refObjParam.GetSize() == 0) return;
+	auto& [nei, neiIdx] = m_mapNei.emplace(refParticleParam.phaseID,
+		std::tuple<thrust::device_vector<uint32_t>, thrust::device_vector<uint32_t>>{}).first->second;
+	neiIdx.resize(particleParam.size + 1u);
 
-	const auto emp = m_mapNei.emplace(refObjParam.GetPhaseID(), NeiBuffer{});
-	auto& nei = emp.first->second;
-	nei.idx.resize(objParam.GetSize() + 1u);
-
-	ComputeNeighborhoodSize_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> > (
-		thrust::raw_pointer_cast(nei.idx.data()), radius, objParam, refObjParam, pRefHash->GetParam());
+	ComputeNeighborhoodSize_kernel << < mcuda::util::DivUp(particleParam.size, nSearchBlockSize), nSearchBlockSize >> > (
+		particleParam.pPosition,
+		particleParam.pRadius,
+		particleParam.size,
+		refParticleParam.pPosition,
+		refParticleParam.pRadius,
+		pRefHash->GetParam().pStartIdx,
+		pRefHash->GetParam().pEndIdx,
+		pRefHash->GetParam().pID,
+		pRefHash->GetParam().hashSize,
+		pRefHash->GetParam().ceilSize,
+		thrust::raw_pointer_cast(neiIdx.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
-	thrust::inclusive_scan(nei.idx.begin(), nei.idx.end(), nei.idx.begin());
-	nei.data.resize(nei.idx.back());
+	thrust::inclusive_scan(neiIdx.begin(), neiIdx.end(), neiIdx.begin());
+	nei.resize(neiIdx.back());
 
-	BuildNeighborhood_kernel << < mcuda::util::DivUp(nSize, nBlockSize), nBlockSize >> > (
-		thrust::raw_pointer_cast(nei.data.data()), thrust::raw_pointer_cast(nei.idx.data()), radius, objParam, refObjParam, pRefHash->GetParam());
+	BuildNeighborhood_kernel << < mcuda::util::DivUp(particleParam.size, nSearchBlockSize), nSearchBlockSize >> > (
+		particleParam.pPosition,
+		particleParam.pRadius,
+		particleParam.size,
+		refParticleParam.pPosition,
+		refParticleParam.pRadius,
+		pRefHash->GetParam().pStartIdx,
+		pRefHash->GetParam().pEndIdx,
+		pRefHash->GetParam().pID,
+		pRefHash->GetParam().hashSize,
+		pRefHash->GetParam().ceilSize,
+		thrust::raw_pointer_cast(nei.data()),
+		thrust::raw_pointer_cast(neiIdx.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 }

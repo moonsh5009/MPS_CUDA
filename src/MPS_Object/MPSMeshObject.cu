@@ -4,6 +4,12 @@
 #include <thrust/sort.h>
 #include <fstream>
 
+namespace
+{
+	constexpr auto nFullBlockSize = 1024u;
+	constexpr auto nBlockSize = 256u;
+}
+
 mps::MeshObject::MeshObject() : Object{}
 {}
 
@@ -40,7 +46,7 @@ void mps::MeshObject::Resize(const size_t size)
 
 void mps::MeshObject::ResizeVertex(const size_t size)
 {
-	m_pos.Resize(size);
+	m_position.Resize(size);
 	m_mass.resize(size);
 	m_velocity.resize(size);
 	m_force.resize(size);
@@ -89,7 +95,7 @@ void mps::MeshObject::LoadMesh(const std::string_view& filePath, const REAL3& vC
 	Resize(faces.size());
 	ResizeVertex(vertices.size());
 	m_face.CopyFromHost(faces);
-	m_pos.CopyFromHost(vertices);
+	m_position.CopyFromHost(vertices);
 
 	Translate(aabb, vCenter, vSize);
 	InitFaceInfo(density);
@@ -108,6 +114,7 @@ std::shared_ptr<mps::ObjectResource> mps::MeshObject::GenerateDeviceResource()
 	if (!optFaceNormRes) return {};
 
 	return std::make_shared<MeshResource>(pSuperParam,
+		GetVertexSize(),
 		std::move(optFaceRes.value()),
 		std::move(optFaceNormRes.value()),
 		thrust::raw_pointer_cast(m_faceArea.data()),
@@ -122,9 +129,7 @@ std::shared_ptr<mps::ObjectResource> mps::MeshObject::GenerateDeviceResource()
 
 void mps::MeshObject::Translate(const AABB& aabb, const REAL3& vCenter, const REAL3& vSize)
 {
-	constexpr auto nBlockSize = 1024u;
-
-	const auto optPosRes = m_pos.GetDeviceResource();
+	const auto optPosRes = m_position.GetDeviceResource();
 	if (!optPosRes) return;
 
 	const auto oriCenter = (aabb.min + aabb.max) * 0.5;
@@ -136,38 +141,42 @@ void mps::MeshObject::Translate(const AABB& aabb, const REAL3& vCenter, const RE
 		oriSize.z > 1.0e-10 ? vSize.z / oriSize.z : 0.0
 	};
 
-	TranslateMesh_kernel << < mcuda::util::DivUp(GetVertexSize(), nBlockSize), nBlockSize >> >
-		(optPosRes->GetData(), GetVertexSize(), oriCenter, vCenter, scale);
+	TranslateMesh_kernel << < mcuda::util::DivUp(GetVertexSize(), nFullBlockSize), nFullBlockSize >> > (
+		optPosRes->GetData(),
+		GetVertexSize(),
+		oriCenter,
+		vCenter,
+		scale);
 	CUDA_CHECK(cudaPeekAtLastError());
 }
 
 void mps::MeshObject::InitFaceInfo(REAL density)
 {
-	constexpr auto nBlockSize = 256u;
-
 	const auto optFaceRes = m_face.GetDeviceResource();
 	if (!optFaceRes) return;
 
-	const auto optPosRes = m_pos.GetDeviceResource();
+	const auto optPosRes = m_position.GetDeviceResource();
 	if (!optPosRes) return;
 
 	const auto optFaceNormRes = m_faceNorm.GetDeviceResource();
 	if (!optFaceNormRes) return;
 
-	ComputeMeshFaceInfo_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> >
-		(optFaceRes->GetData(), GetSize(), optPosRes->GetData(), optFaceNormRes->GetData(), thrust::raw_pointer_cast(m_faceArea.data()));
+	ComputeMeshFaceInfo_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> > (
+		optFaceRes->GetData(),
+		GetSize(),
+		optPosRes->GetData(),
+		optFaceNormRes->GetData(),
+		thrust::raw_pointer_cast(m_faceArea.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	const auto area = thrust::reduce(m_faceArea.begin(), m_faceArea.end(), static_cast<REAL>(0.0), thrust::plus<REAL>());
 	const auto mass = area * density;
-	
+
 	thrust::fill(m_mass.begin(), m_mass.end(), mass / static_cast<REAL>(GetVertexSize()));
 }
 
 void mps::MeshObject::buildAdjacency()
 {
-	constexpr auto nBlockSize = 256u;
-
 	const auto optFaceRes = m_face.GetDeviceResource();
 	if (!optFaceRes) return;
 
@@ -175,8 +184,10 @@ void mps::MeshObject::buildAdjacency()
 	thrust::device_vector<uint32_t> d_nbNodesID{ GetVertexSize() + 1u, 0u };
 	thrust::device_vector<uint2> d_vertexID;
 
-	ComputeNbFacesSize_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> >
-		(optFaceRes->GetData(), GetSize(), thrust::raw_pointer_cast(d_nbFacesID.data()));
+	ComputeNbFacesSize_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> > (
+		optFaceRes->GetData(),
+		GetSize(),
+		thrust::raw_pointer_cast(d_nbFacesID.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	thrust::exclusive_scan(d_nbFacesID.begin(), d_nbFacesID.end(), d_nbFacesID.begin());
@@ -184,19 +195,28 @@ void mps::MeshObject::buildAdjacency()
 	m_nbFaces.resize(d_nbFacesID.back());
 	d_vertexID.resize(d_nbFacesID.back());
 
-	ComputeNbFaces_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> >
-		(optFaceRes->GetData(), GetSize(), thrust::raw_pointer_cast(d_vertexID.data()), thrust::raw_pointer_cast(d_nbFacesID.data()));
+	ComputeNbFaces_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> > (
+		optFaceRes->GetData(),
+		GetSize(),
+		thrust::raw_pointer_cast(d_vertexID.data()),
+		thrust::raw_pointer_cast(d_nbFacesID.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	thrust::sort(d_vertexID.begin(), d_vertexID.end(), mcuda::util::SortUint2CMP());
 	thrust::transform(d_vertexID.begin(), d_vertexID.end(), m_nbFaces.begin(), mcuda::util::TransformUint2CMP());
 
-	RTriangleBuild_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> >
-		(optFaceRes->GetData(), GetSize(), thrust::raw_pointer_cast(m_nbFaces.data()), thrust::raw_pointer_cast(m_nbFacesIdx.data()), thrust::raw_pointer_cast(m_rTri.data()));
+	RTriangleBuild_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> > (
+		optFaceRes->GetData(),
+		GetSize(),
+		thrust::raw_pointer_cast(m_nbFaces.data()),
+		thrust::raw_pointer_cast(m_nbFacesIdx.data()),
+		thrust::raw_pointer_cast(m_rTri.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
-	ComputeNbNodesSize_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> >
-		(optFaceRes->GetData(), GetSize(), thrust::raw_pointer_cast(m_rTri.data()), thrust::raw_pointer_cast(d_nbNodesID.data()));
+	ComputeNbNodesSize_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> > (optFaceRes->GetData(),
+		GetSize(),
+		thrust::raw_pointer_cast(m_rTri.data()),
+		thrust::raw_pointer_cast(d_nbNodesID.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	thrust::exclusive_scan(d_nbNodesID.begin(), d_nbNodesID.end(), d_nbNodesID.begin());
@@ -204,8 +224,12 @@ void mps::MeshObject::buildAdjacency()
 	m_nbNodes.resize(d_nbNodesID.back());
 	d_vertexID.resize(d_nbNodesID.back());
 
-	ComputeNbNodes_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> >
-		(optFaceRes->GetData(), GetSize(), thrust::raw_pointer_cast(m_rTri.data()), thrust::raw_pointer_cast(d_vertexID.data()), thrust::raw_pointer_cast(d_nbNodesID.data()));
+	ComputeNbNodes_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> > (
+		optFaceRes->GetData(),
+		GetSize(),
+		thrust::raw_pointer_cast(m_rTri.data()),
+		thrust::raw_pointer_cast(d_vertexID.data()),
+		thrust::raw_pointer_cast(d_nbNodesID.data()));
 	CUDA_CHECK(cudaPeekAtLastError());
 
 	thrust::sort(d_vertexID.begin(), d_vertexID.end(), mcuda::util::SortUint2CMP());

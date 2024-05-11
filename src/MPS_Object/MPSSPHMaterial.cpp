@@ -3,13 +3,13 @@
 
 mps::SPHMaterial::SPHMaterial() : mps::VirtualMaterial<mps::SPHMaterialParam>{}
 {
-	SetParam(0.1, 1.0);
-	SetViscosity(100.0);
-	//SetSurfaceTension(70000.0);
+	SetParam(0.01, 1.0);
+	SetViscosity(0.0125);
+	SetSurfaceTension(70.0);
 	SetColor({ 0.3f, 0.8f, 0.2f, 1.0f });
 }
 
-void mps::SPHMaterial::SetParam(const REAL radius, const REAL density)
+constexpr void mps::SPHMaterial::SetParam(REAL radius, REAL density)
 {
 	GetParam().radius = radius;
 	GetParam().volume = radius * radius * radius / 48.0 * 3.141592;
@@ -17,17 +17,17 @@ void mps::SPHMaterial::SetParam(const REAL radius, const REAL density)
 	GetParam().mass = density * GetParam().volume;
 }
 
-void mps::SPHMaterial::SetRadius(const REAL radius)
+constexpr void mps::SPHMaterial::SetRadius(REAL radius)
 {
 	SetParam(radius, GetDensity());
 }
 
-void mps::SPHMaterial::SetViscosity(const REAL viscosity)
+constexpr void mps::SPHMaterial::SetViscosity(REAL viscosity)
 {
 	GetParam().viscosity = viscosity;
 }
 
-void mps::SPHMaterial::SetSurfaceTension(const REAL surfaceTension)
+constexpr void mps::SPHMaterial::SetSurfaceTension(REAL surfaceTension)
 {
 	GetParam().surfaceTension = surfaceTension;
 }

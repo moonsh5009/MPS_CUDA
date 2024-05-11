@@ -7,44 +7,45 @@
 
 namespace mps
 {
-	class Object;
-	class ObjectParam;
-	class SPHParam;
-	class BoundaryParticleParam;
-	struct NeiBuffer
+	struct ParticleParam;
+	struct SPHParam;
+	struct BoundaryParticleParam;
+
+	struct NeiParam
 	{
-		thrust::device_vector<uint32_t> data;
-		thrust::device_vector<uint32_t> idx;
+		const uint32_t* pID;
+		const uint32_t* pIdx;
 	};
+
 	class __MY_EXT_CLASS__ SpatialHash : public VirtualTree<SpatialHashParam>
 	{
 	public:
 		SpatialHash();
 
 	public:
-		void SetObjectSize(const size_t size);
-		void SetCeilSize(const REAL size);
+		void SetObjectSize(size_t size);
+		void SetCeilSize(REAL size);
 		void SetHashSize(const glm::uvec3& size);
 
-		uint32_t GetObjectSize() const { return GetParam().GetObjectSize(); };
-		REAL GetCeilSize() const { return GetParam().GetCeilSize(); };
-		const glm::uvec3& GetHashSize() const { return GetParam().GetHashSize(); };
+		constexpr uint32_t GetObjectSize() const { return GetParam().objSize; };
+		constexpr REAL GetCeilSize() const { return GetParam().ceilSize; };
+		constexpr const glm::uvec3& GetHashSize() const { return GetParam().hashSize; };
 
-		const thrust::device_vector<uint32_t>& GetHashKeys() const { return m_key; };
-		const thrust::device_vector<uint32_t>& GetHashIDs() const { return m_ID; };
-		const thrust::device_vector<uint32_t>& GetStartIdx() const { return m_startIdx; };
-		const thrust::device_vector<uint32_t>& GetEndIdx() const { return m_endIdx; };
+		constexpr const thrust::device_vector<uint32_t>& GetHashKeys() const { return m_key; };
+		constexpr const thrust::device_vector<uint32_t>& GetHashIDs() const { return m_ID; };
+		constexpr const thrust::device_vector<uint32_t>& GetStartIdx() const { return m_startIdx; };
+		constexpr const thrust::device_vector<uint32_t>& GetEndIdx() const { return m_endIdx; };
 
-		std::optional<std::tuple<const uint32_t*, const uint32_t*>> GetNeighborhood(const ObjectParam& objParam) const;
+		std::optional<NeiParam> GetNeighborhood(const ParticleParam& objParam) const;
 
 	public:
-		void UpdateHash(const ObjectParam& objParam);
-		void ZSort(ObjectParam& objParam);
+		void UpdateHash(const ParticleParam& particleParam);
+		void ZSort(ParticleParam& particleParam);
 		void ZSort(SPHParam& sphParam);
 		void ZSort(BoundaryParticleParam& boundaryParticleParam);
 
-		void BuildNeighorhood(const ObjectParam& objParam, REAL radius);
-		void BuildNeighorhood(const ObjectParam& objParam, REAL radius, const ObjectParam& refObjParam, const SpatialHash* pRefHash);
+		void BuildNeighorhood(const ParticleParam& particleParam);
+		void BuildNeighorhood(const ParticleParam& particleParam, const ParticleParam& refParticleParam, const SpatialHash* pRefHash);
 
 	private:
 		thrust::device_vector<uint32_t> m_key;
@@ -52,7 +53,7 @@ namespace mps
 		thrust::device_vector<uint32_t> m_startIdx;
 		thrust::device_vector<uint32_t> m_endIdx;
 
-		std::unordered_map<size_t, NeiBuffer> m_mapNei;
+		std::unordered_map<size_t, std::tuple<thrust::device_vector<uint32_t>, thrust::device_vector<uint32_t>>> m_mapNei;
 	};
 };
 

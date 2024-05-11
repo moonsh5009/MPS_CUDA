@@ -22,7 +22,7 @@ namespace mps
 		virtual void Clear() override;
 		virtual void Resize(const size_t size) override;
 		virtual void ResizeVertex(const size_t size);
-		constexpr size_t GetVertexSize() { return m_pos.GetSize(); }
+		constexpr size_t GetVertexSize() { return m_position.GetSize(); }
 
 		void LoadMesh(const std::string_view& filePath, const REAL3& vCenter, const REAL3& vSize, REAL density);
 

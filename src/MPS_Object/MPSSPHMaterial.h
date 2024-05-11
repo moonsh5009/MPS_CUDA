@@ -24,19 +24,19 @@ namespace mps
 		SPHMaterial();
 
 	public:
-		void SetParam(const REAL radius, const REAL density);
-		void SetRadius(const REAL radius);
-		void SetViscosity(const REAL viscosity);
-		void SetSurfaceTension(const REAL surfaceTension);
+		constexpr void SetParam(REAL radius, REAL density);
+		constexpr void SetRadius(REAL radius);
+		constexpr void SetViscosity(REAL viscosity);
+		constexpr void SetSurfaceTension(REAL surfaceTension);
 		void SetColor(const glm::fvec4& color);
 
-		REAL GetRadius() const { return GetParam().radius; };
-		REAL GetMass() const { return GetParam().mass; };
-		REAL GetDensity() const { return GetParam().density; };
-		REAL GetVolume() const { return GetParam().volume; };
-		REAL GetViscosity() const { return GetParam().viscosity; };
-		REAL GetSurfaceTension() const { return GetParam().surfaceTension; };
-		const glm::fvec4& GetColor() const { return GetParam().color; };
+		constexpr REAL GetRadius() const { return GetParam().radius; };
+		constexpr REAL GetMass() const { return GetParam().mass; };
+		constexpr REAL GetDensity() const { return GetParam().density; };
+		constexpr REAL GetVolume() const { return GetParam().volume; };
+		constexpr REAL GetViscosity() const { return GetParam().viscosity; };
+		constexpr REAL GetSurfaceTension() const { return GetParam().surfaceTension; };
+		constexpr const glm::fvec4& GetColor() const { return GetParam().color; };
 	};
 };
 

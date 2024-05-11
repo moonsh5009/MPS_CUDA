@@ -149,7 +149,7 @@ namespace mcuda
 		}
 
 		template<typename T>
-		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC void warpSum(volatile T* sData, const uint32_t tid)
+		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC void WarpSum(volatile T* sData, const uint32_t tid)
 		{
 			sData[tid] += sData[tid + 32u];
 			sData[tid] += sData[tid + 16u];
@@ -159,7 +159,7 @@ namespace mcuda
 			sData[tid] += sData[tid + 1u];
 		}
 		template<typename T>
-		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC void warpMin(volatile T* sData, const uint32_t tid)
+		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC void WarpMin(volatile T* sData, const uint32_t tid)
 		{
 			if (sData[tid] > sData[tid + 32u])
 				sData[tid] = sData[tid + 32u];
@@ -175,7 +175,7 @@ namespace mcuda
 				sData[tid] = sData[tid + 1u];
 		}
 		template<typename T>
-		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC void warpMax(volatile T* sData, const uint32_t tid)
+		MCUDA_INLINE_FUNC MCUDA_DEVICE_FUNC void WarpMax(volatile T* sData, const uint32_t tid)
 		{
 			if (sData[tid] < sData[tid + 32u])
 				sData[tid] = sData[tid + 32u];

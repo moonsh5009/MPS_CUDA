@@ -11,8 +11,13 @@ void mps::SPHObject::Clear()
 
 	m_density.clear();
 	m_pressure.clear();
-	m_factorA.clear();
+	m_factorDFSPH.clear();
+	m_factorST.clear();
+	m_factorSTB.clear();
+
+	m_tempReal.clear();
 	m_tempVec3.clear();
+	m_tempMat3.clear();
 	m_previousVel.clear();
 	m_predictVel.clear();
 }
@@ -23,8 +28,13 @@ void mps::SPHObject::Resize(const size_t size)
 
 	m_density.resize(size);
 	m_pressure.resize(size);
-	m_factorA.resize(size);
+	m_factorDFSPH.resize(size);
+	m_factorST.resize(size);
+	m_factorSTB.resize(size);
+	
+	m_tempReal.resize(size);
 	m_tempVec3.resize(size);
+	m_tempMat3.resize(size);
 	m_previousVel.resize(size);
 	m_predictVel.resize(size);
 }
@@ -38,8 +48,12 @@ std::shared_ptr<mps::ObjectResource> mps::SPHObject::GenerateDeviceResource()
 		pSuperParam,
 		thrust::raw_pointer_cast(m_density.data()),
 		thrust::raw_pointer_cast(m_pressure.data()),
-		thrust::raw_pointer_cast(m_factorA.data()),
+		thrust::raw_pointer_cast(m_factorDFSPH.data()),
+		thrust::raw_pointer_cast(m_factorST.data()),
+		thrust::raw_pointer_cast(m_factorSTB.data()),
+		thrust::raw_pointer_cast(m_tempReal.data()),
 		thrust::raw_pointer_cast(m_tempVec3.data()),
+		thrust::raw_pointer_cast(m_tempMat3.data()),
 		thrust::raw_pointer_cast(m_previousVel.data()),
 		thrust::raw_pointer_cast(m_predictVel.data()));
 }
