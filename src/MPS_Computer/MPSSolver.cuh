@@ -5,18 +5,18 @@
 
 #include "MPSCGKernel.cuh"
 
-#define SOLVER_PRINT		1
+#define SOLVER_PRINT		0
 
 namespace mps::kernel
 {
 	template<typename T>
-	void CGSolver(T* r, T* p, T* Ap, T* x, const T* b, T minError, size_t size, uint32_t maxLoop, std::function<void(T*, T*, uint32_t)> funcComputeAx)
+	uint32_t CGSolver(T* r, T* p, T* Ap, T* x, const T* b, T minError, size_t size, uint32_t maxLoop, std::function<void(T*, T*, uint32_t)> funcComputeAx)
 	{
 		static_assert(std::is_floating_point<T>::value, "T must be a floating-point type");
 		constexpr auto nBlockSize = 256u;
 		constexpr auto nMaxBlockSize = 1024u;
 
-		if (size == 0) return;
+		if (size == 0) return 0u;
 
 		thrust::device_vector<T> d_param(2);
 		thrust::host_vector<T> h_param;
@@ -69,5 +69,6 @@ namespace mps::kernel
 		ss << "CGSolver Loop : " << l << std::endl;
 		OutputDebugStringA(ss.str().c_str());
 	#endif
+		return l;
 	}
 }

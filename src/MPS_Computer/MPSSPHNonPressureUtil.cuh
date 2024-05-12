@@ -442,7 +442,7 @@ __global__ void ComputeSurfaceTensionFactor_kernel(
 	const auto xi = pSPHPosition[id];
 	const auto vi = pSPHVelocity[id];
 
-	REAL grad = 0.0;
+	REAL delta = 0.0;
 
 	mps::device::SPH::NeighborSearch(id, pNei, pNeiIdx, [&](uint32_t jd)
 	{
@@ -457,12 +457,11 @@ __global__ void ComputeSurfaceTensionFactor_kernel(
 		const auto vij = vi - vj;
 		const auto dist = glm::length(xij);
 
-		const auto stG = mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
-		const auto gradij = mj * glm::dot(vij, stG);
-		grad += gradij;
+		const auto grad = mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		delta += mj * glm::dot(vij, grad);
 	});
 
-	pSPHFactorST[id] = grad;
+	pSPHFactorST[id] = delta;
 }
 
 __global__ void ComputeSurfaceTensionCGb_kernel(
@@ -518,7 +517,7 @@ __global__ void ComputeSurfaceTensionCGb_kernel(
 		bi -= mij * gij * xij;
 	});
 
-	pCGb[id] = sphMaterial.surfaceTension / mi * physParam.dt * bi + vi;
+	pCGb[id] = physParam.dt * sphMaterial.surfaceTension / mi * bi + vi;
 }
 
 __global__ void ComputeSurfaceTensionCGAp_kernel(

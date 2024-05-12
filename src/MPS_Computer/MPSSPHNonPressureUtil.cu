@@ -134,7 +134,7 @@ void mps::kernel::SPH::ApplyImplicitViscosityNSurfaceTension(
 
 #if SPH_TIMER_PRINT
 	cudaDeviceSynchronize();
-	MTimer::Start("mps::kernel::SPH::ApplyImplicitViscosityNSurfaceTension");
+	MTimer::Start("ApplyImplicitViscosityNSurfaceTension");
 #endif
 
 	thrust::device_vector<REAL3> d_r(sph.size);
@@ -149,7 +149,7 @@ void mps::kernel::SPH::ApplyImplicitViscosityNSurfaceTension(
 	ComputeSurfaceTensionFactor(sphMaterial, sph, nei);
 	ComputeSurfaceTensionCGb(physParam, sphMaterial, sph, nei);
 
-	mps::kernel::CGSolver<REAL>(
+	const auto l = mps::kernel::CGSolver<REAL>(
 		reinterpret_cast<REAL*>(thrust::raw_pointer_cast(d_r.data())),
 		reinterpret_cast<REAL*>(thrust::raw_pointer_cast(d_p.data())),
 		reinterpret_cast<REAL*>(thrust::raw_pointer_cast(d_Ap.data())),
@@ -184,6 +184,8 @@ void mps::kernel::SPH::ApplyImplicitViscosityNSurfaceTension(
 
 #if SPH_TIMER_PRINT
 	cudaDeviceSynchronize();
-	MTimer::End("mps::kernel::SPH::ApplyImplicitViscosityNSurfaceTension");
+	std::stringstream ss;
+	ss << "Loop " << " : " << l;
+	MTimer::EndWithMessage("ApplyImplicitViscosityNSurfaceTension", ss.str());
 #endif
 }

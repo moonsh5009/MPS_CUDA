@@ -53,4 +53,28 @@ namespace MTimer
 		OutputDebugStringA(ss.str().c_str());
 	#endif
 	}
+
+	static void EndWithMessage(std::string_view msg)
+	{
+	#ifdef CHRRONO_TIME_TEST
+		CTimeDuration d = std::chrono::system_clock::now() - startPoint;
+
+		std::stringstream ss;
+		ss << d.count() << " ms" << ", " << msg << std::endl;
+		OutputDebugStringA(ss.str().c_str());
+	#endif
+	}
+
+	static void EndWithMessage(std::string_view key, std::string_view msg)
+	{
+	#ifdef CHRRONO_TIME_TEST
+		const auto t = mapStartPoint[key];
+		mapStartPoint.erase(mapStartPoint.find(key));
+		CTimeDuration d = std::chrono::system_clock::now() - t;
+
+		std::stringstream ss;
+		ss << key << " : " << d.count() << " ms" << ", " << msg << std::endl;
+		OutputDebugStringA(ss.str().c_str());
+	#endif
+	}
 };

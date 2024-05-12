@@ -154,7 +154,7 @@ void mps::kernel::SPH::ComputeDFSPHConstantDensitySub(
 {
 	if (sph.size == 0) return;
 
-	ComputeCDStiffness_kernel << < mcuda::util::DivUp(sph.size, nFullBlockSize), nFullBlockSize, nFullBlockSize * sizeof(REAL) >> > (
+	ComputeCDStiffness_kernel << < mcuda::util::DivUp(sph.size, nBlockSize), nBlockSize, nBlockSize * sizeof(REAL) >> > (
 		physParam,
 		sphMaterial,
 		sph.pDensity,
@@ -176,7 +176,7 @@ void mps::kernel::SPH::ComputeDFSPHDivergenceFreeSub(
 {
 	if (sph.size == 0) return;
 
-	ComputeDFStiffness_kernel << < mcuda::util::DivUp(sph.size, nFullBlockSize), nFullBlockSize, nFullBlockSize * sizeof(REAL) >> > (
+	ComputeDFStiffness_kernel << < mcuda::util::DivUp(sph.size, nBlockSize), nBlockSize, nBlockSize * sizeof(REAL) >> > (
 		physParam,
 		sphMaterial,
 		sph.pDensity,
@@ -278,7 +278,7 @@ void mps::kernel::SPH::ComputeDFSPHConstantDensity(
 
 #if SPH_TIMER_PRINT
 	cudaDeviceSynchronize();
-	MTimer::Start("mps::kernel::SPH::ComputeDFSPHConstantDensity");
+	MTimer::Start("ComputeDFSPHConstantDensity");
 #endif
 
 	thrust::device_vector<REAL> d_error(1);
@@ -317,7 +317,9 @@ void mps::kernel::SPH::ComputeDFSPHConstantDensity(
 
 #if SPH_TIMER_PRINT
 	cudaDeviceSynchronize();
-	MTimer::End("mps::kernel::SPH::ComputeDFSPHConstantDensity");
+	std::stringstream ss;
+	ss << "Loop " << " : " << l;
+	MTimer::EndWithMessage("ComputeDFSPHConstantDensity", ss.str());
 #endif
 }
 void mps::kernel::SPH::ComputeDFSPHDivergenceFree(
@@ -333,7 +335,7 @@ void mps::kernel::SPH::ComputeDFSPHDivergenceFree(
 
 #if SPH_TIMER_PRINT
 	cudaDeviceSynchronize();
-	MTimer::Start("mps::kernel::SPH::ComputeDFSPHDivergenceFree");
+	MTimer::Start("ComputeDFSPHDivergenceFree");
 #endif
 
 	thrust::device_vector<REAL> d_error(1);
@@ -372,6 +374,8 @@ void mps::kernel::SPH::ComputeDFSPHDivergenceFree(
 
 #if SPH_TIMER_PRINT
 	cudaDeviceSynchronize();
-	MTimer::End("mps::kernel::SPH::ComputeDFSPHDivergenceFree");
+	std::stringstream ss;
+	ss << "Loop " << " : " << l;
+	MTimer::EndWithMessage("ComputeDFSPHDivergenceFree", ss.str());
 #endif
 }

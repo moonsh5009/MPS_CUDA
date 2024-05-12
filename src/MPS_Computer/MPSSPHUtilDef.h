@@ -3,7 +3,7 @@
 #include "../MPS_Object/MPSDef.h"
 
 #define SPH_TIMER_PRINT		1
-#define SPH_DEBUG_PRINT		1
+#define SPH_DEBUG_PRINT		0
 
 namespace mps::kernel::SPH
 {

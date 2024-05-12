@@ -316,10 +316,7 @@ __global__ void ComputeDFStiffness_kernel(
 	s_sumErrors[threadIdx.x] = 0u;
 	if (id < sphSize)
 	{
-		const auto di = pSPHDensity[id];
-		const auto delta = pSPHDelta[id];
-
-		/*auto stiffness = mcuda::util::min(delta * physParam.dt, di / sphMaterial.density + physParam.dt * delta - 0.8);
+		/*auto stiffness = mcuda::util::min(pSPHDelta[id] * physParam.dt, pSPHDensity[id] / sphMaterial.density + physParam.dt * pSPHDelta[id] - 0.8);
 		if (stiffness > 0.0)
 		{
 			s_sumErrors[threadIdx.x] = stiffness;
@@ -329,7 +326,7 @@ __global__ void ComputeDFStiffness_kernel(
 		pSPHPressure[id] = stiffness;*/
 
 		const auto numNeigborhood = pNeiSPH2SPHIdx[id + 1] - pNeiSPH2SPHIdx[id] + pNeiSPH2BoundaryParticle[id + 1] - pNeiSPH2BoundaryParticle[id];
-		auto stiffness = delta * physParam.dt;
+		auto stiffness = pSPHDelta[id] * physParam.dt;
 		if (stiffness > 0.0 && numNeigborhood > 20)
 		{
 			s_sumErrors[threadIdx.x] = stiffness;

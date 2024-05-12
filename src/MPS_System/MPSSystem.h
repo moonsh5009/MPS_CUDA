@@ -60,8 +60,10 @@ namespace mps
 		std::shared_ptr<mgpu::MGPUCore> m_pMGPUCore;
 
 	private:
-		void ResizeParticle(size_t size);
-		void ViscosityTestScene(size_t size, size_t height);
+		uint32_t m_particleWSize;
+		void ResizeParticle();
+		void ViscosityTestScene(size_t height);
+		void SurfaceTensionTestScene();
 		std::shared_ptr<mps::Model> m_pSPHModel;
 		std::shared_ptr<mps::Model> m_pBoundaryModel;
 	};
