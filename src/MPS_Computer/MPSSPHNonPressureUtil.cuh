@@ -457,7 +457,7 @@ __global__ void ComputeSurfaceTensionFactor_kernel(
 		const auto vij = vi - vj;
 		const auto dist = glm::length(xij);
 
-		const auto grad = mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto grad = mps::device::SPH::GKernel(dist, invHi) * xij;
 		delta += mj * glm::dot(vij, grad);
 	});
 
@@ -511,7 +511,7 @@ __global__ void ComputeSurfaceTensionCGb_kernel(
 		const auto invDij = 2.0 / (di + dj);
 
 		const auto stW = mps::device::SPH::STWKernel(dist, invHi);
-		const auto stG = mps::device::SPH::STGKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto stG = mps::device::SPH::STGKernel(dist, invHi) * xij;
 		const auto gij = (stW + physParam.dt * (glm::dot(vij, stG) - (vDeltai + vDeltaj) * invDij * 0.5 * stW)) * invDij;
 
 		bi -= mij * gij * xij;
@@ -571,7 +571,7 @@ __global__ void ComputeSurfaceTensionCGAp_kernel(
 		const auto invDij = 2.0 / (di + dj);
 
 		const auto stW = mps::device::SPH::STWKernel(dist, invHi);
-		const auto stG = mps::device::SPH::STGKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto stG = mps::device::SPH::STGKernel(dist, invHi) * xij;
 		const auto gij = (stW + physParam.dt * (glm::dot(vij, stG) - (vDeltai + vDeltaj) * invDij * 0.5 * stW)) * invDij;
 
 		ApSTi += mij * gij * (pi - pj);
@@ -579,7 +579,7 @@ __global__ void ComputeSurfaceTensionCGAp_kernel(
 	});
 
 	ApSTi *= physParam.dt * sphMaterial.surfaceTension / mi;
-	ApXSPHi *= 0.5 / physParam.dt;
+	ApXSPHi *= sphMaterial.XSPH / physParam.dt;
 
 	mps::device::AtomicAdd(pCGAp + id, ApSTi + ApXSPHi);
 }

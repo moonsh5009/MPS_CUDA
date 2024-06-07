@@ -25,16 +25,19 @@ namespace mps::kernel::SPH
 	void __MY_EXT_CLASS__ ComputeDensityDeltaSub(
 		const mps::SPHMaterialParam& sphMaterial,
 		const mps::SPHParam& sph,
-		const mps::NeiParam& nei);
+		const mps::NeiParam& nei,
+		long long stream = 0);
 	void __MY_EXT_CLASS__ ComputeDensityDeltaSub(
 		const mps::SPHParam& sph,
 		const mps::NeiParam& nei,
 		const mps::SPHMaterialParam& refSPHMaterial,
-		const mps::SPHParam& refSPH);
+		const mps::SPHParam& refSPH,
+		long long stream = 0);
 	void __MY_EXT_CLASS__ ComputeDensityDeltaSub(
 		const mps::SPHParam& sph,
 		const mps::NeiParam& nei,
-		const mps::BoundaryParticleParam& boundaryParticle);
+		const mps::BoundaryParticleParam& boundaryParticle,
+		long long stream = 0);
 
 	void __MY_EXT_CLASS__ ComputeDFSPHConstantDensitySub(
 		const mps::PhysicsParam& physParam,
@@ -45,23 +48,24 @@ namespace mps::kernel::SPH
 		const mps::PhysicsParam& physParam,
 		const mps::SPHMaterialParam& sphMaterial,
 		const mps::SPHParam& sph,
-		const mps::NeiParam& neiSPH2SPH,
-		const mps::NeiParam& neiSPH2BoundaryParticle,
 		REAL* sumError);
 
 	void __MY_EXT_CLASS__ ApplyDFSPHSub(
 		const mps::SPHMaterialParam& sphMaterial,
 		const mps::SPHParam& sph,
-		const mps::NeiParam& nei);
+		const mps::NeiParam& nei,
+		long long stream = 0);
 	void __MY_EXT_CLASS__ ApplyDFSPHSub(
 		const mps::SPHParam& sph,
 		const mps::NeiParam& nei,
 		const mps::SPHMaterialParam& pRefSPHMaterial,
-		const mps::SPHParam& refSPH);
+		const mps::SPHParam& refSPH,
+		long long stream = 0);
 	void __MY_EXT_CLASS__ ApplyDFSPHSub(
 		const mps::SPHParam& sph,
 		const mps::NeiParam& nei,
-		const mps::BoundaryParticleParam& boundaryParticle);
+		const mps::BoundaryParticleParam& boundaryParticle,
+		long long stream = 0);
 	void __MY_EXT_CLASS__ ApplyDFSPHFinal(
 		const mps::SPHParam& sph);
 

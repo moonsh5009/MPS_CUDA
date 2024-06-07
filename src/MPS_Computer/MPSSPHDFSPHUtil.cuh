@@ -37,7 +37,7 @@ __global__ void ComputeDFSPHFactor_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto grad = sphMaterial.volume * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto grad = sphMaterial.volume * mps::device::SPH::GKernel(dist, invHi) * xij;
 		grads += grad;
 		factorDFSPHi += glm::dot(grad, grad);
 	});
@@ -78,7 +78,7 @@ __global__ void ComputeDFSPHFactor_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto grad = refSPHMaterial.volume * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto grad = refSPHMaterial.volume * mps::device::SPH::GKernel(dist, invHi) * xij;
 		grads += grad;
 		factorDFSPHi += glm::dot(grad, grad);
 	});
@@ -117,7 +117,7 @@ __global__ void ComputeDFSPHFactor_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto grad = pBoundaryParticleVolume[jd] * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto grad = pBoundaryParticleVolume[jd] * mps::device::SPH::GKernel(dist, invHi) * xij;
 		grads += grad;
 	});
 
@@ -168,7 +168,7 @@ __global__ void ComputeDensityDelta_kernel(
 		const auto xij = xi - xj;
 		const auto vij = vi - vj;
 		const auto dist = glm::length(xij);
-		delta += sphMaterial.volume * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * glm::dot(xij, vij);
+		delta += sphMaterial.volume * mps::device::SPH::GKernel(dist, invHi) * glm::dot(xij, vij);
 	});
 
 	mcuda::util::AtomicAdd(pSPHDelta + id, delta);
@@ -209,7 +209,7 @@ __global__ void ComputeDensityDelta_kernel(
 		const auto xij = xi - xj;
 		const auto vij = vi - vj;
 		const auto dist = glm::length(xij);
-		delta += refSPHMaterial.volume * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * glm::dot(xij, vij);
+		delta += refSPHMaterial.volume * mps::device::SPH::GKernel(dist, invHi) * glm::dot(xij, vij);
 	});
 
 	mcuda::util::AtomicAdd(pSPHDelta + id, delta);
@@ -250,7 +250,7 @@ __global__ void ComputeDensityDelta_kernel(
 		const auto xij = xi - xj;
 		const auto vij = vi - vj;
 		const auto dist = glm::length(xij);
-		delta += pBoundaryParticleVolume[jd] * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * glm::dot(xij, vij);
+		delta += pBoundaryParticleVolume[jd] * mps::device::SPH::GKernel(dist, invHi) * glm::dot(xij, vij);
 	});
 
 	mcuda::util::AtomicAdd(pSPHDelta + id, delta);
@@ -306,8 +306,6 @@ __global__ void ComputeDFStiffness_kernel(
 	const REAL* MCUDA_RESTRICT pSPHDelta,
 	REAL* MCUDA_RESTRICT pSPHPressure,
 	size_t sphSize,
-	const uint32_t* MCUDA_RESTRICT pNeiSPH2SPHIdx,
-	const uint32_t* MCUDA_RESTRICT pNeiSPH2BoundaryParticle,
 	REAL* MCUDA_RESTRICT sumError)
 {
 	extern __shared__ REAL s_sumErrors[];
@@ -316,18 +314,8 @@ __global__ void ComputeDFStiffness_kernel(
 	s_sumErrors[threadIdx.x] = 0u;
 	if (id < sphSize)
 	{
-		/*auto stiffness = mcuda::util::min(pSPHDelta[id] * physParam.dt, pSPHDensity[id] / sphMaterial.density + physParam.dt * pSPHDelta[id] - 0.8);
+		auto stiffness = mcuda::util::min(pSPHDelta[id] * physParam.dt, pSPHDensity[id] / sphMaterial.density + physParam.dt * pSPHDelta[id] - 0.8);
 		if (stiffness > 0.0)
-		{
-			s_sumErrors[threadIdx.x] = stiffness;
-			stiffness *= pSPHFactorDFSPH[id] / (physParam.dt * physParam.dt);
-		}
-		else stiffness = 0.0;
-		pSPHPressure[id] = stiffness;*/
-
-		const auto numNeigborhood = pNeiSPH2SPHIdx[id + 1] - pNeiSPH2SPHIdx[id] + pNeiSPH2BoundaryParticle[id + 1] - pNeiSPH2BoundaryParticle[id];
-		auto stiffness = pSPHDelta[id] * physParam.dt;
-		if (stiffness > 0.0 && numNeigborhood > 20)
 		{
 			s_sumErrors[threadIdx.x] = stiffness;
 			stiffness *= pSPHFactorDFSPH[id] / (physParam.dt * physParam.dt);
@@ -371,7 +359,6 @@ __global__ void ApplyDFSPH_kernel(
 	const auto pi = pSPHPressure[id];
 
 	REAL3 force{ 0.0 };
-
 	mps::device::SPH::NeighborSearch(id, pNei, pNeiIdx, [&](uint32_t jd)
 	{
 		const auto hj = pSPHRadius[jd] * mps::device::SPH::H_RATIO;
@@ -382,7 +369,7 @@ __global__ void ApplyDFSPH_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto forceij = sphMaterial.volume * (pi + pj) * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto forceij = sphMaterial.volume * (pi + pj) * mps::device::SPH::GKernel(dist, invHi) * xij;
 		force -= forceij;
 	});
 
@@ -423,7 +410,7 @@ __global__ void ApplyDFSPH_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto forceij = refSPHMaterial.volume * (pi + pj) * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto forceij = refSPHMaterial.volume * (pi + pj) * mps::device::SPH::GKernel(dist, invHi) * xij;
 		force -= forceij;
 	});
 
@@ -462,7 +449,7 @@ __global__ void ApplyDFSPH_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto forceij = pBoundaryParticleVolume[jd] * pi * mps::device::SPH::GKernel(dist, invHi) / (dist + FLT_EPSILON) * xij;
+		const auto forceij = pBoundaryParticleVolume[jd] * pi * mps::device::SPH::GKernel(dist, invHi) * xij;
 		force -= forceij;
 	});
 
@@ -477,5 +464,5 @@ __global__ void ApplyDFSPHFinal_kernel(
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sphSize) return;
 
-	pSPHForce[id] = pSPHForce[id] * pSPHMass[id];
+	pSPHForce[id] = 0.5 * pSPHMass[id] * pSPHForce[id];
 }

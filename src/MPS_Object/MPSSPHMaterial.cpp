@@ -4,8 +4,9 @@
 mps::SPHMaterial::SPHMaterial() : mps::VirtualMaterial<mps::SPHMaterialParam>{}
 {
 	SetParam(0.01, 1.0);
-	SetViscosity(0.0125);
-	SetSurfaceTension(140.0);
+	SetViscosity(0.025);
+	SetXSPH(0.1);
+	SetSurfaceTension(100.0);
 	SetColor({ 0.3f, 0.8f, 0.2f, 1.0f });
 }
 
@@ -25,6 +26,11 @@ constexpr void mps::SPHMaterial::SetRadius(REAL radius)
 constexpr void mps::SPHMaterial::SetViscosity(REAL viscosity)
 {
 	GetParam().viscosity = viscosity;
+}
+
+constexpr void mps::SPHMaterial::SetXSPH(REAL XSPH)
+{
+	GetParam().XSPH = XSPH;
 }
 
 constexpr void mps::SPHMaterial::SetSurfaceTension(REAL surfaceTension)

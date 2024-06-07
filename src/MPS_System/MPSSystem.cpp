@@ -245,20 +245,6 @@ void mps::System::OnUpdate()
     mps::kernel::Advect::ApplyGravity(physParam, *pSPHParam);
     mps::kernel::Advect::UpdateVelocity(physParam, *pSPHParam);
 
-    /* mps::kernel::ResetForce(*pSPHParam);
-     mps::kernel::SPH::ApplyExplicitSurfaceTension(*pSPHParam, pSPHMaterial, pSPHHash);
-     mps::kernel::UpdateVelocity(physParam, *pSPHParam);*/
-
-     /*mps::kernel::ResetForce(*pSPHParam);
-      mps::kernel::SPH::ApplyExplicitViscosity(*pSPHParam, pSPHMaterial, pSPHHash);
-      mps::kernel::UpdateVelocity(physParam, *pSPHParam);*/
-
-      //mps::kernel::SPH::ApplyImplicitCGSurfaceTension(physParam, *pSPHParam, pSPHMaterial, pSPHHash);
-
-      //mps::kernel::SPH::ApplyImplicitJacobiViscosity(physParam, *pSPHParam, pSPHMaterial, pSPHHash);
-      //mps::kernel::SPH::ApplyImplicitGDViscosity(physParam, *pSPHParam, pSPHMaterial, pSPHHash);
-      //mps::kernel::SPH::ApplyImplicitCGViscosity(physParam, *pSPHParam, pSPHMaterial, pSPHHash);
-
     mps::kernel::SPH::ComputeDFSPHDivergenceFree(
         physParam,
         pSPHMaterial->GetParam(),
@@ -279,7 +265,7 @@ void mps::System::OnUpdate()
         neiSPH2SPH,
         neiSPH2BP);
 
-    //mps::kernel::BoundaryCollision(physParam, *pSPHParam);
+    mps::kernel::Advect::BoundaryCollision(physParam, *pSPHParam);
     mps::kernel::Advect::UpdatePosition(physParam, *pSPHParam);
 
     {
@@ -290,8 +276,8 @@ void mps::System::OnUpdate()
         OutputDebugStringA("\n");
     }
     //m_pCamera->GetTransform()->Set({ 6.04415, 9.72579, -10.5085 }, { 0.86881, 0, 0.495144 }, { -0.217152, 0.898697, 0.381028 }, { -0.444984, -0.438562, 0.780798 });
-    m_pCamera->GetTransform()->Set({ 0.0165471, 0.657244, -12.2736 }, { 0.999998, 0, 0.002 }, { -0.000506425, 0.967411, 0.253212 }, { -0.00193482, -0.253213, 0.967408 });
-    Capture(300, 4);
+    //m_pCamera->GetTransform()->Set({ 0.0165471, 0.657244, -12.2736 }, { 0.999998, 0, 0.002 }, { -0.000506425, 0.967411, 0.253212 }, { -0.00193482, -0.253213, 0.967408 });
+    //Capture(300, 4);
     m_frame++;
 }
 

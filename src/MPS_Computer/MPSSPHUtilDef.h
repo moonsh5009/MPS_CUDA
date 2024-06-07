@@ -8,7 +8,7 @@
 namespace mps::kernel::SPH
 {
 	constexpr auto nFullBlockSize = 1024u;
-	constexpr auto nBlockSize = 256u;
+	constexpr auto nBlockSize = 128u;
 }
 
 namespace mps

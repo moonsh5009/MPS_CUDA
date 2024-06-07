@@ -14,6 +14,7 @@ namespace mps
 		REAL volume;
 
 		REAL viscosity;
+		REAL XSPH;
 		REAL surfaceTension;
 
 		glm::fvec4 color;
@@ -27,6 +28,7 @@ namespace mps
 		constexpr void SetParam(REAL radius, REAL density);
 		constexpr void SetRadius(REAL radius);
 		constexpr void SetViscosity(REAL viscosity);
+		constexpr void SetXSPH(REAL XSPH);
 		constexpr void SetSurfaceTension(REAL surfaceTension);
 		void SetColor(const glm::fvec4& color);
 
@@ -35,6 +37,7 @@ namespace mps
 		constexpr REAL GetDensity() const { return GetParam().density; };
 		constexpr REAL GetVolume() const { return GetParam().volume; };
 		constexpr REAL GetViscosity() const { return GetParam().viscosity; };
+		constexpr REAL GetXSPH() const { return GetParam().XSPH; };
 		constexpr REAL GetSurfaceTension() const { return GetParam().surfaceTension; };
 		constexpr const glm::fvec4& GetColor() const { return GetParam().color; };
 	};

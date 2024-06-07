@@ -149,6 +149,7 @@ void mps::kernel::SPH::ApplyImplicitViscosityNSurfaceTension(
 	ComputeSurfaceTensionFactor(sphMaterial, sph, nei);
 	ComputeSurfaceTensionCGb(physParam, sphMaterial, sph, nei);
 
+	REAL factor = 0.0;
 	const auto l = mps::kernel::CGSolver<REAL>(
 		reinterpret_cast<REAL*>(thrust::raw_pointer_cast(d_r.data())),
 		reinterpret_cast<REAL*>(thrust::raw_pointer_cast(d_p.data())),
@@ -157,19 +158,15 @@ void mps::kernel::SPH::ApplyImplicitViscosityNSurfaceTension(
 		reinterpret_cast<REAL*>(sph.pTempVec3),
 		static_cast<REAL>(1.0e-2),
 		sph.size * 3,
-		100u,
+		300u,
 		[&](REAL* p, REAL* Ap, uint32_t l)
 	{
 		auto pCGp = reinterpret_cast<REAL3*>(p);
 		auto pCGAp = reinterpret_cast<REAL3*>(Ap);
-		REAL factor = [&]
-		{
-			if (l == 0u) return static_cast<REAL>(0.0);
-			/*if (l < 18u)		factor = static_cast<T>(0.01);
-			else if (l == 18u)	factor = static_cast<T>(0.1);
-			else				factor += l * static_cast<T>(0.016);*/
-			return static_cast<REAL>(0.01);
-		}();
+		if (l == 0u)		factor = static_cast<REAL>(0.0);
+		else if (l < 18u)	factor = static_cast<REAL>(0.01);
+		//else if (l == 18u)	factor = static_cast<REAL>(0.1);
+		//else				factor += l * static_cast<REAL>(0.016);
 
 		thrust::fill(thrust::device_pointer_cast(pCGAp), thrust::device_pointer_cast(pCGAp + sph.size), REAL3{ 0.0 });
 		ComputeSurfaceTensionCGAp(physParam, sphMaterial, sph, nei, pCGp, pCGAp);
