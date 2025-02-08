@@ -66,24 +66,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>.generate</Filter>
     </ClCompile>
-    <ClCompile Include="MPSGBArchiver.cpp">
-      <Filter>GBArchiver</Filter>
-    </ClCompile>
-    <ClCompile Include="MPSSPHMaterial.cpp">
-      <Filter>Material\SPH</Filter>
-    </ClCompile>
-    <ClCompile Include="MPSSPHModel.cpp">
-      <Filter>Model\SPH</Filter>
-    </ClCompile>
-    <ClCompile Include="MPSParticleObject.cpp">
-      <Filter>Object\Particle</Filter>
-    </ClCompile>
-    <ClCompile Include="MPSObstacleModel.cpp">
-      <Filter>Model\Obstacle</Filter>
-    </ClCompile>
-    <ClCompile Include="MPSMeshMaterial.cpp">
-      <Filter>Material\Obstacle</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -195,6 +177,24 @@
     </CudaCompile>
     <CudaCompile Include="MPSBoundaryParticleObject.cu">
       <Filter>Object\SPH</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSObstacleModel.cpp">
+      <Filter>Model\Obstacle</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSSPHModel.cpp">
+      <Filter>Model\SPH</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSParticleObject.cpp">
+      <Filter>Object\Particle</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSMeshMaterial.cpp">
+      <Filter>Material\Obstacle</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSSPHMaterial.cpp">
+      <Filter>Material\SPH</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSGBArchiver.cpp">
+      <Filter>GBArchiver</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

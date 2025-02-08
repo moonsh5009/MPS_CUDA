@@ -180,8 +180,8 @@ void mps::MeshObject::buildAdjacency()
 	const auto optFaceRes = m_face.GetDeviceResource();
 	if (!optFaceRes) return;
 
-	thrust::device_vector<uint32_t> d_nbFacesID{ GetVertexSize() + 1u, 0u };
-	thrust::device_vector<uint32_t> d_nbNodesID{ GetVertexSize() + 1u, 0u };
+	thrust::device_vector<uint32_t> d_nbFacesID(GetVertexSize() + 1, 0u);
+	thrust::device_vector<uint32_t> d_nbNodesID(GetVertexSize() + 1, 0u);
 	thrust::device_vector<uint2> d_vertexID;
 
 	ComputeNbFacesSize_kernel << < mcuda::util::DivUp(GetSize(), nBlockSize), nBlockSize >> > (

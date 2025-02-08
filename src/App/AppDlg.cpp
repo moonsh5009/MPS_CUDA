@@ -46,6 +46,8 @@ END_MESSAGE_MAP()
 BOOL CAppDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+	m_pMPSCore = std::make_shared<mps::System>();
+	m_pMPSCore->SetDevice(0);
 
 	SetIcon(m_hIcon, TRUE);
 	SetIcon(m_hIcon, FALSE);
@@ -56,7 +58,6 @@ BOOL CAppDlg::OnInitDialog()
 		return -1;
 	}
 
-	m_pMPSCore = std::make_shared<mps::System>();
 	m_pMPSCore->Initalize();
 
 	SetTimer(1000, 30, NULL);
@@ -143,7 +144,7 @@ BOOL CAppDlg::GetRenderingContext()
 	{
 		return TRUE;
 	}
-	//Get access to modern OpenGL functionality from this old style context.
+
 	glewExperimental = GL_TRUE;
 	if (GLEW_OK != glewInit())
 	{
@@ -151,18 +152,11 @@ BOOL CAppDlg::GetRenderingContext()
 		return FALSE;
 	}
 
-	//참고 http://gamedev.stackexchange.com/a/30443
 	GLint attribs[] =
 	{
-		//OpenGL 2.0 사용
 		WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
 		WGL_CONTEXT_MINOR_VERSION_ARB, 0,
-		// Uncomment this for forward compatibility mode
-		//WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-		// Uncomment this for Compatibility profile
 		WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-		// We are using Core profile here
-		//WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 		0
 	};
 

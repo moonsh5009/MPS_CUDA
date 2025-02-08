@@ -28,6 +28,7 @@ namespace mps
 
 	public:
 		void Initalize();
+		void SetDevice(int device);
 
 	protected:
 		//virtual void OnLMouseDown(mevent::Flag flag, glm::ivec2 curPos) override;

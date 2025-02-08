@@ -2,10 +2,10 @@ template<typename T, GLenum TYPE>
 void mcuda::gl::Buffer<T, TYPE>::CudaRegister()
 {
 	if (this->GetSize() <= 0ull) return;
+	assert(glIsBuffer(this->GetID()));
 	CudaUnRegister();
 
-	const auto error = cudaGraphicsGLRegisterBuffer(&m_pCuRes->resource, this->GetID(), cudaGraphicsMapFlagsNone);
-	assert(error == cudaSuccess);
+	CUDA_CHECK(cudaGraphicsGLRegisterBuffer(&m_pCuRes->resource, this->GetID(), cudaGraphicsMapFlagsNone));
 }
 
 template<typename T, GLenum TYPE>
@@ -14,8 +14,7 @@ void mcuda::gl::Buffer<T, TYPE>::CudaUnRegister()
 	if (!m_pCuRes->resource) return;
 	assert(m_pCuRes->bMapping == false);
 
-	const auto error = cudaGraphicsUnregisterResource(m_pCuRes->resource);
-	assert(error == cudaSuccess);
+	CUDA_CHECK(cudaGraphicsUnregisterResource(m_pCuRes->resource));
 	m_pCuRes->resource = nullptr;
 }
 
@@ -54,14 +53,16 @@ std::optional<mcuda::gl::DeviceResource<T>> mcuda::gl::Buffer<T, TYPE>::GetDevic
 
 	if (const auto error = cudaGraphicsMapResources(1, &m_pCuRes->resource, 0); error != cudaSuccess)
 	{
+		CUDA_CHECK(error);
 		assert(false);
 		return {};
 	}
 
 	T* ptr;
 	size_t capacityByteLength;
-	if (cudaGraphicsResourceGetMappedPointer(reinterpret_cast<void**>(&ptr), &capacityByteLength, m_pCuRes->resource) != cudaSuccess)
+	if (const auto error = cudaGraphicsResourceGetMappedPointer(reinterpret_cast<void**>(&ptr), &capacityByteLength, m_pCuRes->resource); error != cudaSuccess)
 	{
+		CUDA_CHECK(error);
 		assert(false);
 		return {};
 	}

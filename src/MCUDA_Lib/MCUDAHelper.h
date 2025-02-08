@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <sstream>
 
 #include "cuda_runtime.h"
 
@@ -32,10 +33,18 @@
 #ifndef _DEBUG
 #define CUDA_CHECK(x)	(x)
 #else
-#define CUDA_CHECK(x)	{\
-		(x); \
-		cudaError_t e = cudaGetLastError(); \
-		if (e != cudaSuccess) assert(false); } //"cuda failure %s:%d: '%s'\n", __FILE__, __LINE__, cudaGetErrorString(e));
+#define CUDA_CHECK(x) \
+{ \
+	(x); \
+	cudaError_t e = cudaGetLastError(); \
+	if (e != cudaSuccess) \
+	{ \
+		std::stringstream ss; \
+		ss << "cuda failure " << __FILE__ << ":" << __LINE__ << ":" << cudaGetErrorString(e) << "\n"; \
+		OutputDebugStringA(ss.str().c_str()); \
+		assert(false); \
+	} \
+}
 #endif
 
 namespace mcuda

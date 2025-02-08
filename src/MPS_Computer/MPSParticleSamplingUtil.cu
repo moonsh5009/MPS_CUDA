@@ -43,18 +43,18 @@ void mps::kernel::ParticleSampling::ParticleSampling(const MeshMaterialParam& ma
 {
 	if (obj.size == 0) return;
 
-	thrust::device_vector<uint32_t> prevIdx{ obj.size + 1u, 0u };
-	thrust::device_vector<uint32_t> currIdx{ obj.size + 1u, 0u };
-	thrust::device_vector<bool> isGenerateds{ obj.size, false };
+	thrust::device_vector<uint32_t> prevIdx(obj.size + 1u, 0u);
+	thrust::device_vector<uint32_t> currIdx(obj.size + 1u, 0u);
+	thrust::device_vector<bool> isGenerateds(obj.size, false);
 
 	if (IsSamplingParticleRequired(material, obj, thrust::raw_pointer_cast(prevIdx.data()), thrust::raw_pointer_cast(currIdx.data()), thrust::raw_pointer_cast(isGenerateds.data())))
 	{
 		const auto nParticleSize = boundaryParticle.GetSize();
-		thrust::device_vector<uint32_t> prevFaceID{ nParticleSize };
-		thrust::device_vector<REAL2> prevBCC{ nParticleSize };
-		thrust::device_vector<REAL3> prevPosition{ nParticleSize };
-		thrust::device_vector<REAL> prevRadius{ nParticleSize };
-		thrust::device_vector<glm::fvec4> prevColor{ nParticleSize };
+		thrust::device_vector<uint32_t> prevFaceID(nParticleSize);
+		thrust::device_vector<REAL2> prevBCC(nParticleSize);
+		thrust::device_vector<REAL3> prevPosition(nParticleSize);
+		thrust::device_vector<REAL> prevRadius(nParticleSize);
+		thrust::device_vector<glm::fvec4> prevColor(nParticleSize);
 
 		if (nParticleSize > 0u)
 		{

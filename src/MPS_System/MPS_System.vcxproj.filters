@@ -29,11 +29,13 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>.generate</Filter>
     </ClCompile>
-    <ClCompile Include="MPSSystem.cpp">
-      <Filter>System</Filter>
-    </ClCompile>
     <ClCompile Include="MPSSystemEventHandler.cpp">
       <Filter>System</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="MPSSystem.cpp">
+      <Filter>System</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

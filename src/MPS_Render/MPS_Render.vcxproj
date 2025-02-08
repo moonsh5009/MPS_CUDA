@@ -33,10 +33,10 @@
     <ClCompile Include="MPSCameraProjection.cpp" />
     <ClCompile Include="MPSCameraTransform.cpp" />
     <ClCompile Include="MPSCameraUserInputEventHandler.cpp" />
-    <ClCompile Include="MPSRenderer.cpp" />
-    <ClCompile Include="MPSRenderManager.cpp" />
-    <ClCompile Include="MPSSPHRenderer.cpp" />
-    <ClCompile Include="MPSMeshRenderer.cpp" />
+    <CudaCompile Include="MPSRenderer.cpp" />
+    <CudaCompile Include="MPSRenderManager.cpp" />
+    <CudaCompile Include="MPSSPHRenderer.cpp" />
+    <CudaCompile Include="MPSMeshRenderer.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -68,7 +68,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.7.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -108,6 +108,13 @@
       <CudaRuntime>Shared</CudaRuntime>
       <AdditionalOptions>-std=c++17 %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
+    <PreBuildEvent>
+      <Command>cd ../
+cd ../bin/$(Platform)/$(Configuration)/
+if not exist "shader" mkdir "shader"
+
+xcopy "../../../src/shader" "./shader" /Y</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -131,9 +138,16 @@
       <CudaRuntime>Shared</CudaRuntime>
       <AdditionalOptions>-std=c++17 %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
+    <PreBuildEvent>
+      <Command>cd ../
+cd ../bin/$(Platform)/$(Configuration)/
+if not exist "shader" mkdir "shader"
+
+xcopy "../../../src/shader" "./shader" /Y</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.7.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.targets" />
   </ImportGroup>
 </Project>

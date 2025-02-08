@@ -369,7 +369,7 @@ __global__ void ApplyDFSPH_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto forceij = sphMaterial.volume * (pi + pj) * mps::device::SPH::GKernel(dist, invHi) * xij;
+		const auto forceij = 0.5 * sphMaterial.volume * (pi + pj) * mps::device::SPH::GKernel(dist, invHi) * xij;
 		force -= forceij;
 	});
 
@@ -410,7 +410,7 @@ __global__ void ApplyDFSPH_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto forceij = refSPHMaterial.volume * (pi + pj) * mps::device::SPH::GKernel(dist, invHi) * xij;
+		const auto forceij = 0.5 * refSPHMaterial.volume * (pi + pj) * mps::device::SPH::GKernel(dist, invHi) * xij;
 		force -= forceij;
 	});
 
@@ -449,7 +449,7 @@ __global__ void ApplyDFSPH_kernel(
 
 		const auto xij = xi - xj;
 		const auto dist = glm::length(xij);
-		const auto forceij = pBoundaryParticleVolume[jd] * pi * mps::device::SPH::GKernel(dist, invHi) * xij;
+		const auto forceij = 0.5 * pBoundaryParticleVolume[jd] * pi * mps::device::SPH::GKernel(dist, invHi) * xij;
 		force -= forceij;
 	});
 
@@ -464,5 +464,5 @@ __global__ void ApplyDFSPHFinal_kernel(
 	uint32_t id = threadIdx.x + blockIdx.x * blockDim.x;
 	if (id >= sphSize) return;
 
-	pSPHForce[id] = 0.5 * pSPHMass[id] * pSPHForce[id];
+	pSPHForce[id] = pSPHMass[id] * pSPHForce[id];
 }

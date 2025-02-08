@@ -105,18 +105,8 @@
     <ClCompile Include="MPSCamera.cpp">
       <Filter>Camera</Filter>
     </ClCompile>
-    <ClCompile Include="MPSRenderManager.cpp" />
-    <ClCompile Include="MPSRenderer.cpp">
-      <Filter>Renderer\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="MPSSPHRenderer.cpp">
-      <Filter>Renderer\SPH</Filter>
-    </ClCompile>
     <ClCompile Include="MPSGLPArchiver.cpp">
       <Filter>MGLPArchiver</Filter>
-    </ClCompile>
-    <ClCompile Include="MPSMeshRenderer.cpp">
-      <Filter>Renderer\Mesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -138,5 +128,17 @@
     <None Include="..\shader\MeshShader.vert">
       <Filter>Shader\TriMesh</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="MPSSPHRenderer.cpp">
+      <Filter>Renderer\SPH</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSMeshRenderer.cpp">
+      <Filter>Renderer\Mesh</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSRenderer.cpp">
+      <Filter>Renderer\Base</Filter>
+    </CudaCompile>
+    <CudaCompile Include="MPSRenderManager.cpp" />
   </ItemGroup>
 </Project>

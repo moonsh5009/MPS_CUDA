@@ -60,7 +60,7 @@ void mps::System::Initalize()
             auto pMeshMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
             auto pBoundaryParticle = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
             auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
-            pMeshObject->LoadMesh("../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
+            pMeshObject->LoadMesh("../../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
             pMeshMaterial->SetParam(radius * 4, 1.0);
 
             auto pMeshRes = pMeshObject->GetDeviceResource<mps::MeshResource>();
@@ -81,6 +81,15 @@ void mps::System::Initalize()
     }
 
     glEnable(GL_DEPTH_TEST);
+}
+
+void mps::System::SetDevice(int device)
+{
+    CUDA_CHECK(cudaDeviceReset());
+    CUDA_CHECK(cudaSetDevice(device));
+    int n;
+    cudaGetDeviceCount(&n);
+    OutputDebugStringA(std::to_string(n).c_str());
 }
 
 void mps::System::OnWMouseDown(mevent::Flag flag, glm::ivec2 curPos)
@@ -430,7 +439,7 @@ void mps::System::ResizeParticle()
         auto pMeshMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
         auto pBoundaryParticle = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
         auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
-        pMeshObject->LoadMesh("../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
+        pMeshObject->LoadMesh("../../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
         pMeshMaterial->SetParam(radius * 4, 1.0);
 
         auto pMeshRes = pMeshObject->GetDeviceResource<mps::MeshResource>();
@@ -527,7 +536,7 @@ void mps::System::ViscosityTestScene(size_t height)
         auto pMeshMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
         auto pBoundaryParticle = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
         auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
-        pMeshObject->LoadMesh("../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
+        pMeshObject->LoadMesh("../../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
         pMeshMaterial->SetParam(radius * 4, 1.0);
 
         auto pMeshRes = pMeshObject->GetDeviceResource<mps::MeshResource>();
@@ -628,7 +637,7 @@ void mps::System::SurfaceTensionTestScene()
         auto pMeshMaterial = static_cast<mps::MeshMaterial*>(m_pBoundaryModel->GetMaterial());
         auto pBoundaryParticle = static_cast<mps::BoundaryParticleObject*>(m_pBoundaryModel->GetSubObject());
         auto pBoundaryParticleHash = static_cast<mps::SpatialHash*>(m_pBoundaryModel->GetTree(static_cast<uint32_t>(mps::ObstacleTreeIdx::SpatialHash)));
-        pMeshObject->LoadMesh("../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
+        pMeshObject->LoadMesh("../../../obj/cube.obj", (m_pGBArchiver->m_physicsParam.max + m_pGBArchiver->m_physicsParam.min) * 0.5, m_pGBArchiver->m_physicsParam.max - m_pGBArchiver->m_physicsParam.min, 1.0);
         pMeshMaterial->SetParam(radius * 4, 1.0);
 
         auto pMeshRes = pMeshObject->GetDeviceResource<mps::MeshResource>();
