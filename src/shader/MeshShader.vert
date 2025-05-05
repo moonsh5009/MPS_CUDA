@@ -1,7 +1,8 @@
-#include <MeshShader.glsl>
+#version 450 core
+#include "MeshShader.glsl"
 
 layout (std430, binding = 0) restrict readonly buffer Face { uint aFace[]; };
-layout (std430, binding = 1) restrict readonly buffer Vertex { double aVertex[]; };
+layout (std430, binding = 1) restrict readonly buffer Vertex { float[3] aVertex[]; };
 layout (std430, binding = 2) restrict readonly buffer FrontColor { vec4 aFrontColor[]; };
 layout (std430, binding = 3) restrict readonly buffer BackColor { vec4 aBackColor[]; };
 
@@ -9,12 +10,12 @@ out VertexShaderOut vsOut;
 
 void main()
 {
-	uint idxFace = gl_VertexID / 3;
-	uint iVertex = gl_VertexID - idxFace * 3;
+	uint idxFace = gl_VertexIndex / 3;
+	uint iVertex = gl_VertexIndex - idxFace * 3;
 
 	uint idxVertex = aFace[idxFace * 3 + iVertex];
-
-	vsOut.pos = vec3(float(aVertex[idxVertex * 3 + 0]), float(aVertex[idxVertex * 3 + 1]), -float(aVertex[idxVertex * 3 + 2]));
+	float[3] vertex_array = aVertex[idxVertex];
+	vsOut.pos = vec3(vertex_array[0], vertex_array[1], vertex_array[2]);
 	vsOut.frontColor = aFrontColor[idxFace];
 	vsOut.backColor = aBackColor[idxFace];
 	

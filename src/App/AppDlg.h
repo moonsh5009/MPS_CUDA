@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "../MPS_System/MPSSystem.h"
-
 
 // CAppDlg 대화 상자
 class CAppDlg : public CDialogEx
@@ -47,7 +45,7 @@ private:
 	CDC* m_pDC;
 
 private:
-	std::shared_ptr<mps::System> m_pMPSCore;
+	//std::shared_ptr<mps::System> m_pMPSCore;
 	glm::ivec2 ConvertMousePos(const CPoint& pos) const;
 
 public:

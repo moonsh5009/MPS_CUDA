@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include=".generate">
+      <UniqueIdentifier>{c2cb9a87-5aa6-45ba-9f55-d880176bfa1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Buffer">
+      <UniqueIdentifier>{2187575d-38f1-4ed6-8e16-f0da71812b11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Helper">
+      <UniqueIdentifier>{026ca911-2efb-426b-ab5c-82c23cdb2054}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{e86d0321-3a18-4ce5-a79d-9d7afb7a4f88}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HeaderPre.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="HeaderPost.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>.generate</Filter>
+    </ClInclude>
+    <ClInclude Include="MCUDAHelper.cuh">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="MCUDAHelper.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="MDismantler.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="MTimer.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>.generate</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -4,10 +4,6 @@
 #include "AppDlg.h"
 #include "afxdialogex.h"
 
-#include "GL/GLEW/glew.h"
-#include "GL/GLEW/wglew.h"
-#include "GL/GLFW/glfw3.h"
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -42,12 +38,12 @@ END_MESSAGE_MAP()
 
 
 // CAppDlg 메시지 처리기
-
+#include "../MRender_Lib/Core.h"
 BOOL CAppDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	m_pMPSCore = std::make_shared<mps::System>();
-	m_pMPSCore->SetDevice(0);
+	//m_pMPSCore = std::make_shared<mps::System>();
+	//m_pMPSCore->SetDevice(0);
 
 	SetIcon(m_hIcon, TRUE);
 	SetIcon(m_hIcon, FALSE);
@@ -58,7 +54,9 @@ BOOL CAppDlg::OnInitDialog()
 		return -1;
 	}
 
-	m_pMPSCore->Initalize();
+	//m_pMPSCore->Initalize();
+
+	mvk::Core core{ WindowFromDC(m_pDC->GetSafeHdc()) };
 
 	SetTimer(1000, 30, NULL);
 
@@ -116,8 +114,8 @@ void CAppDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
 
-	m_pMPSCore->Update();
-	m_pMPSCore->Draw();
+	//m_pMPSCore->Update();
+	//m_pMPSCore->Draw();
 
 	SwapBuffers(m_pDC->GetSafeHdc());
 
@@ -145,22 +143,7 @@ BOOL CAppDlg::GetRenderingContext()
 		return TRUE;
 	}
 
-	glewExperimental = GL_TRUE;
-	if (GLEW_OK != glewInit())
-	{
-		AfxMessageBox(CString("GLEW could not be initialized!"));
-		return FALSE;
-	}
-
-	GLint attribs[] =
-	{
-		WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
-		WGL_CONTEXT_MINOR_VERSION_ARB, 0,
-		WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-		0
-	};
-
-	HGLRC CompHRC = wglCreateContextAttribsARB(m_pDC->GetSafeHdc(), 0, attribs);
+	HGLRC CompHRC = wglCreateContext(m_pDC->GetSafeHdc());
 	if (CompHRC && wglMakeCurrent(m_pDC->GetSafeHdc(), CompHRC))
 		m_hRC = CompHRC;
 
@@ -239,7 +222,7 @@ void CAppDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	SetCapture();
 
-	m_pMPSCore->LMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	//m_pMPSCore->LMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
@@ -247,7 +230,7 @@ void CAppDlg::OnRButtonDown(UINT nFlags, CPoint point)
 {
 	SetCapture();
 
-	m_pMPSCore->RMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	//m_pMPSCore->RMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnRButtonDown(nFlags, point);
 }
 
@@ -255,7 +238,7 @@ void CAppDlg::OnMButtonDown(UINT nFlags, CPoint point)
 {
 	SetCapture();
 
-	m_pMPSCore->WMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	//m_pMPSCore->WMouseDown(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnMButtonDown(nFlags, point);
 }
 
@@ -266,7 +249,7 @@ void CAppDlg::OnLButtonUp(UINT nFlags, CPoint point)
 		ReleaseCapture();
 	}
 
-	m_pMPSCore->LMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	//m_pMPSCore->LMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnLButtonUp(nFlags, point);
 }
 
@@ -277,7 +260,7 @@ void CAppDlg::OnRButtonUp(UINT nFlags, CPoint point)
 		ReleaseCapture();
 	}
 
-	m_pMPSCore->RMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	//m_pMPSCore->RMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnRButtonUp(nFlags, point);
 }
 
@@ -288,30 +271,30 @@ void CAppDlg::OnMButtonUp(UINT nFlags, CPoint point)
 		ReleaseCapture();
 	}
 
-	m_pMPSCore->WMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	//m_pMPSCore->WMouseUp(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnMButtonUp(nFlags, point);
 }
 
 void CAppDlg::OnMouseMove(UINT nFlags, CPoint point)
 {
-	m_pMPSCore->MouseMove(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
+	//m_pMPSCore->MouseMove(static_cast<mevent::Flag>(nFlags), ConvertMousePos(point));
 	CDialogEx::OnMouseMove(nFlags, point);
 }
 
 BOOL CAppDlg::OnMouseWheel(UINT nFlags, short zDelta, CPoint point)
 {
-	m_pMPSCore->MouseWheel(static_cast<mevent::Flag>(nFlags), { 0, static_cast<int>(zDelta / abs(zDelta)) }, ConvertMousePos(point));
+	//m_pMPSCore->MouseWheel(static_cast<mevent::Flag>(nFlags), { 0, static_cast<int>(zDelta / abs(zDelta)) }, ConvertMousePos(point));
 	return CDialogEx::OnMouseWheel(nFlags, zDelta, point);
 }
 
 void CAppDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-	m_pMPSCore->KeyDown(nChar, nRepCnt, static_cast<mevent::Flag>(nFlags));
+	//m_pMPSCore->KeyDown(nChar, nRepCnt, static_cast<mevent::Flag>(nFlags));
 }
 
 void CAppDlg::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-	m_pMPSCore->KeyUp(nChar, nRepCnt, static_cast<mevent::Flag>(nFlags));
+	//m_pMPSCore->KeyUp(nChar, nRepCnt, static_cast<mevent::Flag>(nFlags));
 }
 
 BOOL CAppDlg::PreTranslateMessage(MSG* pMsg)

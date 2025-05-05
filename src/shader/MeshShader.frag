@@ -1,4 +1,5 @@
-#include <MeshShader.glsl>
+#version 450 core
+#include "MeshShader.glsl"
 
 in VertexShaderOut vsOut;
 

@@ -1,4 +1,5 @@
-#include <ParticleShader.glsl>
+#version 450 core
+#include "ParticleShader.glsl"
 
 in VertexShaderOut vsOut;
 
