@@ -20,7 +20,7 @@
       <Filter>.generate</Filter>
     </ClInclude>
     <ClInclude Include="Device.h" />
-    <ClInclude Include="Surface.h" />
+    <ClInclude Include="RenderContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -28,6 +28,6 @@
     </ClCompile>
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="Device.cpp" />
-    <ClCompile Include="Surface.cpp" />
+    <ClCompile Include="RenderContext.cpp" />
   </ItemGroup>
 </Project>

@@ -7,22 +7,16 @@ mvk::Core::Core(HWND window)
 }
 
 mvk::Core::~Core()
-{}
+{
+	Destroy();
+}
 
 void mvk::Core::Initialize(HWND window)
 {
 	try
 	{
-		GenerateInstance();
-
-		vk::Win32SurfaceCreateInfoKHR createInfo({}, GetModuleHandle(nullptr), window);
-		vk::SurfaceKHR surface;
-		const auto res = m_instance.createWin32SurfaceKHR(&createInfo, nullptr, &surface);
-		if (res != vk::Result::eSuccess)
-			throw std::runtime_error("Can't Create Vulkan Win32 Surface");
-
-		m_pDevice = std::make_shared<Device>(m_instance, surface);
-		m_pSurface = std::make_shared<Surface>(std::move(surface), m_pDevice);
+		m_pDevice = std::make_shared<Device>(window, GenerateInstance());
+		m_pRenderContext = std::make_shared<RenderContext>(m_pDevice);
 	}
 	catch (std::runtime_error e)
 	{
@@ -30,7 +24,7 @@ void mvk::Core::Initialize(HWND window)
 	}
 }
 
-void mvk::Core::GenerateInstance()
+std::tuple<vk::Instance, vk::DebugUtilsMessengerEXT> mvk::Core::GenerateInstance()
 {
 	if (ENABLE_VALIDATION_LAYERS && !CheckValidationLayerSupport())
 	{
@@ -64,10 +58,13 @@ void mvk::Core::GenerateInstance()
 		createInfo.setPNext(&debugCreateInfo);
 	}
 
-	const auto res = vk::createInstance(&createInfo, nullptr, &m_instance);
-	if (res != vk::Result::eSuccess)
+	const auto instance = vk::createInstance(createInfo);
+	if (!instance)
+	{
 		throw std::runtime_error("failed to create instance!");
+	}
 
+	vk::DebugUtilsMessengerEXT debugMessenger;
 	if (ENABLE_VALIDATION_LAYERS)
 	{
 		/*debugMessenger = m_instance.createDebugUtilsMessengerEXT(debugCreateInfo);
@@ -76,6 +73,14 @@ void mvk::Core::GenerateInstance()
 			throw std::runtime_error("failed to set up debug messenger!");
 		}*/
 	}
+
+	return { instance, debugMessenger };
+}
+
+void mvk::Core::Destroy()
+{
+	m_pRenderContext.reset();
+	m_pDevice.reset();
 }
 
 bool mvk::Core::CheckValidationLayerSupport() const

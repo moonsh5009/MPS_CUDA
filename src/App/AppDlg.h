@@ -4,7 +4,10 @@
 
 #pragma once
 
-
+namespace mvk
+{
+	class Core;
+}
 // CAppDlg 대화 상자
 class CAppDlg : public CDialogEx
 {
@@ -45,6 +48,7 @@ private:
 	CDC* m_pDC;
 
 private:
+	std::shared_ptr<mvk::Core> m_vkcore;
 	//std::shared_ptr<mps::System> m_pMPSCore;
 	glm::ivec2 ConvertMousePos(const CPoint& pos) const;
 

@@ -1,34 +1,70 @@
 #include "stdafx.h"
 #include "Device.h"
 
+#include "Core.h"
 #include <string>
 #include <set>
 
-mvk::Device::Device(const vk::Instance& instance, const vk::SurfaceKHR& surface)
+mvk::Device::Device(HWND window, const std::tuple<vk::Instance, vk::DebugUtilsMessengerEXT>& instance) :
+	m_instance{ std::get<0>(instance) },
+	m_debugMessenger{ std::get<1>(instance) }
 {
-	Initialize(instance, surface);
+	Initialize(window);
 }
 
 mvk::Device::~Device()
-{}
-
-void mvk::Device::Initialize(const vk::Instance& instance, const vk::SurfaceKHR& surface)
 {
-	InitPhysicalDevice(instance, surface);
-	CreateDeviceAndQueue(surface);
+	Destroy();
 }
 
-void mvk::Device::InitPhysicalDevice(const vk::Instance& instance, const vk::SurfaceKHR& surface)
+void mvk::Device::Initialize(HWND window)
 {
-	const auto physicalDevices = instance.enumeratePhysicalDevices();
+	CreateSurface(window);
+	InitPhysicalDevice();
+	CreateDeviceAndQueue();
+}
+
+void mvk::Device::Destroy()
+{
+	m_logical.destroy();
+	m_logical = nullptr;
+
+	//m_instance.destroyDebugUtilsMessengerEXT(m_debugMessenger);
+	//m_debugMessenger = nullptr;
+
+	m_instance.destroySurfaceKHR(m_surface);
+	m_surface = nullptr;
+
+	m_instance.destroy();
+	m_instance = nullptr;
+
+	m_physical = nullptr;
+	m_presentQueue = nullptr;
+	m_queue = nullptr;
+	m_queueFamilyIndices.reset();
+}
+
+void mvk::Device::CreateSurface(HWND window)
+{
+	vk::Win32SurfaceCreateInfoKHR createInfo({}, GetModuleHandle(nullptr), window);
+	m_surface = m_instance.createWin32SurfaceKHR(createInfo);
+	if (!m_surface)
+	{
+		throw std::runtime_error("Can't Create Vulkan Win32 Surface");
+	}
+}
+
+void mvk::Device::InitPhysicalDevice()
+{
+	const auto physicalDevices = m_instance.enumeratePhysicalDevices();
 	if (physicalDevices.empty())
 		throw std::runtime_error("failed to find GPUs with Vulkan support!");
 
 	for (const auto& physicalDevice : physicalDevices)
 	{
-		if (IsDeviceSuitable(surface, physicalDevice))
+		if (IsDeviceSuitable(physicalDevice))
 		{
-			m_physicalDevice = physicalDevice;
+			m_physical = physicalDevice;
 			return;
 		}
 	}
@@ -36,9 +72,9 @@ void mvk::Device::InitPhysicalDevice(const vk::Instance& instance, const vk::Sur
 	throw std::runtime_error("failed to find a suitable GPU!");
 }
 
-void mvk::Device::CreateDeviceAndQueue(const vk::SurfaceKHR& surface)
+void mvk::Device::CreateDeviceAndQueue()
 {
-	auto queueFamilies = FindQueueFamilies(surface, m_physicalDevice);
+	auto queueFamilies = FindQueueFamilies(m_physical);
 	const auto queuePriority = 1.0f;
 	const auto queueFamilyIndices = queueFamilies.Get();
 
@@ -54,18 +90,16 @@ void mvk::Device::CreateDeviceAndQueue(const vk::SurfaceKHR& surface)
 		queueCreateInfos.data());
 
 	if (ENABLE_VALIDATION_LAYERS)
-	{
 		deviceCreateInfo.setPEnabledLayerNames(VALIDATION_LAYERS);
-	}
 	deviceCreateInfo.setPEnabledExtensionNames(DEVICE_EXTENSIONS);
 
-	m_device = m_physicalDevice.createDevice(deviceCreateInfo);
-	m_queue = m_device.getQueue(*queueFamilies.graphics, 0);
-	m_presentQueue = m_device.getQueue(*queueFamilies.present, 0);
+	m_logical = m_physical.createDevice(deviceCreateInfo);
+	m_queue = m_logical.getQueue(*queueFamilies.graphics, 0);
+	m_presentQueue = m_logical.getQueue(*queueFamilies.present, 0);
 	m_queueFamilyIndices = std::move(queueFamilies);
 }
 
-mvk::QueueFamilyIndices mvk::Device::FindQueueFamilies(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& device) const
+mvk::QueueFamilyIndices mvk::Device::FindQueueFamilies(const vk::PhysicalDevice& device) const
 {
 	QueueFamilyIndices indices;
 
@@ -74,7 +108,7 @@ mvk::QueueFamilyIndices mvk::Device::FindQueueFamilies(const vk::SurfaceKHR& sur
 	{
 		if (queueFamilyProperties[i].queueFlags & (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute))
 			indices.graphics = i;
-		if (device.getSurfaceSupportKHR(i, surface))
+		if (device.getSurfaceSupportKHR(i, m_surface))
 			indices.present = i;
 		if (indices.IsComplete())
 			return indices;
@@ -94,16 +128,16 @@ bool mvk::Device::CheckDeviceExtensionSupport(const vk::PhysicalDevice& device) 
 	return requiredExtensions.empty();
 }
 
-bool mvk::Device::CheckSwapChainAdequate(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& device) const
+bool mvk::Device::CheckSwapChainAdequate(const vk::PhysicalDevice& device) const
 {
-	const auto formats = device.getSurfaceFormatsKHR(surface);
-	const auto presentModes = device.getSurfacePresentModesKHR(surface);
+	const auto formats = device.getSurfaceFormatsKHR(m_surface);
+	const auto presentModes = device.getSurfacePresentModesKHR(m_surface);
 	return !formats.empty() && !presentModes.empty();
 }
 
-bool mvk::Device::IsDeviceSuitable(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& device) const
+bool mvk::Device::IsDeviceSuitable(const vk::PhysicalDevice& device) const
 {
-	return FindQueueFamilies(surface, device).IsComplete()
+	return FindQueueFamilies(device).IsComplete()
 		&& CheckDeviceExtensionSupport(device)
-		&& CheckSwapChainAdequate(surface, device);
+		&& CheckSwapChainAdequate(device);
 }

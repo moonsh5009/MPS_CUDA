@@ -24,41 +24,54 @@ namespace mvk
 				return { i1 };
 			return { i1, i2 };
 		}
+		constexpr void reset()
+		{
+			graphics.reset();
+			present.reset();
+		}
 	};
 
 	class __MY_EXT_CLASS__ Device
 	{
 	public:
-		Device(const vk::Instance& instance, const vk::SurfaceKHR& surface);
+		Device(HWND window, const std::tuple<vk::Instance, vk::DebugUtilsMessengerEXT>& instance);
 		~Device();
 
-		void Initialize(const vk::Instance& instance, const vk::SurfaceKHR& surface);
+		void Initialize(HWND window);
+		void Destroy();
 
-		constexpr const vk::PhysicalDevice& GetPhysicalDevice() const { return m_physicalDevice; }
-		constexpr const vk::Queue& GetPresentQueue() const { return m_queue; }
+	private:
+		void CreateSurface(HWND window);
+		void InitPhysicalDevice();
+		void CreateDeviceAndQueue();
 
-		constexpr const vk::Device& GetDevice() const { return m_device; }
-		constexpr const vk::Queue& GetQueue() const { return m_queue; }
+		QueueFamilyIndices FindQueueFamilies(const vk::PhysicalDevice& device) const;
+		bool CheckDeviceExtensionSupport(const vk::PhysicalDevice& device) const;
+		bool CheckSwapChainAdequate(const vk::PhysicalDevice& device) const;
+		bool IsDeviceSuitable(const vk::PhysicalDevice& device) const;
+
+	public:
+		constexpr const vk::SurfaceKHR& GetSurface() const { return m_surface; }
+
+		constexpr const vk::PhysicalDevice& GetPhysical() const { return m_physical; }
+		constexpr const vk::Device& GetLogical() const { return m_logical; }
 
 		constexpr const QueueFamilyIndices& GetQueueFamilyIndices() const { return m_queueFamilyIndices; }
+		constexpr const vk::Queue& GetPresentQueue() const { return m_presentQueue; }
+		constexpr const vk::Queue& GetQueue() const { return m_queue; }
 		constexpr bool IsOneQueueFamily() const { return m_queueFamilyIndices.graphics == m_queueFamilyIndices.present; }
 
 	private:
-		void InitPhysicalDevice(const vk::Instance& instance, const vk::SurfaceKHR& surface);
-		void CreateDeviceAndQueue(const vk::SurfaceKHR& surface);
+		vk::Instance m_instance;
+		vk::DebugUtilsMessengerEXT m_debugMessenger;
+		vk::SurfaceKHR m_surface;
 
-		QueueFamilyIndices FindQueueFamilies(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& device) const;
-		bool CheckDeviceExtensionSupport(const vk::PhysicalDevice& device) const;
-		bool CheckSwapChainAdequate(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& device) const;
-		bool IsDeviceSuitable(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& device) const;
-
-		vk::PhysicalDevice m_physicalDevice;
-		vk::Queue m_presentQueue;
-
-		vk::Device m_device;
-		vk::Queue m_queue;
+		vk::PhysicalDevice m_physical;
+		vk::Device m_logical;
 
 		QueueFamilyIndices m_queueFamilyIndices;
+		vk::Queue m_presentQueue;
+		vk::Queue m_queue;
 	};
 }
 

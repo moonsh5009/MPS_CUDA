@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Device.h"
-#include "Surface.h"
+#include "RenderContext.h"
 
 #include "HeaderPre.h"
 
@@ -14,8 +14,14 @@ namespace mvk
 		~Core();
 
 		void Initialize(HWND window);
-		void GenerateInstance();
+		void Destroy();
 
+	private:
+		std::tuple<vk::Instance, vk::DebugUtilsMessengerEXT> GenerateInstance();
+		bool CheckValidationLayerSupport() const;
+		std::vector<const char*> GetRequiredExtensions() const;
+
+	public:
 		static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(
 			vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			vk::DebugUtilsMessageTypeFlagsEXT messageType,
@@ -26,15 +32,11 @@ namespace mvk
 			return VK_FALSE;
 		}
 
+		constexpr const std::shared_ptr<RenderContext>& GetRenderContext() const { return m_pRenderContext; }
+
 	private:
-		bool CheckValidationLayerSupport() const;
-		std::vector<const char*> GetRequiredExtensions() const;
-
-		vk::Instance m_instance;
-		vk::DebugUtilsMessengerEXT debugMessenger;
-
 		std::shared_ptr<Device> m_pDevice;
-		std::shared_ptr<Surface> m_pSurface;
+		std::shared_ptr<RenderContext> m_pRenderContext;
 	};
 }
 

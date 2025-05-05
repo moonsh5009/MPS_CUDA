@@ -176,14 +176,14 @@ python ./compile.py ..\..\shader\ ..\..\..\bin\$(Platform)\$(Configuration)\shad
     <ClInclude Include="HeaderPost.h" />
     <ClInclude Include="HeaderPre.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Surface.h" />
+    <ClInclude Include="RenderContext.h" />
     <ClInclude Include="VulkanDef.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="Surface.cpp" />
+    <ClCompile Include="RenderContext.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

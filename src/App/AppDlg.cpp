@@ -55,9 +55,7 @@ BOOL CAppDlg::OnInitDialog()
 	}
 
 	//m_pMPSCore->Initalize();
-
-	mvk::Core core{ WindowFromDC(m_pDC->GetSafeHdc()) };
-
+	m_vkcore = std::make_shared<mvk::Core>(WindowFromDC(m_pDC->GetSafeHdc()));
 	SetTimer(1000, 30, NULL);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
@@ -117,7 +115,7 @@ void CAppDlg::OnTimer(UINT_PTR nIDEvent)
 	//m_pMPSCore->Update();
 	//m_pMPSCore->Draw();
 
-	SwapBuffers(m_pDC->GetSafeHdc());
+	//SwapBuffers(m_pDC->GetSafeHdc());
 
 	CDialogEx::OnTimer(nIDEvent);
 }
@@ -308,5 +306,6 @@ BOOL CAppDlg::PreTranslateMessage(MSG* pMsg)
 		OnKeyUp(static_cast<UINT>(pMsg->wParam), LOWORD(pMsg->lParam), HIWORD(pMsg->lParam));
 		break;
 	}
+	m_vkcore->GetRenderContext()->DrawFrame();
 	return CDialogEx::PreTranslateMessage(pMsg);
 }

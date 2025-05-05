@@ -13,6 +13,7 @@ namespace mvk
 #else
 	constexpr bool ENABLE_VALIDATION_LAYERS = false;
 #endif
+	constexpr size_t MAX_FRAMES_IN_FLIGHT = 3;
 
 	constexpr std::array<const char*, 1> VALIDATION_LAYERS = {
 		"VK_LAYER_KHRONOS_validation"
