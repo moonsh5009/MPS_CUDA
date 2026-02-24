@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Configure",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--preset", "msvc-x64"],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Build Debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--config", "Debug"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "CMake: Build Release",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--config", "Release"],
+            "group": "build",
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

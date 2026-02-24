@@ -1,14 +1,21 @@
-#pragma once
+﻿#pragma once
 #pragma warning (disable : 4251)
-#pragma warning (disable : 4267)
-#pragma warning (disable : 4068)
+#pragma warning (disable : 4275)
+
+#define BUILD_MPS_SYSTEM
+#define MCORE_USE_CUDA
+
+#define NOMINMAX
+#define NOGDI
 
 #include <iostream>
 #include <cassert>
 #include <cstdint>
 
 #include <algorithm>
+#include <memory>
 #include <array>
+#include <stack>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -18,10 +25,10 @@
 #include <optional>
 #include <functional>
 
-#include <GL/GLEW/glew.h>
-#include <GL/GLEW/wglew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "../MCore_util/EnumExt.h"
+#include "../MCore_util/Logger.h"
 
-#include "../MCUDA_Lib/MTimer.h"
+#include "../MCore_util/DeviceSingleArray.h"
+#include "../MCore_util/DeviceMultiArray.h"
+
+using namespace mcore;

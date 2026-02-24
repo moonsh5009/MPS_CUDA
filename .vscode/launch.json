@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug App",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/x64/Debug/App.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin/x64/Debug",
+            "environment": [],
+            "preLaunchTask": "CMake: Build Debug"
+        },
+        {
+            "name": "Release App",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/x64/Release/App.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin/x64/Release",
+            "environment": [],
+            "preLaunchTask": "CMake: Build Release"
+        }
+    ]
+}
